@@ -1,8 +1,14 @@
--- Enable Row Level Security
-ALTER DATABASE postgres SET "app.jwt_secret" TO 'your-jwt-secret';
+-- Drop existing tables if they exist (to avoid type conflicts)
+DROP TABLE IF EXISTS public.enrollments CASCADE;
+DROP TABLE IF EXISTS public.courses CASCADE;
+DROP TABLE IF EXISTS public.profiles CASCADE;
+
+-- Drop existing functions if they exist
+DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
+DROP FUNCTION IF EXISTS public.handle_updated_at() CASCADE;
 
 -- Create profiles table
-CREATE TABLE IF NOT EXISTS public.profiles (
+CREATE TABLE public.profiles (
     id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
     email TEXT NOT NULL,
     full_name TEXT,
@@ -13,7 +19,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 );
 
 -- Create courses table
-CREATE TABLE IF NOT EXISTS public.courses (
+CREATE TABLE public.courses (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     title TEXT NOT NULL,
     description TEXT,
@@ -28,7 +34,7 @@ CREATE TABLE IF NOT EXISTS public.courses (
 );
 
 -- Create enrollments table
-CREATE TABLE IF NOT EXISTS public.enrollments (
+CREATE TABLE public.enrollments (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     course_id UUID REFERENCES public.courses(id) ON DELETE CASCADE,
@@ -115,13 +121,13 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Triggers for updated_at
-CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.profiles
+CREATE TRIGGER profiles_handle_updated_at BEFORE UPDATE ON public.profiles
     FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
-CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.courses
+CREATE TRIGGER courses_handle_updated_at BEFORE UPDATE ON public.courses
     FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
--- Insert some sample data
+-- Insert some sample data (no instructor_id for now since we don't have users yet)
 INSERT INTO public.courses (title, description, category, level, price, duration) VALUES
 ('Introduction to React', 'Learn the basics of React development', 'Web Development', 'beginner', 49.99, '4 hours'),
 ('Advanced JavaScript', 'Master advanced JavaScript concepts', 'Programming', 'advanced', 79.99, '8 hours'),
