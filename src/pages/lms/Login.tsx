@@ -1,20 +1,62 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { useToast } from '@/components/ui/use-toast';
 
 const Login = () => {
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<'student' | 'instructor'>('student');
-  const { login } = useAuth();
+  const [password, setPassword] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [fullName, setFullName] = useState('');
+  const [role, setRole] = useState<'student' | 'instructor' | 'admin'>('student');
+  const [loading, setLoading] = useState(false);
+  
+  const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
-      login(email, role);
-      navigate('/dashboard');
+    setLoading(true);
+
+    try {
+      if (isSignUp) {
+        const { error } = await signUp(email, password, fullName, role);
+        if (error) {
+          toast({
+            title: "Sign Up Failed",
+            description: error,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Account Created",
+            description: "Please check your email to verify your account.",
+          });
+          setIsSignUp(false);
+        }
+      } else {
+        const { error } = await signIn(email, password);
+        if (error) {
+          toast({
+            title: "Sign In Failed",
+            description: error,
+            variant: "destructive",
+          });
+        } else {
+          navigate('/dashboard');
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -25,11 +67,29 @@ const Login = () => {
       <div className="flex-1 flex items-center justify-center p-6 mt-16">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           <div className="bg-blue-600 px-8 py-10 text-center">
-            <h1 className="font-bold text-3xl text-white mb-2">Welcome Back</h1>
-            <p className="text-blue-100">Sign in to NexaLearn to continue</p>
+            <h1 className="font-bold text-3xl text-white mb-2">
+              {isSignUp ? 'Create Account' : 'Welcome Back'}
+            </h1>
+            <p className="text-blue-100">
+              {isSignUp ? 'Join NexaLearn today' : 'Sign in to NexaLearn to continue'}
+            </p>
           </div>
 
-          <form onSubmit={handleLogin} className="p-8 space-y-6">
+          <form onSubmit={handleSubmit} className="p-8 space-y-6">
+            {isSignUp && (
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700">Full Name</label>
+                <input 
+                  type="text" 
+                  required
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  placeholder="John Doe"
+                />
+              </div>
+            )}
+
             <div className="space-y-2">
               <label className="text-sm font-semibold text-gray-700">Email Address</label>
               <input 
@@ -43,26 +103,48 @@ const Login = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700">Role (Demo)</label>
-              <select 
-                value={role}
-                onChange={(e) => setRole(e.target.value as any)}
-                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
-              >
-                <option value="student">Student</option>
-                <option value="instructor">Instructor</option>
-              </select>
+              <label className="text-sm font-semibold text-gray-700">Password</label>
+              <input 
+                type="password" 
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                placeholder="••••••••"
+                minLength={6}
+              />
             </div>
+
+            {isSignUp && (
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700">Role</label>
+                <select 
+                  value={role}
+                  onChange={(e) => setRole(e.target.value as any)}
+                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
+                >
+                  <option value="student">Student</option>
+                  <option value="instructor">Instructor</option>
+                </select>
+              </div>
+            )}
 
             <button 
               type="submit"
-              className="w-full py-3.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors shadow-md shadow-blue-500/30"
+              disabled={loading}
+              className="w-full py-3.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors shadow-md shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Sign In
+              {loading ? 'Loading...' : (isSignUp ? 'Create Account' : 'Sign In')}
             </button>
             
-            <div className="text-center text-xs text-gray-400 mt-4">
-              * This is a demo environment. Any email will work.
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setIsSignUp(!isSignUp)}
+                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+              >
+                {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+              </button>
             </div>
           </form>
         </div>

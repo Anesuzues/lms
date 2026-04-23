@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getCourseById } from '@/services/mockData';
 
 const Dashboard = () => {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, signOut } = useAuth();
 
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" />;
@@ -52,7 +52,7 @@ const Dashboard = () => {
               <Settings size={20} />
             </button>
             <button 
-              onClick={logout}
+              onClick={signOut}
               className="flex-1 md:flex-none px-6 py-3 flex items-center justify-center gap-2 rounded-xl bg-red-50 border border-red-100 text-red-600 hover:bg-red-600 hover:text-white transition-colors font-bold"
             >
               <LogOut size={20} />

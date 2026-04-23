@@ -1,21 +1,25 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
-type UserRole = 'student' | 'instructor';
+export type UserRole = 'student' | 'instructor' | 'admin';
 
-interface User {
+export interface User {
   id: string;
-  name: string;
   email: string;
+  name: string;
   role: UserRole;
   avatar?: string;
-  enrolledCourses: string[]; // Course IDs
+  enrolledCourses: string[];
 }
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  login: (email: string, role?: UserRole) => void;
-  logout: () => void;
+  loading: boolean;
+  signUp: (email: string, password: string, fullName: string, role?: UserRole) => Promise<{ error?: string }>;
+  signIn: (email: string, password: string) => Promise<{ error?: string }>;
+  signOut: () => Promise<void>;
   enrollInCourse: (courseId: string) => void;
 }
 
@@ -23,52 +27,168 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check local storage on mount
-    const storedUser = localStorage.getItem('nexalearn_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        loadUserProfile(session.user);
+      }
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        await loadUserProfile(session.user);
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = (email: string, role: UserRole = 'student') => {
-    const newUser: User = {
-      id: `user-${Date.now()}`,
-      name: email.split('@')[0],
-      email,
-      role,
-      avatar: `https://ui-avatars.com/api/?name=${email}&background=0D8ABC&color=fff`,
-      enrolledCourses: []
-    };
-    setUser(newUser);
-    localStorage.setItem('nexalearn_user', JSON.stringify(newUser));
-  };
+  const loadUserProfile = async (supabaseUser: SupabaseUser) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', supabaseUser.id)
+        .single();
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('nexalearn_user');
-  };
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading user profile:', error);
+        return;
+      }
 
-  const enrollInCourse = (courseId: string) => {
-    if (user && !user.enrolledCourses.includes(courseId)) {
-      const updatedUser = {
-        ...user,
-        enrolledCourses: [...user.enrolledCourses, courseId]
-      };
-      setUser(updatedUser);
-      localStorage.setItem('nexalearn_user', JSON.stringify(updatedUser));
+      if (profile) {
+        // Get enrolled courses
+        const { data: enrollments } = await supabase
+          .from('enrollments')
+          .select('course_id')
+          .eq('user_id', supabaseUser.id);
+
+        const enrolledCourses = enrollments?.map(e => e.course_id) || [];
+
+        setUser({
+          id: profile.id,
+          email: profile.email,
+          name: profile.full_name || profile.email.split('@')[0],
+          role: profile.role,
+          avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${profile.email}&background=0D8ABC&color=fff`,
+          enrolledCourses
+        });
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error);
     }
   };
 
-  if (isLoading) {
-    return null; 
-  }
+  const signUp = async (email: string, password: string, fullName: string, role: UserRole = 'student') => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            role: role,
+          }
+        }
+      });
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      // Create profile record
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            email: data.user.email!,
+            full_name: fullName,
+            role: role,
+          });
+
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+        }
+      }
+
+      return {};
+    } catch (error) {
+      return { error: 'An unexpected error occurred' };
+    }
+  };
+
+  const signIn = async (email: string, password: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return {};
+    } catch (error) {
+      return { error: 'An unexpected error occurred' };
+    }
+  };
+
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  const enrollInCourse = async (courseId: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('enrollments')
+        .insert({
+          user_id: user.id,
+          course_id: courseId,
+          progress: 0
+        });
+
+      if (error) {
+        console.error('Error enrolling in course:', error);
+        return;
+      }
+
+      // Update local user state
+      setUser(prev => prev ? {
+        ...prev,
+        enrolledCourses: [...prev.enrolledCourses, courseId]
+      } : null);
+    } catch (error) {
+      console.error('Error enrolling in course:', error);
+    }
+  };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, enrollInCourse }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      isAuthenticated: !!user, 
+      loading,
+      signUp, 
+      signIn, 
+      signOut, 
+      enrollInCourse 
+    }}>
       {children}
     </AuthContext.Provider>
   );
