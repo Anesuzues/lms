@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Comprehensive Google Form Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .result { margin: 10px 0; padding: 10px; background: #f5f5f5; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        input, textarea { margin: 5px 0; padding: 5px; }
+        button { padding: 10px 15px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Comprehensive Google Form Submission Test</h1>
+    
+    <div class="test-section">
+        <h3>Test 1: Direct Form Submission (Same as your working form)</h3>
+        <button onclick="testDirectSubmission()">Test Direct Submission</button>
+        <div id="direct-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 2: Fetch API Submission</h3>
+        <button onclick="testFetchSubmission()">Test Fetch Submission</button>
+        <div id="fetch-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 3: XMLHttpRequest Submission</h3>
+        <button onclick="testXHRSubmission()">Test XHR Submission</button>
+        <div id="xhr-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 4: Form with All Required Fields</h3>
+        <form id="testForm">
+            <label>Name: <input type="text" name="entry.484371361" value="Test User Complete" required></label><br>
+            <label>Email: <input type="email" name="entry.66967256" value="test-complete@example.com" required></label><br>
+            <label>Phone: <input type="tel" name="entry.387778515" value="+27123456789" required></label><br>
+            <label>Modules: <input type="text" name="entry.1700736970" value="Test Module Complete" required></label><br>
+            <label>Career Interest: 
+                <select name="entry.403697090" required>
+                    <option value="System support">System support</option>
+                    <option value="Social Media & Digital Marketing">Social Media & Digital Marketing</option>
+                </select>
+            </label><br>
+            <label>Program: <input type="text" name="entry.1417367921" value="Test Program Complete" required></label><br>
+            <label>Summary: <textarea name="entry.420636245">Test summary complete</textarea></label><br>
+            <label>Location: <input type="text" name="entry.1642881079" value="Test Location Complete" required></label><br>
+            <input type="hidden" name="fvv" value="1">
+            <input type="hidden" name="fbzx" value="-743813356216699381">
+            <button type="button" onclick="submitTestForm()">Submit Test Form</button>
+        </form>
+        <div id="form-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 5: Check Form Accessibility</h3>
+        <button onclick="checkFormAccess()">Check Form Access</button>
+        <div id="access-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 6: Manual Form Link</h3>
+        <p>Try submitting manually to verify the form is working:</p>
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSeicnftUC9dRZKALdSJugUxYTEJTQQrEyOoEjyzxtSExc2inQ/viewform" target="_blank">
+            Open Google Form Manually
+        </a>
+        <div id="manual-result" class="result">Submit manually and check if it appears in your sheet</div>
+    </div>
+    
+    <script>
+        const FORM_URL = 'https://docs.google.com/forms/u/0/d/e/1FAIpQLSeicnftUC9dRZKALdSJugUxYTEJTQQrEyOoEjyzxtSExc2inQ/formResponse';
+        
+        function log(elementId, message, isError = false) {
+            const element = document.getElementById(elementId);
+            element.innerHTML += `<p class="${isError ? 'error' : 'success'}">${new Date().toLocaleTimeString()}: ${message}</p>`;
+            console.log(message);
+        }
+        
+        function testDirectSubmission() {
+            log('direct-result', 'Starting direct form submission test...');
+            
+            // Create form element
+            const form = document.createElement('form');
+            form.action = FORM_URL;
+            form.method = 'POST';
+            form.target = 'hidden_iframe_direct';
+            
+            // Add all fields
+            const fields = {
+                'entry.484371361': 'Test User Direct Complete',
+                'entry.66967256': 'test-direct-complete@example.com',
+                'entry.387778515': '+27123456789',
+                'entry.1700736970': 'Test Module Direct',
+                'entry.403697090': 'System support',
+                'entry.1417367921': 'Test Program Direct',
+                'entry.420636245': 'Test summary direct',
+                'entry.1642881079': 'Test Location Direct',
+                'fvv': '1',
+                'fbzx': '-743813356216699381'
+            };
+            
+            Object.entries(fields).forEach(([name, value]) => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = name;
+                input.value = value;
+                form.appendChild(input);
+            });
+            
+            // Create iframe
+            let iframe = document.getElementById('hidden_iframe_direct');
+            if (!iframe) {
+                iframe = document.createElement('iframe');
+                iframe.id = 'hidden_iframe_direct';
+                iframe.name = 'hidden_iframe_direct';
+                iframe.style.display = 'none';
+                document.body.appendChild(iframe);
+            }
+            
+            iframe.onload = function() {
+                log('direct-result', '✅ Direct form submission completed - check your Google Sheet');
+            };
+            
+            iframe.onerror = function() {
+                log('direct-result', '❌ Direct form submission failed', true);
+            };
+            
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+            
+            log('direct-result', 'Form submitted via direct method');
+        }
+        
+        function testFetchSubmission() {
+            log('fetch-result', 'Starting fetch API submission test...');
+            
+            const formData = new FormData();
+            formData.append('entry.484371361', 'Test User Fetch Complete');
+            formData.append('entry.66967256', 'test-fetch-complete@example.com');
+            formData.append('entry.387778515', '+27123456789');
+            formData.append('entry.1700736970', 'Test Module Fetch');
+            formData.append('entry.403697090', 'System support');
+            formData.append('entry.1417367921', 'Test Program Fetch');
+            formData.append('entry.420636245', 'Test summary fetch');
+            formData.append('entry.1642881079', 'Test Location Fetch');
+            formData.append('fvv', '1');
+            formData.append('fbzx', '-743813356216699381');
+            
+            fetch(FORM_URL, {
+                method: 'POST',
+                body: formData,
+                mode: 'no-cors'
+            })
+            .then(() => {
+                log('fetch-result', '✅ Fetch submission completed - check your Google Sheet');
+            })
+            .catch(error => {
+                log('fetch-result', `❌ Fetch submission failed: ${error.message}`, true);
+            });
+        }
+        
+        function testXHRSubmission() {
+            log('xhr-result', 'Starting XMLHttpRequest submission test...');
+            
+            const formData = new FormData();
+            formData.append('entry.484371361', 'Test User XHR Complete');
+            formData.append('entry.66967256', 'test-xhr-complete@example.com');
+            formData.append('entry.387778515', '+27123456789');
+            formData.append('entry.1700736970', 'Test Module XHR');
+            formData.append('entry.403697090', 'System support');
+            formData.append('entry.1417367921', 'Test Program XHR');
+            formData.append('entry.420636245', 'Test summary XHR');
+            formData.append('entry.1642881079', 'Test Location XHR');
+            formData.append('fvv', '1');
+            formData.append('fbzx', '-743813356216699381');
+            
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', FORM_URL, true);
+            
+            xhr.onload = function() {
+                log('xhr-result', `✅ XHR submission completed (Status: ${xhr.status}) - check your Google Sheet`);
+            };
+            
+            xhr.onerror = function() {
+                log('xhr-result', '❌ XHR submission failed', true);
+            };
+            
+            xhr.send(formData);
+        }
+        
+        function submitTestForm() {
+            log('form-result', 'Submitting complete test form...');
+            
+            const form = document.getElementById('testForm');
+            const formData = new FormData(form);
+            
+            // Log all form data
+            log('form-result', 'Form data being sent:');
+            for (let [key, value] of formData.entries()) {
+                log('form-result', `${key}: ${value}`);
+            }
+            
+            fetch(FORM_URL, {
+                method: 'POST',
+                body: formData,
+                mode: 'no-cors'
+            })
+            .then(() => {
+                log('form-result', '✅ Complete form submission completed - check your Google Sheet');
+            })
+            .catch(error => {
+                log('form-result', `❌ Complete form submission failed: ${error.message}`, true);
+            });
+        }
+        
+        function checkFormAccess() {
+            log('access-result', 'Checking form accessibility...');
+            
+            // Test if we can access the form
+            fetch('https://docs.google.com/forms/d/e/1FAIpQLSeicnftUC9dRZKALdSJugUxYTEJTQQrEyOoEjyzxtSExc2inQ/viewform', {
+                method: 'HEAD',
+                mode: 'no-cors'
+            })
+            .then(() => {
+                log('access-result', '✅ Form is accessible');
+            })
+            .catch(error => {
+                log('access-result', `❌ Form access failed: ${error.message}`, true);
+            });
+            
+            // Test formResponse endpoint
+            fetch(FORM_URL, {
+                method: 'HEAD',
+                mode: 'no-cors'
+            })
+            .then(() => {
+                log('access-result', '✅ FormResponse endpoint is accessible');
+            })
+            .catch(error => {
+                log('access-result', `❌ FormResponse endpoint failed: ${error.message}`, true);
+            });
+        }
+        
+        // Auto-run accessibility check on load
+        window.onload = function() {
+            checkFormAccess();
+        };
+    </script>
+</body>
+</html>

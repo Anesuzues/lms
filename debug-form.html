@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Find Correct Form Response URL</title>
+</head>
+<body>
+    <h2>Find Correct Google Form Response URL</h2>
+    
+    <p><strong>Instructions:</strong></p>
+    <ol>
+        <li>Go to your working form: <a href="https://docs.google.com/forms/d/17f_dVJEPQweDEuNl4QPf0v7I2sa7uRAZKuyH1w_UaYY/viewform" target="_blank">Open Form</a></li>
+        <li>Right-click on the page and select "View Page Source"</li>
+        <li>Search for "formResponse" in the source code</li>
+        <li>Copy the full URL that looks like: https://docs.google.com/forms/d/e/[LONG_ID]/formResponse</li>
+        <li>Paste it in the input below and test</li>
+    </ol>
+    
+    <div style="margin: 20px 0;">
+        <label for="formUrl">Form Response URL:</label><br>
+        <input type="text" id="formUrl" style="width: 600px; padding: 5px;" 
+               value="https://docs.google.com/forms/u/0/d/e/1FAIpQLSeicnftUC9dRZKALdSJugUxYTEJTQQrEyOoEjyzxtSExc2inQ/formResponse"
+               placeholder="https://docs.google.com/forms/d/e/[FORM_ID]/formResponse">
+        <button onclick="testFormUrl()">Test This URL</button>
+    </div>
+    
+    <div style="margin: 20px 0;">
+        <label for="fbzxValue">fbzx Value (from form source):</label><br>
+        <input type="text" id="fbzxValue" style="width: 300px; padding: 5px;" 
+               value="-743813356216699381"
+               placeholder="Find fbzx value in form source">
+    </div>
+    
+    <button onclick="testSubmission()">Test Form Submission</button>
+    
+    <div id="results" style="margin-top: 20px; padding: 10px; background: #f5f5f5;"></div>
+    
+    <script>
+        function log(message) {
+            document.getElementById('results').innerHTML += '<p>' + message + '</p>';
+            console.log(message);
+        }
+        
+        function testFormUrl() {
+            const url = document.getElementById('formUrl').value;
+            if (!url) {
+                log('❌ Please enter a form URL');
+                return;
+            }
+            
+            log('Testing URL: ' + url);
+            
+            // Try to fetch the URL to see if it exists
+            fetch(url, { method: 'HEAD', mode: 'no-cors' })
+                .then(() => log('✅ URL appears to be valid'))
+                .catch(error => log('❌ URL test failed: ' + error.message));
+        }
+        
+        function testSubmission() {
+            const formUrl = document.getElementById('formUrl').value;
+            const fbzxValue = document.getElementById('fbzxValue').value;
+            
+            if (!formUrl) {
+                log('❌ Please enter the form response URL');
+                return;
+            }
+            
+            if (!fbzxValue) {
+                log('❌ Please enter the fbzx value');
+                return;
+            }
+            
+            log('🧪 Testing form submission...');
+            log('URL: ' + formUrl);
+            log('fbzx: ' + fbzxValue);
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('entry.484371361', 'Test User Debug');
+            formData.append('entry.66967256', 'test-debug@example.com');
+            formData.append('entry.387778515', '+27123456789');
+            formData.append('entry.1700736970', 'Test Module');
+            formData.append('entry.403697090', 'System support');
+            formData.append('entry.1417367921', 'Test Program');
+            formData.append('entry.420636245', 'Test summary');
+            formData.append('entry.1642881079', 'Test Location');
+            formData.append('fvv', '1');
+            formData.append('fbzx', fbzxValue);
+            
+            // Submit using fetch
+            fetch(formUrl, {
+                method: 'POST',
+                body: formData,
+                mode: 'no-cors'
+            })
+            .then(() => {
+                log('✅ Form submission completed (no-cors mode)');
+                log('Check your Google Sheet to see if the submission appeared');
+            })
+            .catch(error => {
+                log('❌ Form submission failed: ' + error.message);
+            });
+        }
+        
+        // Clear results
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+    </script>
+    
+    <button onclick="clearResults()" style="margin-top: 10px;">Clear Results</button>
+</body>
+</html>

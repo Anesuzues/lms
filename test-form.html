@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Minimal Test Form</title>
+</head>
+<body>
+    <h2>Minimal Google Form Test</h2>
+    
+    <form 
+        action="https://docs.google.com/forms/u/0/d/e/1FAIpQLSeicnftUC9dRZKALdSJugUxYTEJTQQrEyOoEjyzxtSExc2inQ/formResponse"
+        method="POST"
+        target="hidden_iframe"
+        onsubmit="handleSubmit()"
+    >
+        <p>
+            <label>Name:</label><br>
+            <input type="text" name="entry.484371361" value="Test User" required>
+        </p>
+        
+        <p>
+            <label>Email:</label><br>
+            <input type="email" name="entry.66967256" value="test@example.com" required>
+        </p>
+        
+        <p>
+            <input type="submit" value="Submit Test">
+        </p>
+        
+        <!-- Hidden fields -->
+        <input type="hidden" name="fvv" value="1">
+        <input type="hidden" name="fbzx" value="4260055148021695714">
+    </form>
+    
+    <iframe name="hidden_iframe" style="display:none;" onload="handleIframeLoad()"></iframe>
+    
+    <div id="status"></div>
+    
+    <script>
+        function handleSubmit() {
+            document.getElementById('status').innerHTML = 'Submitting...';
+            console.log('Form submitted');
+        }
+        
+        function handleIframeLoad() {
+            setTimeout(() => {
+                document.getElementById('status').innerHTML = 'Form submitted! Check Google Form responses.';
+                console.log('Iframe loaded - form submission complete');
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

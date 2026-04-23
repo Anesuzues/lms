@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Form Test (No File Upload)</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .form-container { max-width: 600px; margin: 0 auto; }
+        .field { margin: 15px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, textarea, select { width: 100%; padding: 8px; margin-bottom: 5px; }
+        button { padding: 10px 20px; background: #4285f4; color: white; border: none; cursor: pointer; }
+        .result { margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Simple Form Test (Without File Upload)</h2>
+        <p>Testing form submission without the CV upload field to isolate the issue.</p>
+        
+        <form id="simpleForm">
+            <div class="field">
+                <label for="name">Name and surname *</label>
+                <input type="text" id="name" name="entry.484371361" value="Test User Simple" required>
+            </div>
+            
+            <div class="field">
+                <label for="email">Email Address *</label>
+                <input type="email" id="email" name="entry.66967256" value="test-simple@example.com" required>
+            </div>
+            
+            <div class="field">
+                <label for="phone">Phone number *</label>
+                <input type="tel" id="phone" name="entry.387778515" value="+27123456789" required>
+            </div>
+            
+            <div class="field">
+                <label for="modules">Modules covered *</label>
+                <input type="text" id="modules" name="entry.1700736970" value="Test Module Simple" required>
+            </div>
+            
+            <div class="field">
+                <label for="career">Career Interest *</label>
+                <select id="career" name="entry.403697090" required>
+                    <option value="">Select an option</option>
+                    <option value="Social Media & Digital Marketing">Social Media & Digital Marketing</option>
+                    <option value="Videography & Content Creation">Videography & Content Creation</option>
+                    <option value="System support" selected>System support</option>
+                    <option value="Network support">Network support</option>
+                </select>
+            </div>
+            
+            <div class="field">
+                <label for="program">Program name *</label>
+                <input type="text" id="program" name="entry.1417367921" value="Test Program Simple" required>
+            </div>
+            
+            <div class="field">
+                <label for="summary">Brief summary</label>
+                <textarea id="summary" name="entry.420636245" rows="3">Test summary for simple form submission</textarea>
+            </div>
+            
+            <div class="field">
+                <label for="location">Where are you based? *</label>
+                <input type="text" id="location" name="entry.1642881079" value="Test Location Simple" required>
+            </div>
+            
+            <!-- Hidden fields -->
+            <input type="hidden" name="fvv" value="1">
+            <input type="hidden" name="fbzx" value="-743813356216699381">
+            
+            <button type="button" onclick="submitSimpleForm()">Submit Simple Form</button>
+        </form>
+        
+        <div id="result" class="result" style="display: none;"></div>
+        
+        <div style="margin-top: 30px; padding: 15px; background: #e3f2fd; border-radius: 5px;">
+            <h3>Instructions:</h3>
+            <ol>
+                <li>Click "Submit Simple Form" above</li>
+                <li>Check your Google Sheet for a new entry</li>
+                <li>If this works, the issue is with the file upload field</li>
+                <li>If this doesn't work, there's a deeper form configuration issue</li>
+            </ol>
+        </div>
+    </div>
+    
+    <script>
+        function submitSimpleForm() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<p>⏳ Submitting form...</p>';
+            
+            const form = document.getElementById('simpleForm');
+            const formData = new FormData(form);
+            
+            // Log what we're sending
+            console.log('Submitting form data:');
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}: ${value}`);
+            }
+            
+            // Method 1: Direct form submission
+            const hiddenForm = document.createElement('form');
+            hiddenForm.action = 'https://docs.google.com/forms/u/0/d/e/1FAIpQLSeicnftUC9dRZKALdSJugUxYTEJTQQrEyOoEjyzxtSExc2inQ/formResponse';
+            hiddenForm.method = 'POST';
+            hiddenForm.target = 'hidden_iframe_simple';
+            
+            // Copy all form data to hidden form
+            for (let [key, value] of formData.entries()) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = value;
+                hiddenForm.appendChild(input);
+            }
+            
+            // Create iframe for submission
+            let iframe = document.getElementById('hidden_iframe_simple');
+            if (!iframe) {
+                iframe = document.createElement('iframe');
+                iframe.id = 'hidden_iframe_simple';
+                iframe.name = 'hidden_iframe_simple';
+                iframe.style.display = 'none';
+                document.body.appendChild(iframe);
+            }
+            
+            iframe.onload = function() {
+                resultDiv.innerHTML = `
+                    <p>✅ <strong>Form submitted successfully!</strong></p>
+                    <p>Check your Google Sheet for the new entry with:</p>
+                    <ul>
+                        <li>Name: Test User Simple</li>
+                        <li>Email: test-simple@example.com</li>
+                        <li>Career: System support</li>
+                    </ul>
+                    <p>If you see this entry, the form is working correctly.</p>
+                `;
+            };
+            
+            iframe.onerror = function() {
+                resultDiv.innerHTML = '<p>❌ <strong>Form submission failed</strong></p>';
+            };
+            
+            document.body.appendChild(hiddenForm);
+            hiddenForm.submit();
+            document.body.removeChild(hiddenForm);
+            
+            // Also try fetch method as backup
+            fetch('https://docs.google.com/forms/u/0/d/e/1FAIpQLSeicnftUC9dRZKALdSJugUxYTEJTQQrEyOoEjyzxtSExc2inQ/formResponse', {
+                method: 'POST',
+                body: formData,
+                mode: 'no-cors'
+            }).catch(error => {
+                console.log('Fetch method also attempted:', error);
+            });
+        }
+    </script>
+</body>
+</html>
