@@ -23,7 +23,9 @@ const Login = () => {
 
     try {
       if (isSignUp) {
+        console.log('Attempting sign up...');
         const { error } = await signUp(email, password, fullName, role);
+        console.log('Sign up result:', { error });
         if (error) {
           toast({
             title: "Sign Up Failed",
@@ -38,7 +40,9 @@ const Login = () => {
           setIsSignUp(false);
         }
       } else {
+        console.log('Attempting sign in...');
         const { error } = await signIn(email, password);
+        console.log('Sign in result:', { error });
         if (error) {
           toast({
             title: "Sign In Failed",
@@ -46,10 +50,12 @@ const Login = () => {
             variant: "destructive",
           });
         } else {
+          console.log('Sign in successful, navigating to dashboard...');
           navigate('/dashboard');
         }
       }
     } catch (error) {
+      console.error('Authentication error:', error);
       toast({
         title: "Error",
         description: "An unexpected error occurred",

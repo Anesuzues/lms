@@ -130,10 +130,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('AuthContext: Attempting sign in with:', { email });
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+
+      console.log('AuthContext: Sign in response:', { error });
 
       if (error) {
         return { error: error.message };
@@ -141,6 +144,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return {};
     } catch (error) {
+      console.error('AuthContext: Sign in error:', error);
       return { error: 'An unexpected error occurred' };
     }
   };
