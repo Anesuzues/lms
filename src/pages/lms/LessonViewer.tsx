@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import LessonSidebar from '@/components/lms/LessonSidebar';
 import VideoPlayer from '@/components/VideoPlayer';
 
-// Mock lessons data with videos
+// Mock lessons data with videos (all free React lessons)
 const mockLessons = {
   '1': {
     id: '1',
@@ -26,7 +26,7 @@ const mockLessons = {
     video_type: 'youtube' as const,
     duration_minutes: 20,
     order_index: 2,
-    is_free: false
+    is_free: true
   },
   '3': {
     id: '3',
@@ -36,7 +36,27 @@ const mockLessons = {
     video_type: 'youtube' as const,
     duration_minutes: 25,
     order_index: 3,
-    is_free: false
+    is_free: true
+  },
+  '4': {
+    id: '4',
+    title: 'Understanding JSX',
+    description: 'Learn the JSX syntax and how it works',
+    video_url: 'https://www.youtube.com/watch?v=7fPXI_MnBOY',
+    video_type: 'youtube' as const,
+    duration_minutes: 18,
+    order_index: 4,
+    is_free: true
+  },
+  '5': {
+    id: '5',
+    title: 'Props and State',
+    description: 'Master React props and state management',
+    video_url: 'https://www.youtube.com/watch?v=IYvD9oBCuJI',
+    video_type: 'youtube' as const,
+    duration_minutes: 30,
+    order_index: 5,
+    is_free: true
   }
 };
 

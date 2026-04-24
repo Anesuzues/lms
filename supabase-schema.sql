@@ -171,23 +171,13 @@ CREATE TRIGGER courses_handle_updated_at BEFORE UPDATE ON public.courses
 
 -- Insert some sample data (no instructor_id for now since we don't have users yet)
 INSERT INTO public.courses (id, title, description, category, level, price, duration) VALUES
-('550e8400-e29b-41d4-a716-446655440001', 'Introduction to React', 'Learn the basics of React development', 'Web Development', 'beginner', 49.99, '4 hours'),
-('550e8400-e29b-41d4-a716-446655440002', 'Advanced JavaScript', 'Master advanced JavaScript concepts', 'Programming', 'advanced', 79.99, '8 hours'),
-('550e8400-e29b-41d4-a716-446655440003', 'UI/UX Design Fundamentals', 'Learn the principles of good design', 'Design', 'beginner', 39.99, '6 hours'),
-('550e8400-e29b-41d4-a716-446655440004', 'Node.js Backend Development', 'Build scalable backend applications', 'Backend', 'intermediate', 69.99, '10 hours'),
-('550e8400-e29b-41d4-a716-446655440005', 'Python for Data Science', 'Analyze data with Python', 'Data Science', 'intermediate', 89.99, '12 hours');
+('550e8400-e29b-41d4-a716-446655440001', 'Introduction to React', 'Learn the basics of React development - completely free course', 'Web Development', 'beginner', 0.00, '4 hours');
 
--- Insert sample lessons with videos
+-- Insert sample lessons with videos (all free)
 INSERT INTO public.lessons (course_id, title, description, video_url, video_type, duration_minutes, order_index, is_free) VALUES
--- React Course Lessons
+-- React Course Lessons (all free)
 ('550e8400-e29b-41d4-a716-446655440001', 'What is React?', 'Introduction to React and its core concepts', 'https://www.youtube.com/watch?v=N3AkSS5hXMA', 'youtube', 15, 1, true),
-('550e8400-e29b-41d4-a716-446655440001', 'Setting up React Environment', 'Learn how to set up your development environment', 'https://www.youtube.com/watch?v=SqcY0GlETPk', 'youtube', 20, 2, false),
-('550e8400-e29b-41d4-a716-446655440001', 'Your First Component', 'Create your first React component', 'https://www.youtube.com/watch?v=w7ejDZ8SWv8', 'youtube', 25, 3, false),
-
--- JavaScript Course Lessons  
-('550e8400-e29b-41d4-a716-446655440002', 'Advanced Functions', 'Deep dive into JavaScript functions', 'https://www.youtube.com/watch?v=gigtS_5KOqo', 'youtube', 30, 1, true),
-('550e8400-e29b-41d4-a716-446655440002', 'Promises and Async/Await', 'Master asynchronous JavaScript', 'https://www.youtube.com/watch?v=PoRJizFvM7s', 'youtube', 35, 2, false),
-
--- Design Course Lessons
-('550e8400-e29b-41d4-a716-446655440003', 'Design Principles', 'Learn fundamental design principles', 'https://www.youtube.com/watch?v=a5KYlHNKQB8', 'youtube', 20, 1, true),
-('550e8400-e29b-41d4-a716-446655440003', 'Color Theory', 'Understanding color in design', 'https://www.youtube.com/watch?v=Qj1FK8n7WgY', 'youtube', 25, 2, false);
+('550e8400-e29b-41d4-a716-446655440001', 'Setting up React Environment', 'Learn how to set up your development environment', 'https://www.youtube.com/watch?v=SqcY0GlETPk', 'youtube', 20, 2, true),
+('550e8400-e29b-41d4-a716-446655440001', 'Your First Component', 'Create your first React component', 'https://www.youtube.com/watch?v=w7ejDZ8SWv8', 'youtube', 25, 3, true),
+('550e8400-e29b-41d4-a716-446655440001', 'Understanding JSX', 'Learn the JSX syntax and how it works', 'https://www.youtube.com/watch?v=7fPXI_MnBOY', 'youtube', 18, 4, true),
+('550e8400-e29b-41d4-a716-446655440001', 'Props and State', 'Master React props and state management', 'https://www.youtube.com/watch?v=IYvD9oBCuJI', 'youtube', 30, 5, true);

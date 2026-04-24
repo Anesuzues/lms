@@ -5,7 +5,6 @@ import Benefits from "@/components/Benefits";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
 import IntakeFormModal from "@/components/IntakeFormModal";
-import AuthTest from "@/components/AuthTest";
 import { useState } from "react";
 
 const Index = () => {
@@ -20,11 +19,6 @@ const Index = () => {
         intakeFormUrl={intakeFormUrl} 
         onOpenForm={() => setIsFormModalOpen(true)}
       />
-      
-      {/* Temporary Auth Test Component */}
-      <div className="container mx-auto px-4 py-8">
-        <AuthTest />
-      </div>
       
       <main>
         <Hero 

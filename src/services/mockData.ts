@@ -68,25 +68,6 @@ export const MOCK_COURSES: Course[] = [
         ]
       }
     ]
-  },
-  {
-    id: 'course-2',
-    title: 'Advanced Professional Development',
-    description: 'Take your career to the next level with advanced strategies for professional growth and networking.',
-    thumbnail: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&q=80&w=800',
-    instructor: 'Jane Doe',
-    level: 'Advanced',
-    duration: '6 hours',
-    price: 49.99,
-    modules: [
-      {
-        id: 'module-adv-1',
-        title: 'Networking Strategies',
-        lessons: [
-          { id: 'lesson-adv-1', title: 'Building Meaningful Connections', duration: '12:00', type: 'video', isCompleted: false }
-        ]
-      }
-    ]
   }
 ];
 
