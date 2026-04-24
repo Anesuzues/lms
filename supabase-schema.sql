@@ -171,13 +171,22 @@ CREATE TRIGGER courses_handle_updated_at BEFORE UPDATE ON public.courses
 
 -- Insert some sample data (no instructor_id for now since we don't have users yet)
 INSERT INTO public.courses (id, title, description, category, level, price, duration) VALUES
-('550e8400-e29b-41d4-a716-446655440001', 'Introduction to React', 'Learn the basics of React development - completely free course', 'Web Development', 'beginner', 0.00, '4 hours');
+('550e8400-e29b-41d4-a716-446655440001', 'Get Workplace Ready with NexaLearn', 'A comprehensive 4-module course to prepare you for Work Integrated Learning (WIL). Learn AI literacy, CV building, interview skills, and workplace conduct - completely free!', 'Professional Development', 'beginner', 0.00, '4 modules');
 
--- Insert sample lessons with videos (all free)
+-- Insert sample lessons with videos (organized by modules)
 INSERT INTO public.lessons (course_id, title, description, video_url, video_type, duration_minutes, order_index, is_free) VALUES
--- React Course Lessons (all free)
-('550e8400-e29b-41d4-a716-446655440001', 'What is React?', 'Introduction to React and its core concepts', 'https://www.youtube.com/watch?v=N3AkSS5hXMA', 'youtube', 15, 1, true),
-('550e8400-e29b-41d4-a716-446655440001', 'Setting up React Environment', 'Learn how to set up your development environment', 'https://www.youtube.com/watch?v=SqcY0GlETPk', 'youtube', 20, 2, true),
-('550e8400-e29b-41d4-a716-446655440001', 'Your First Component', 'Create your first React component', 'https://www.youtube.com/watch?v=w7ejDZ8SWv8', 'youtube', 25, 3, true),
-('550e8400-e29b-41d4-a716-446655440001', 'Understanding JSX', 'Learn the JSX syntax and how it works', 'https://www.youtube.com/watch?v=7fPXI_MnBOY', 'youtube', 18, 4, true),
-('550e8400-e29b-41d4-a716-446655440001', 'Props and State', 'Master React props and state management', 'https://www.youtube.com/watch?v=IYvD9oBCuJI', 'youtube', 30, 5, true);
+-- Module 1: Foundations
+('550e8400-e29b-41d4-a716-446655440001', 'Every Essential AI Skill in 25 Minutes', 'AI literacy, research mindset, workplace context, WIL preparation', 'https://www.youtube.com/watch?v=nuEhBT31KQw', 'youtube', 25, 1, true),
+('550e8400-e29b-41d4-a716-446655440001', 'A Practical Guide to Using AI for Work – Part 1', 'Practical AI applications in the workplace', 'https://www.youtube.com/watch?v=uIklPjEHtNc', 'youtube', 30, 2, true),
+
+-- Module 2: CV & AI
+('550e8400-e29b-41d4-a716-446655440001', 'Using AI to Strengthen Your Resume & Cover Letter', 'CV creation, self-presentation, ethical AI use', 'https://www.youtube.com/watch?v=C67edx_QBIk', 'youtube', 20, 3, true),
+('550e8400-e29b-41d4-a716-446655440001', 'Perfecting Your Resume Using AI Technology', 'Advanced resume optimization with AI tools', 'https://www.youtube.com/watch?v=Bi40ZSV8FWI', 'youtube', 18, 4, true),
+
+-- Module 3: Interview Readiness
+('550e8400-e29b-41d4-a716-446655440001', 'How to Use AI to Prepare for a Job Interview', 'Interview preparation, confidence, simulation', 'https://www.youtube.com/watch?v=-2r1pG9Y48Q', 'youtube', 22, 5, true),
+('550e8400-e29b-41d4-a716-446655440001', 'Top FREE AI Mock Interview Tools', 'Practice interviews with AI assistance', 'https://www.youtube.com/watch?v=iGGkmKN8ilw', 'youtube', 15, 6, true),
+('550e8400-e29b-41d4-a716-446655440001', 'Interview Practice with Google AI', 'Advanced interview simulation techniques', 'https://www.youtube.com/watch?v=9fDZ42pwSEI', 'youtube', 25, 7, true),
+
+-- Module 4: Work Conduct & WIL Readiness
+('550e8400-e29b-41d4-a716-446655440001', 'AI Skills for the Modern Job Hunt – Full Workshop', 'Professional behaviour, job search maturity, workplace expectations', 'https://www.youtube.com/watch?v=XOYLHOm-AVw', 'youtube', 45, 8, true);

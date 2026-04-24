@@ -6,58 +6,108 @@ import { useAuth } from '@/contexts/AuthContext';
 import LessonSidebar from '@/components/lms/LessonSidebar';
 import VideoPlayer from '@/components/VideoPlayer';
 
-// Mock lessons data with videos (all free React lessons)
+// Mock lessons data organized by modules
 const mockLessons = {
+  // Module 1: Foundations
   '1': {
     id: '1',
-    title: 'What is React?',
-    description: 'Introduction to React and its core concepts',
-    video_url: 'https://www.youtube.com/watch?v=N3AkSS5hXMA',
-    video_type: 'youtube' as const,
-    duration_minutes: 15,
-    order_index: 1,
-    is_free: true
-  },
-  '2': {
-    id: '2', 
-    title: 'Setting up React Environment',
-    description: 'Learn how to set up your development environment',
-    video_url: 'https://www.youtube.com/watch?v=SqcY0GlETPk',
-    video_type: 'youtube' as const,
-    duration_minutes: 20,
-    order_index: 2,
-    is_free: true
-  },
-  '3': {
-    id: '3',
-    title: 'Your First Component', 
-    description: 'Create your first React component',
-    video_url: 'https://www.youtube.com/watch?v=w7ejDZ8SWv8',
+    title: 'Every Essential AI Skill in 25 Minutes',
+    description: 'AI literacy, research mindset, workplace context, WIL preparation',
+    video_url: 'https://www.youtube.com/watch?v=nuEhBT31KQw',
     video_type: 'youtube' as const,
     duration_minutes: 25,
+    order_index: 1,
+    is_free: true,
+    module: 'Foundations'
+  },
+  '2': {
+    id: '2',
+    title: 'A Practical Guide to Using AI for Work – Part 1',
+    description: 'Practical AI applications in the workplace',
+    video_url: 'https://www.youtube.com/watch?v=uIklPjEHtNc',
+    video_type: 'youtube' as const,
+    duration_minutes: 30,
+    order_index: 2,
+    is_free: true,
+    module: 'Foundations'
+  },
+  // Module 2: CV & AI
+  '3': {
+    id: '3',
+    title: 'Using AI to Strengthen Your Resume & Cover Letter',
+    description: 'CV creation, self-presentation, ethical AI use',
+    video_url: 'https://www.youtube.com/watch?v=C67edx_QBIk',
+    video_type: 'youtube' as const,
+    duration_minutes: 20,
     order_index: 3,
-    is_free: true
+    is_free: true,
+    module: 'CV & AI'
   },
   '4': {
     id: '4',
-    title: 'Understanding JSX',
-    description: 'Learn the JSX syntax and how it works',
-    video_url: 'https://www.youtube.com/watch?v=7fPXI_MnBOY',
+    title: 'Perfecting Your Resume Using AI Technology',
+    description: 'Advanced resume optimization with AI tools',
+    video_url: 'https://www.youtube.com/watch?v=Bi40ZSV8FWI',
     video_type: 'youtube' as const,
     duration_minutes: 18,
     order_index: 4,
-    is_free: true
+    is_free: true,
+    module: 'CV & AI'
   },
+  // Module 3: Interview Readiness
   '5': {
     id: '5',
-    title: 'Props and State',
-    description: 'Master React props and state management',
-    video_url: 'https://www.youtube.com/watch?v=IYvD9oBCuJI',
+    title: 'How to Use AI to Prepare for a Job Interview',
+    description: 'Interview preparation, confidence, simulation',
+    video_url: 'https://www.youtube.com/watch?v=-2r1pG9Y48Q',
     video_type: 'youtube' as const,
-    duration_minutes: 30,
+    duration_minutes: 22,
     order_index: 5,
-    is_free: true
+    is_free: true,
+    module: 'Interview Readiness'
+  },
+  '6': {
+    id: '6',
+    title: 'Top FREE AI Mock Interview Tools',
+    description: 'Practice interviews with AI assistance',
+    video_url: 'https://www.youtube.com/watch?v=iGGkmKN8ilw',
+    video_type: 'youtube' as const,
+    duration_minutes: 15,
+    order_index: 6,
+    is_free: true,
+    module: 'Interview Readiness'
+  },
+  '7': {
+    id: '7',
+    title: 'Interview Practice with Google AI',
+    description: 'Advanced interview simulation techniques',
+    video_url: 'https://www.youtube.com/watch?v=9fDZ42pwSEI',
+    video_type: 'youtube' as const,
+    duration_minutes: 25,
+    order_index: 7,
+    is_free: true,
+    module: 'Interview Readiness'
+  },
+  // Module 4: Work Conduct & WIL Readiness
+  '8': {
+    id: '8',
+    title: 'AI Skills for the Modern Job Hunt – Full Workshop',
+    description: 'Professional behaviour, job search maturity, workplace expectations',
+    video_url: 'https://www.youtube.com/watch?v=XOYLHOm-AVw',
+    video_type: 'youtube' as const,
+    duration_minutes: 45,
+    order_index: 8,
+    is_free: true,
+    module: 'Work Conduct & WIL Readiness'
   }
+};
+
+// Group lessons by module
+const moduleGroups = {
+  'Foundations': Object.values(mockLessons).filter(l => l.module === 'Foundations'),
+  'CV & AI': Object.values(mockLessons).filter(l => l.module === 'CV & AI'),
+  'Interview Readiness': Object.values(mockLessons).filter(l => l.module === 'Interview Readiness'),
+  'Work Conduct & WIL Readiness': Object.values(mockLessons).filter(l => l.module === 'Work Conduct & WIL Readiness')
 };
 
 const LessonViewer = () => {
@@ -185,52 +235,61 @@ const LessonViewer = () => {
         `}>
           <div className="h-full flex flex-col">
             <div className="p-4 border-b border-gray-200">
-              <h3 className="font-bold text-lg text-gray-900">Course Content</h3>
-              <p className="text-sm text-gray-600">{Object.keys(mockLessons).length} lessons</p>
+              <h3 className="font-bold text-lg text-gray-900">Get Workplace Ready</h3>
+              <p className="text-sm text-gray-600">4 modules • {Object.keys(mockLessons).length} lessons</p>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {Object.values(mockLessons).map((lesson) => (
-                <div
-                  key={lesson.id}
-                  onClick={() => {
-                    setActiveLessonId(lesson.id);
-                    if (window.innerWidth < 768) setSidebarOpen(false);
-                  }}
-                  className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                    activeLessonId === lesson.id
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                      activeLessonId === lesson.id
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {lesson.order_index}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {Object.entries(moduleGroups).map(([moduleName, lessons], moduleIndex) => (
+                <div key={moduleName} className="space-y-2">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">
+                      {moduleIndex + 1}
                     </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-sm text-gray-900 mb-1">
-                        {lesson.title}
-                      </h4>
-                      <p className="text-xs text-gray-600 mb-2">
-                        {lesson.description}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500">
-                          {lesson.duration_minutes} min
-                        </span>
-                        {lesson.is_free && (
-                          <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full">
-                            Free
-                          </span>
-                        )}
+                    <h4 className="font-semibold text-sm text-gray-900">{moduleName}</h4>
+                  </div>
+                  
+                  {lessons.map((lesson) => (
+                    <div
+                      key={lesson.id}
+                      onClick={() => {
+                        setActiveLessonId(lesson.id);
+                        if (window.innerWidth < 768) setSidebarOpen(false);
+                      }}
+                      className={`p-3 border rounded-lg cursor-pointer transition-all ml-4 ${
+                        activeLessonId === lesson.id
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                          activeLessonId === lesson.id
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {lesson.order_index}
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <h5 className="font-medium text-xs text-gray-900 mb-1 leading-tight">
+                            {lesson.title}
+                          </h5>
+                          <p className="text-xs text-gray-600 mb-2 leading-tight">
+                            {lesson.description}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">
+                              {lesson.duration_minutes} min
+                            </span>
+                            <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full">
+                              Free
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
               ))}
             </div>
