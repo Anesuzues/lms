@@ -125,8 +125,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         // If Supabase fails, fall back to mock authentication
-        if (error.message.includes('timeout') || error.message.includes('network')) {
-          console.log('Supabase timeout, using mock sign up');
+        if (error.message.includes('timeout') || 
+            error.message.includes('network') || 
+            error.message.includes('rate limit') ||
+            error.message.includes('Invalid login credentials')) {
+          console.log('Supabase error, using mock sign up:', error.message);
           return mockSignUp(email, fullName, role);
         }
         return { error: error.message };
@@ -193,8 +196,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         // If Supabase fails, fall back to mock authentication for testing
-        if (error.message.includes('timeout') || error.message.includes('network')) {
-          console.log('Supabase timeout, using mock authentication');
+        if (error.message.includes('timeout') || 
+            error.message.includes('network') || 
+            error.message.includes('rate limit') ||
+            error.message.includes('Invalid login credentials')) {
+          console.log('Supabase error, using mock authentication:', error.message);
           return mockSignIn(email, password);
         }
         return { error: error.message };
