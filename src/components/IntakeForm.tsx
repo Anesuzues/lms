@@ -13,7 +13,7 @@ const IntakeForm = ({ onSuccess }: IntakeFormProps) => {
     const [showOtherInput, setShowOtherInput] = useState(false);
     const formRef = useRef<HTMLFormElement>(null);
 
-    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         
         // Validate checkboxes
@@ -25,47 +25,28 @@ const IntakeForm = ({ onSuccess }: IntakeFormProps) => {
 
         setIsSubmitting(true);
 
-        // Create hidden iframe if it doesn't exist
-        let iframe = document.getElementById('hidden_iframe') as HTMLIFrameElement;
-        if (!iframe) {
-            iframe = document.createElement('iframe');
-            iframe.id = 'hidden_iframe';
-            iframe.name = 'hidden_iframe';
-            iframe.style.display = 'none';
-            document.body.appendChild(iframe);
-        }
+        const formData = new FormData(e.currentTarget);
+        const actionUrl = "https://docs.google.com/forms/u/0/d/e/1FAIpQLSeicnftUC9dRZKALdSJugUxYTEJTQQrEyOoEjyzxtSExc2inQ/formResponse";
 
-        // Set up iframe load handler BEFORE submitting
-        const handleIframeLoad = () => {
-            // Add a small delay to ensure the form was actually submitted
-            setTimeout(() => {
-                console.log('Form submission completed');
-                setIsSubmitting(false);
-                setIsSubmitted(true);
-                toast.success("Registration successful!");
-                
-                if (onSuccess) {
-                    setTimeout(onSuccess, 2000);
-                }
-                
-                // Remove the event listener
-                iframe.removeEventListener('load', handleIframeLoad);
-            }, 500);
-        };
+        try {
+            await fetch(actionUrl, {
+                method: "POST",
+                mode: "no-cors",
+                body: formData
+            });
 
-        iframe.addEventListener('load', handleIframeLoad);
-
-        // Debug: Log form data before submission
-        const formData = new FormData(formRef.current);
-        console.log('Submitting form with data:');
-        for (let [key, value] of formData.entries()) {
-            console.log(`${key}: ${value}`);
-        }
-
-        // Submit the form
-        if (formRef.current) {
-            console.log('Submitting to:', formRef.current.action);
-            formRef.current.submit();
+            console.log('Form submission completed');
+            setIsSubmitting(false);
+            setIsSubmitted(true);
+            toast.success("Registration successful!");
+            
+            if (onSuccess) {
+                setTimeout(onSuccess, 2000);
+            }
+        } catch (error) {
+            console.error("Submission error:", error);
+            toast.error("Failed to submit the form. Please try again.");
+            setIsSubmitting(false);
         }
     };
 
@@ -79,9 +60,9 @@ const IntakeForm = ({ onSuccess }: IntakeFormProps) => {
     if (isSubmitted) {
         return (
             <div className="flex flex-col items-center justify-center p-12 text-center space-y-4 animate-scale-in">
-                <CheckCircle2 className="w-16 h-16 text-green-500" />
-                <h3 className="text-2xl font-bold text-white">Application Received!</h3>
-                <p className="text-gray-400">
+                <CheckCircle2 className="w-16 h-16 text-primary" />
+                <h3 className="text-2xl font-bold tracking-tight">Application Received!</h3>
+                <p className="text-muted-foreground">
                     Thank you for registering. You will receive an email with Module 0 access shortly.
                 </p>
             </div>
@@ -89,19 +70,16 @@ const IntakeForm = ({ onSuccess }: IntakeFormProps) => {
     }
 
     return (
-        <div className="p-6 lg:p-8 bg-[#0f172a] text-white">
+        <div className="p-6 lg:p-8 text-foreground">
             <form
                 ref={formRef}
                 onSubmit={handleSubmit}
-                action="https://docs.google.com/forms/u/0/d/e/1FAIpQLSeicnftUC9dRZKALdSJugUxYTEJTQQrEyOoEjyzxtSExc2inQ/formResponse"
-                method="POST"
-                target="hidden_iframe"
                 className="space-y-6"
             >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Name and Surname */}
                     <div className="md:col-span-2">
-                        <label htmlFor="name" className="block text-gray-300 font-semibold mb-2">
+                        <label htmlFor="name" className="block text-foreground font-semibold mb-2">
                             Name and surname? <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -110,13 +88,13 @@ const IntakeForm = ({ onSuccess }: IntakeFormProps) => {
                             name="entry.484371361"
                             required
                             placeholder="Enter your full name"
-                            className="w-full px-4 py-3 bg-[#1e293b] border-2 border-slate-700 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition-all"
+                            className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder-muted-foreground focus:border-primary focus:shadow-glow focus:outline-none transition-all"
                         />
                     </div>
 
                     {/* Email Address */}
                     <div>
-                        <label htmlFor="email" className="block text-gray-300 font-semibold mb-2">
+                        <label htmlFor="email" className="block text-foreground font-semibold mb-2">
                             Email Address? <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -125,13 +103,13 @@ const IntakeForm = ({ onSuccess }: IntakeFormProps) => {
                             name="entry.66967256"
                             required
                             placeholder="your.email@example.com"
-                            className="w-full px-4 py-3 bg-[#1e293b] border-2 border-slate-700 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition-all"
+                            className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder-muted-foreground focus:border-primary focus:shadow-glow focus:outline-none transition-all"
                         />
                     </div>
 
                     {/* Phone Number */}
                     <div>
-                        <label htmlFor="phone" className="block text-gray-300 font-semibold mb-2">
+                        <label htmlFor="phone" className="block text-foreground font-semibold mb-2">
                             Phone number? <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -140,13 +118,13 @@ const IntakeForm = ({ onSuccess }: IntakeFormProps) => {
                             name="entry.387778515"
                             required
                             placeholder="+27 XX XXX XXXX"
-                            className="w-full px-4 py-3 bg-[#1e293b] border-2 border-slate-700 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition-all"
+                            className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder-muted-foreground focus:border-primary focus:shadow-glow focus:outline-none transition-all"
                         />
                     </div>
 
                     {/* Modules Covered */}
                     <div className="md:col-span-2">
-                        <label htmlFor="modules" className="block text-gray-300 font-semibold mb-2">
+                        <label htmlFor="modules" className="block text-foreground font-semibold mb-2">
                             Modules covered? <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -155,51 +133,51 @@ const IntakeForm = ({ onSuccess }: IntakeFormProps) => {
                             name="entry.1700736970"
                             required
                             placeholder="List the modules you've covered"
-                            className="w-full px-4 py-3 bg-[#1e293b] border-2 border-slate-700 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition-all"
+                            className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder-muted-foreground focus:border-primary focus:shadow-glow focus:outline-none transition-all"
                         />
                     </div>
 
                     {/* Career Interest */}
                     <div className="md:col-span-2">
-                        <label className="block text-gray-300 font-semibold mb-2">
+                        <label className="block text-foreground font-semibold mb-2">
                             Career Interest (choose all that apply) <span className="text-red-500">*</span>
                         </label>
-                        <div className="bg-[#1e293b] border-2 border-slate-700 rounded-lg p-4 space-y-3">
+                        <div className="glass-panel rounded-lg p-4 space-y-3">
                             <label className="flex items-center space-x-3 cursor-pointer">
                                 <input
                                     type="checkbox"
                                     name="entry.403697090"
                                     value="Social Media & Digital Marketing"
-                                    className="w-5 h-5 rounded border-slate-600 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
+                                    className="w-5 h-5 rounded border-border text-primary focus:ring-primary focus:ring-offset-0"
                                 />
-                                <span className="text-gray-300">Social Media & Digital Marketing</span>
+                                <span className="text-foreground">Social Media & Digital Marketing</span>
                             </label>
                             <label className="flex items-center space-x-3 cursor-pointer">
                                 <input
                                     type="checkbox"
                                     name="entry.403697090"
                                     value="Videography & Content Creation"
-                                    className="w-5 h-5 rounded border-slate-600 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
+                                    className="w-5 h-5 rounded border-border text-primary focus:ring-primary focus:ring-offset-0"
                                 />
-                                <span className="text-gray-300">Videography & Content Creation</span>
+                                <span className="text-foreground">Videography & Content Creation</span>
                             </label>
                             <label className="flex items-center space-x-3 cursor-pointer">
                                 <input
                                     type="checkbox"
                                     name="entry.403697090"
                                     value="System support"
-                                    className="w-5 h-5 rounded border-slate-600 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
+                                    className="w-5 h-5 rounded border-border text-primary focus:ring-primary focus:ring-offset-0"
                                 />
-                                <span className="text-gray-300">System support</span>
+                                <span className="text-foreground">System support</span>
                             </label>
                             <label className="flex items-center space-x-3 cursor-pointer">
                                 <input
                                     type="checkbox"
                                     name="entry.403697090"
                                     value="Network support"
-                                    className="w-5 h-5 rounded border-slate-600 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
+                                    className="w-5 h-5 rounded border-border text-primary focus:ring-primary focus:ring-offset-0"
                                 />
-                                <span className="text-gray-300">Network support</span>
+                                <span className="text-foreground">Network support</span>
                             </label>
                             <label className="flex items-center space-x-3 cursor-pointer">
                                 <input
@@ -207,16 +185,16 @@ const IntakeForm = ({ onSuccess }: IntakeFormProps) => {
                                     name="entry.403697090"
                                     value="Other"
                                     onChange={(e) => setShowOtherInput(e.target.checked)}
-                                    className="w-5 h-5 rounded border-slate-600 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
+                                    className="w-5 h-5 rounded border-border text-primary focus:ring-primary focus:ring-offset-0"
                                 />
-                                <span className="text-gray-300">Other:</span>
+                                <span className="text-foreground">Other:</span>
                             </label>
                             {showOtherInput && (
                                 <input
                                     type="text"
                                     name="entry.403697090.other_option_response"
                                     placeholder="Please specify"
-                                    className="w-full px-4 py-2 bg-[#0f172a] border-2 border-slate-600 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none ml-8"
+                                    className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground placeholder-muted-foreground focus:border-primary focus:shadow-glow focus:outline-none ml-8 transition-all"
                                 />
                             )}
                         </div>
@@ -224,7 +202,7 @@ const IntakeForm = ({ onSuccess }: IntakeFormProps) => {
 
                     {/* Program Name */}
                     <div className="md:col-span-2">
-                        <label htmlFor="program" className="block text-gray-300 font-semibold mb-2">
+                        <label htmlFor="program" className="block text-foreground font-semibold mb-2">
                             Provide the program name you were on? <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -233,13 +211,13 @@ const IntakeForm = ({ onSuccess }: IntakeFormProps) => {
                             name="entry.1417367921"
                             required
                             placeholder="Program name"
-                            className="w-full px-4 py-3 bg-[#1e293b] border-2 border-slate-700 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition-all"
+                            className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder-muted-foreground focus:border-primary focus:shadow-glow focus:outline-none transition-all"
                         />
                     </div>
 
                     {/* Summary */}
                     <div className="md:col-span-2">
-                        <label htmlFor="summary" className="block text-gray-300 font-semibold mb-2">
+                        <label htmlFor="summary" className="block text-foreground font-semibold mb-2">
                             Give us a brief summary about yourself and your outcome from the qualification you are working towards?
                         </label>
                         <textarea
@@ -247,13 +225,13 @@ const IntakeForm = ({ onSuccess }: IntakeFormProps) => {
                             name="entry.420636245"
                             rows={4}
                             placeholder="Tell us about yourself and your goals..."
-                            className="w-full px-4 py-3 bg-[#1e293b] border-2 border-slate-700 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition-all resize-vertical"
+                            className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder-muted-foreground focus:border-primary focus:shadow-glow focus:outline-none transition-all resize-vertical"
                         />
                     </div>
 
                     {/* Location */}
                     <div className="md:col-span-2">
-                        <label htmlFor="location" className="block text-gray-300 font-semibold mb-2">
+                        <label htmlFor="location" className="block text-foreground font-semibold mb-2">
                             Where are you based? <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -262,7 +240,7 @@ const IntakeForm = ({ onSuccess }: IntakeFormProps) => {
                             name="entry.1642881079"
                             required
                             placeholder="City, Province"
-                            className="w-full px-4 py-3 bg-[#1e293b] border-2 border-slate-700 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition-all"
+                            className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder-muted-foreground focus:border-primary focus:shadow-glow focus:outline-none transition-all"
                         />
                     </div>
                 </div>
@@ -276,7 +254,7 @@ const IntakeForm = ({ onSuccess }: IntakeFormProps) => {
                     <Button
                         type="submit"
                         disabled={isSubmitting}
-                        className="px-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-6 rounded-lg transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-lg"
+                        className="px-8 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-6 rounded-full transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-glow hover:scale-105"
                     >
                         {isSubmitting ? (
                             <>
@@ -291,7 +269,7 @@ const IntakeForm = ({ onSuccess }: IntakeFormProps) => {
                     <button
                         type="button"
                         onClick={clearForm}
-                        className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
+                        className="text-muted-foreground hover:text-primary text-sm font-medium transition-colors"
                     >
                         Clear form
                     </button>

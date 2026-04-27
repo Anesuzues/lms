@@ -58,13 +58,13 @@ const Modules = () => {
           {modules.map((module, index) => (
             <Card 
               key={module.number}
-              className="group relative overflow-hidden border-0 shadow-card hover:shadow-lg transition-all duration-500 hover:-translate-y-1 opacity-0 animate-fade-in-up"
+              className="group relative overflow-hidden glass-panel hover-glow hover:-translate-y-1 transition-all duration-500 opacity-0 animate-fade-in-up"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <CardContent className="p-6 lg:p-8">
                 <div className="flex items-start gap-5">
                   {/* Icon */}
-                  <div className={`relative w-14 h-14 rounded-2xl bg-gradient-to-br ${module.color} flex items-center justify-center shrink-0 shadow-soft`}>
+                  <div className={`relative w-14 h-14 rounded-2xl bg-gradient-to-br ${module.color} flex items-center justify-center shrink-0 shadow-glow transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3`}>
                     <module.icon className="w-7 h-7 text-white" />
                     <span className="absolute -top-2 -right-2 w-6 h-6 bg-card rounded-full flex items-center justify-center text-xs font-bold shadow-sm border border-border">
                       {module.number}

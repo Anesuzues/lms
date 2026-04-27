@@ -10,8 +10,9 @@ const Hero = ({ intakeFormUrl, onOpenForm }: HeroProps) => {
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
       {/* Background Pattern */}
-      <div className="absolute inset-0 bg-gradient-to-br from-secondary via-background to-background" />
-      <div className="absolute top-0 right-0 w-1/2 h-full bg-hero-gradient opacity-5 blur-3xl" />
+      <div className="absolute inset-0 bg-background" />
+      <div className="absolute top-0 right-0 w-3/4 h-full bg-hero-gradient opacity-10 blur-3xl rounded-full translate-x-1/3 -translate-y-1/4" />
+      <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-primary/10 opacity-20 blur-3xl rounded-full -translate-x-1/4 translate-y-1/4" />
 
       {/* Floating Elements */}
       <div className="absolute top-20 left-10 w-20 h-20 bg-primary/10 rounded-full blur-2xl animate-float" />
@@ -21,28 +22,27 @@ const Hero = ({ intakeFormUrl, onOpenForm }: HeroProps) => {
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           {/* Content */}
           <div className="space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-secondary rounded-full text-secondary-foreground text-sm font-medium opacity-0 animate-fade-in">
-              <span className="w-2 h-2 bg-accent rounded-full animate-pulse-soft" />
+            <div className="inline-flex items-center gap-2 px-4 py-2 glass-panel rounded-full text-foreground text-sm font-medium opacity-0 animate-fade-in border border-primary/20">
+              <span className="w-2 h-2 bg-primary rounded-full animate-pulse-soft shadow-glow" />
               Free Course for All Students
             </div>
 
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight opacity-0 animate-fade-in" style={{ animationDelay: '0.1s' }}>
-              Get <span className="text-gradient">Workplace Ready</span> with NexaLearn
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.1] tracking-tight opacity-0 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+              Get <span className="text-gradient drop-shadow-sm">Workplace Ready</span> with NexaLearn
             </h1>
 
             <p className="text-lg md:text-xl text-muted-foreground max-w-xl opacity-0 animate-fade-in" style={{ animationDelay: '0.2s' }}>
               A free 4-module course delivered via email. Watch videos, complete assessments, and get ready for Work Integrated Learning (WIL).
             </p>
 
-            <div className="flex justify-center opacity-0 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <div className="flex justify-start opacity-0 animate-fade-in" style={{ animationDelay: '0.3s' }}>
               <Button
-                variant="hero"
                 size="lg"
-                className="group"
+                className="group bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow rounded-full px-8 py-6 text-lg transition-all hover:scale-105"
                 onClick={onOpenForm}
               >
                 Start Your Free Course
-                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
               </Button>
             </div>
 
@@ -76,12 +76,12 @@ const Hero = ({ intakeFormUrl, onOpenForm }: HeroProps) => {
           <div className="relative hidden lg:block opacity-0 animate-scale-in" style={{ animationDelay: '0.3s' }}>
             <div className="relative w-full aspect-square max-w-lg mx-auto">
               {/* Main Card */}
-              <div className="absolute inset-8 bg-card rounded-3xl shadow-card p-8 flex flex-col justify-between">
+              <div className="absolute inset-8 glass-panel rounded-3xl p-8 flex flex-col justify-between hover-glow group transition-all duration-500">
                 <div>
-                  <div className="w-16 h-16 bg-hero-gradient rounded-2xl flex items-center justify-center mb-6">
-                    <Briefcase className="w-8 h-8 text-primary-foreground" />
+                  <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center mb-6 shadow-glow transition-transform group-hover:scale-110 duration-500">
+                    <Briefcase className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="text-2xl font-bold mb-2">Your Journey Starts Here</h3>
+                  <h3 className="text-2xl font-bold mb-2 tracking-tight">Your Journey Starts Here</h3>
                   <p className="text-muted-foreground">CV Building • Interview Skills • Workplace Conduct</p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -95,14 +95,14 @@ const Hero = ({ intakeFormUrl, onOpenForm }: HeroProps) => {
               </div>
 
               {/* Floating Badge */}
-              <div className="absolute top-4 right-4 bg-accent text-accent-foreground px-4 py-2 rounded-full font-semibold text-sm shadow-soft animate-float">
+              <div className="absolute top-4 right-4 glass-panel bg-primary/90 text-white px-4 py-2 rounded-full font-semibold text-sm shadow-glow animate-float border-primary/50">
                 100% Free
               </div>
 
               {/* Progress Badge */}
-              <div className="absolute bottom-4 left-4 bg-card rounded-2xl shadow-card p-4 animate-float" style={{ animationDelay: '1s' }}>
+              <div className="absolute bottom-4 left-4 glass-panel rounded-2xl p-4 animate-float hover-glow" style={{ animationDelay: '1s' }}>
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-secondary rounded-xl flex items-center justify-center">
+                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20">
                     <Award className="w-6 h-6 text-primary" />
                   </div>
                   <div>

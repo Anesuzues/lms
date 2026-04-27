@@ -55,11 +55,11 @@ const Benefits = () => {
           {benefits.map((benefit, index) => (
             <div 
               key={benefit.title}
-              className="group p-6 lg:p-8 bg-card rounded-2xl shadow-soft hover:shadow-card transition-all duration-300 hover:-translate-y-1 opacity-0 animate-fade-in"
+              className="group p-6 lg:p-8 glass-panel hover-glow transition-all duration-300 hover:-translate-y-1 opacity-0 animate-fade-in"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
-              <div className="w-12 h-12 bg-secondary rounded-xl flex items-center justify-center mb-5 group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
-                <benefit.icon className="w-6 h-6" />
+              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-5 group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-glow transition-all duration-300">
+                <benefit.icon className="w-6 h-6 text-primary group-hover:text-white" />
               </div>
               <h3 className="text-xl font-bold mb-2">{benefit.title}</h3>
               <p className="text-muted-foreground">{benefit.description}</p>

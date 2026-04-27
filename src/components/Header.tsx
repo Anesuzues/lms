@@ -11,7 +11,7 @@ const Header = ({ intakeFormUrl, onOpenForm }: HeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/50">
+    <header className="fixed top-0 left-0 right-0 z-50 glass-panel border-b-0 transition-all duration-300">
       <div className="container">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
@@ -42,10 +42,9 @@ const Header = ({ intakeFormUrl, onOpenForm }: HeaderProps) => {
             </a>
           </nav>
 
-          {/* CTA */}
           <div className="hidden md:block">
             <Button 
-              variant="default"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-glow hover:shadow-lg transition-all rounded-full px-6"
               onClick={onOpenForm}
             >
               Start Your Free Course
@@ -101,8 +100,7 @@ const Header = ({ intakeFormUrl, onOpenForm }: HeaderProps) => {
                 Contact
               </a>
               <Button 
-                variant="default" 
-                className="w-full mt-2"
+                className="w-full mt-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-glow rounded-full"
                 onClick={() => {
                   onOpenForm();
                   setIsMenuOpen(false);
