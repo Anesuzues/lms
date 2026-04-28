@@ -1,12 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Users, Award, Briefcase } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-interface HeroProps {
-  intakeFormUrl: string;
-  onOpenForm: () => void;
-}
+const Hero = () => {
+  const navigate = useNavigate();
 
-const Hero = ({ intakeFormUrl, onOpenForm }: HeroProps) => {
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
       {/* Background Pattern */}
@@ -39,7 +37,7 @@ const Hero = ({ intakeFormUrl, onOpenForm }: HeroProps) => {
               <Button
                 size="lg"
                 className="group bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow rounded-full px-8 py-6 text-lg transition-all hover:scale-105"
-                onClick={onOpenForm}
+                onClick={() => navigate("/login")}
               >
                 Start Your Free Course
                 <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />

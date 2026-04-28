@@ -18,11 +18,11 @@ const CourseDetail = () => {
   if (!course) {
     return (
       <div className="min-h-screen flex flex-col bg-gray-50">
-        <Header intakeFormUrl="#" onOpenForm={() => {}} />
+        <Header />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Course Not Found</h2>
-            <button onClick={() => navigate('/courses')} className="text-blue-600 hover:underline">
+            <button onClick={() => navigate('/courses')} className="text-primary hover:underline">
               Return to Catalog
             </button>
           </div>
@@ -56,7 +56,7 @@ const CourseDetail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Header intakeFormUrl="#" onOpenForm={() => {}} />
+      <Header />
 
       <main className="flex-1 container mx-auto px-6 py-12 mt-16 max-w-6xl">
         <button 
@@ -73,7 +73,7 @@ const CourseDetail = () => {
           {/* Left Col: Info */}
           <div className="lg:col-span-2 space-y-10">
             <div>
-              <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold mb-4">
+              <span className="inline-block px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold mb-4">
                 {course.level}
               </span>
               <h1 className="font-bold text-4xl md:text-5xl mb-6 text-gray-900 leading-tight">
@@ -87,7 +87,7 @@ const CourseDetail = () => {
             {/* Stats/Meta */}
             <div className="flex flex-wrap gap-8 py-8 border-y border-gray-200">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                   <Clock size={24} />
                 </div>
                 <div>
@@ -96,7 +96,7 @@ const CourseDetail = () => {
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                   <BookOpen size={24} />
                 </div>
                 <div>
@@ -105,7 +105,7 @@ const CourseDetail = () => {
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                   <User size={24} />
                 </div>
                 <div>
@@ -122,12 +122,12 @@ const CourseDetail = () => {
                 {course.modules.map((module, idx) => (
                   <div key={module.id} className="p-6 rounded-2xl bg-white border border-gray-200 shadow-sm">
                     <h4 className="font-bold text-lg text-gray-900 mb-4 flex items-center gap-2">
-                      <span className="text-blue-600">Module {idx + 1}:</span> {module.title}
+                      <span className="text-primary">Module {idx + 1}:</span> {module.title}
                     </h4>
                     <ul className="space-y-3">
                       {module.lessons.map((lesson, lIdx) => (
                         <li key={lesson.id} className="flex items-start gap-3 text-gray-600">
-                          <PlayCircle size={18} className="mt-0.5 text-blue-400 shrink-0" />
+                          <PlayCircle size={18} className="mt-0.5 text-primary/60 shrink-0" />
                           <span className="flex-1 font-medium">
                             {idx + 1}.{lIdx + 1} {lesson.title}
                           </span>
@@ -150,7 +150,7 @@ const CourseDetail = () => {
                 <div className="rounded-xl overflow-hidden mb-6 relative bg-gray-100">
                   <img src={course.thumbnail} alt={course.title} className="w-full h-56 object-cover" />
                   <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                    <div className="w-16 h-16 rounded-full bg-white text-blue-600 flex items-center justify-center shadow-lg hover:scale-110 transition-transform cursor-pointer">
+                    <div className="w-16 h-16 rounded-full bg-white text-primary flex items-center justify-center shadow-lg hover:scale-110 transition-transform cursor-pointer">
                       <PlayCircle size={32} className="ml-1" />
                     </div>
                   </div>
@@ -172,14 +172,14 @@ const CourseDetail = () => {
                 {isEnrolled ? (
                   <button 
                     onClick={() => navigate(`/learn/${course.id}`)}
-                    className="w-full py-4 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/30 text-lg"
+                    className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors shadow-lg text-lg"
                   >
                     Continue Learning
                   </button>
                 ) : (
                   <button 
                     onClick={handleEnroll}
-                    className="w-full py-4 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/30 text-lg"
+                    className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors shadow-lg text-lg"
                   >
                     Enroll Now
                   </button>

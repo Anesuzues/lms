@@ -195,8 +195,8 @@ const LessonViewer = () => {
               />
             ) : (
               <div className="relative z-10 text-center p-8">
-                <div className="w-24 h-24 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-6 animate-pulse">
-                  <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center shadow-[0_0_30px_rgba(37,99,235,0.5)]" />
+                <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6 animate-pulse">
+                  <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-glow" />
                 </div>
                 <h2 className="text-2xl md:text-3xl font-bold mb-4 text-white">Select a Lesson</h2>
                 <p className="text-gray-300 max-w-md mx-auto">
@@ -220,7 +220,7 @@ const LessonViewer = () => {
                    setActiveLessonId(nextIndex.toString());
                  }
                }}
-               className="px-6 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
+               className="px-6 py-2.5 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 transition-colors shadow-sm"
              >
                Next Lesson
              </button>
@@ -243,7 +243,7 @@ const LessonViewer = () => {
               {Object.entries(moduleGroups).map(([moduleName, lessons], moduleIndex) => (
                 <div key={moduleName} className="space-y-2">
                   <div className="flex items-center gap-2 mb-3">
-                    <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">
+                    <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
                       {moduleIndex + 1}
                     </div>
                     <h4 className="font-semibold text-sm text-gray-900">{moduleName}</h4>
@@ -258,14 +258,14 @@ const LessonViewer = () => {
                       }}
                       className={`p-3 border rounded-lg cursor-pointer transition-all ml-4 ${
                         activeLessonId === lesson.id
-                          ? 'border-blue-500 bg-blue-50'
+                          ? 'border-primary bg-primary/5'
                           : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                       }`}
                     >
                       <div className="flex items-start gap-3">
                         <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
                           activeLessonId === lesson.id
-                            ? 'bg-blue-600 text-white'
+                            ? 'bg-primary text-primary-foreground'
                             : 'bg-gray-100 text-gray-600'
                         }`}>
                           {lesson.order_index}

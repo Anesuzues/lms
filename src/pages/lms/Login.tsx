@@ -68,7 +68,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Header intakeFormUrl="#" onOpenForm={() => {}} />
+      <Header />
       
       <div className="flex-1 flex items-center justify-center p-6 mt-16">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">

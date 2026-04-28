@@ -20,7 +20,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Header intakeFormUrl="#" onOpenForm={() => {}} />
+      <Header />
       
       <main className="flex-1 container mx-auto px-6 py-12 mt-16 max-w-7xl">
         
@@ -36,7 +36,7 @@ const Dashboard = () => {
               <h1 className="font-bold text-3xl text-gray-900 mb-1">
                 {user.name}
               </h1>
-              <p className="text-blue-600 font-semibold capitalize">
+              <p className="text-primary font-semibold capitalize">
                 {user.role} Account
               </p>
               <div className="flex gap-4 mt-3 text-sm text-gray-500 font-medium">
@@ -67,7 +67,7 @@ const Dashboard = () => {
             <h2 className="font-bold text-2xl text-gray-900">
               My Learning Path
             </h2>
-            <Link to="/courses" className="text-blue-600 hover:text-blue-800 text-sm font-bold bg-blue-50 px-4 py-2 rounded-lg transition-colors">
+            <Link to="/courses" className="text-primary hover:text-primary/80 text-sm font-bold bg-primary/10 px-4 py-2 rounded-lg transition-colors">
               Browse Catalog &rarr;
             </Link>
           </div>
@@ -92,7 +92,7 @@ const Dashboard = () => {
               </p>
               <Link 
                 to="/courses"
-                className="inline-block px-8 py-4 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20"
+                className="inline-block px-8 py-4 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors shadow-lg"
               >
                 Explore Catalog
               </Link>

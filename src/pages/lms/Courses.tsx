@@ -18,7 +18,7 @@ const Courses = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Header intakeFormUrl="#" onOpenForm={() => {}} />
+      <Header />
 
       <main className="flex-1 container mx-auto px-6 py-12 mt-16 max-w-7xl">
         {/* Header */}
@@ -40,7 +40,7 @@ const Courses = () => {
             <input
               type="text"
               placeholder="Search courses..."
-              className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-sm transition-all"
+              className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-sm transition-all"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -49,9 +49,9 @@ const Courses = () => {
 
         {/* User Status Strip */}
         {user ? (
-          <div className="mb-10 p-5 rounded-xl bg-blue-50 border border-blue-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <span className="text-gray-700">Welcome back, <span className="font-bold text-blue-800">{user.name}</span>! Ready to continue learning?</span>
-            <Link to="/dashboard" className="text-sm font-bold bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap">
+          <div className="mb-10 p-5 rounded-xl bg-primary/5 border border-primary/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <span className="text-gray-700">Welcome back, <span className="font-bold text-primary">{user.name}</span>! Ready to continue learning?</span>
+            <Link to="/dashboard" className="text-sm font-bold bg-primary text-primary-foreground px-5 py-2.5 rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap">
               Go to Dashboard
             </Link>
           </div>
