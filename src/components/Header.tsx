@@ -29,20 +29,23 @@ const Header = () => {
             <a href="/courses" className="text-sm font-bold text-primary hover:text-primary/80 transition-colors">
               Courses
             </a>
-            {isAuthenticated && (
+            {isAuthenticated ? (
               <a href="/dashboard" className="text-sm font-bold text-primary hover:text-primary/80 transition-colors">
                 Dashboard
               </a>
+            ) : (
+              <>
+                <a href="/#modules" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                  Modules
+                </a>
+                <a href="/#benefits" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                  Benefits
+                </a>
+                <a href="/#contact" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                  Contact
+                </a>
+              </>
             )}
-            <a href="/#modules" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Modules
-            </a>
-            <a href="/#benefits" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Benefits
-            </a>
-            <a href="/#contact" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Contact
-            </a>
           </nav>
 
           {/* Desktop Auth */}
@@ -99,20 +102,23 @@ const Header = () => {
               <a href="/courses" className="text-sm font-bold text-primary hover:text-primary/80 transition-colors" onClick={() => setIsMenuOpen(false)}>
                 Courses
               </a>
-              {isAuthenticated && (
+              {isAuthenticated ? (
                 <a href="/dashboard" className="text-sm font-bold text-primary hover:text-primary/80 transition-colors" onClick={() => setIsMenuOpen(false)}>
                   Dashboard
                 </a>
+              ) : (
+                <>
+                  <a href="/#modules" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsMenuOpen(false)}>
+                    Modules
+                  </a>
+                  <a href="/#benefits" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsMenuOpen(false)}>
+                    Benefits
+                  </a>
+                  <a href="/#contact" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsMenuOpen(false)}>
+                    Contact
+                  </a>
+                </>
               )}
-              <a href="/#modules" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsMenuOpen(false)}>
-                Modules
-              </a>
-              <a href="/#benefits" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsMenuOpen(false)}>
-                Benefits
-              </a>
-              <a href="/#contact" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsMenuOpen(false)}>
-                Contact
-              </a>
               {isAuthenticated ? (
                 <Button variant="outline" className="w-full mt-2 gap-2" onClick={handleSignOut}>
                   <LogOut className="w-4 h-4" />
