@@ -190,3 +190,21 @@ INSERT INTO public.lessons (course_id, title, description, video_url, video_type
 
 -- Module 4: Work Conduct & WIL Readiness
 ('550e8400-e29b-41d4-a716-446655440001', 'AI Skills for the Modern Job Hunt – Full Workshop', 'Professional behaviour, job search maturity, workplace expectations', 'https://www.youtube.com/watch?v=XOYLHOm-AVw', 'youtube', 45, 8, true);
+
+
+-- ─── Lesson Progress Table ────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.lesson_progress (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    course_id UUID REFERENCES public.courses(id) ON DELETE CASCADE,
+    lesson_id UUID REFERENCES public.lessons(id) ON DELETE CASCADE,
+    completed BOOLEAN DEFAULT false,
+    completed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(user_id, lesson_id)
+);
+
+ALTER TABLE public.lesson_progress ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage their own lesson progress" ON public.lesson_progress
+    FOR ALL USING (auth.uid() = user_id);

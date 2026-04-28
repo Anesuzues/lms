@@ -1,92 +1,123 @@
-import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Loader2 } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CourseCard from '@/components/lms/CourseCard';
-import { MOCK_COURSES } from '@/services/mockData';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
+import { fetchCourses, fetchUserEnrollments, DBCourse, DBEnrollment } from '@/services/courseService';
+
+// Map DB course to the shape CourseCard expects
+const mapCourse = (c: DBCourse) => ({
+  id: c.id,
+  title: c.title,
+  description: c.description || '',
+  thumbnail: c.thumbnail_url || 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=800',
+  instructor: 'NexaLearn Team',
+  level: (c.level.charAt(0).toUpperCase() + c.level.slice(1)) as 'Beginner' | 'Intermediate' | 'Advanced',
+  duration: c.duration || '4 weeks',
+  price: c.price === 0 ? 'Free' as const : c.price,
+  modules: [],
+});
 
 const Courses = () => {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
+  const [courses, setCourses] = useState<ReturnType<typeof mapCourse>[]>([]);
+  const [enrollments, setEnrollments] = useState<DBEnrollment[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredCourses = MOCK_COURSES.filter(course => 
-    course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    course.description.toLowerCase().includes(searchQuery.toLowerCase())
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      const [dbCourses, dbEnrollments] = await Promise.all([
+        fetchCourses(),
+        user ? fetchUserEnrollments(user.id) : Promise.resolve([]),
+      ]);
+      setCourses(dbCourses.map(mapCourse));
+      setEnrollments(dbEnrollments);
+      setLoading(false);
+    };
+    load();
+  }, [user?.id]);
+
+  const filtered = courses.filter(c =>
+    c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    c.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const getProgress = (courseId: string) => {
+    const e = enrollments.find(e => e.course_id === courseId);
+    return e?.progress ?? 0;
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
 
-      <main className="flex-1 container mx-auto px-6 py-12 mt-16 max-w-7xl">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+      <main className="flex-1 container mx-auto px-4 md:px-6 py-10 mt-16 max-w-7xl">
+        {/* Page Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
-            <h1 className="font-bold text-4xl text-gray-900 mb-4">
-              Course Catalog
-            </h1>
-            <p className="text-gray-600 text-lg max-w-2xl">
-              Get workplace ready with our comprehensive selection of courses designed to boost your professional skills.
+            <h1 className="font-bold text-4xl text-foreground mb-2">Course Catalog</h1>
+            <p className="text-muted-foreground max-w-xl">
+              Build the skills you need to thrive in the modern workplace.
             </p>
           </div>
-          
-          {/* Search */}
-          <div className="relative w-full md:w-96">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400" />
-            </div>
+          <div className="relative w-full md:w-80">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search courses..."
-              className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-sm transition-all"
+              className="w-full pl-11 pr-4 py-3 bg-card border border-border rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
         </div>
 
-        {/* User Status Strip */}
+        {/* User strip */}
         {user ? (
-          <div className="mb-10 p-5 rounded-xl bg-primary/5 border border-primary/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <span className="text-gray-700">Welcome back, <span className="font-bold text-primary">{user.name}</span>! Ready to continue learning?</span>
-            <Link to="/dashboard" className="text-sm font-bold bg-primary text-primary-foreground px-5 py-2.5 rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap">
-              Go to Dashboard
+          <div className="mb-8 p-4 rounded-xl bg-primary/5 border border-primary/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <span className="text-sm text-foreground">Welcome back, <span className="font-bold text-primary">{user.name}</span>! Ready to continue learning?</span>
+            <Link to="/dashboard" className="text-sm font-bold bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap">
+              My Dashboard →
             </Link>
           </div>
         ) : (
-          <div className="mb-10 p-5 rounded-xl bg-white shadow-sm border border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <span className="text-gray-600">Sign in to track your progress and access enrolled courses.</span>
-            <Link to="/login" className="text-sm font-bold bg-white text-gray-800 border border-gray-300 px-5 py-2.5 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap">
+          <div className="mb-8 p-4 rounded-xl bg-card border border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <span className="text-sm text-muted-foreground">Sign in to track your progress and access enrolled courses.</span>
+            <Link to="/login" className="text-sm font-semibold border border-border px-4 py-2 rounded-lg hover:bg-secondary transition-colors whitespace-nowrap">
               Sign In
             </Link>
           </div>
         )}
 
         {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredCourses.length > 0 ? (
-            filteredCourses.map(course => {
-              const isEnrolled = user?.enrolledCourses.includes(course.id);
-              const progress = isEnrolled ? ((course.id.charCodeAt(0) * 17) % 71) + 10 : 0;
-              
+        {loading ? (
+          <div className="flex items-center justify-center py-24">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : filtered.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filtered.map(course => {
+              const isEnrolled = enrollments.some(e => e.course_id === course.id);
               return (
-                <CourseCard 
-                  key={course.id} 
-                  course={course} 
+                <CourseCard
+                  key={course.id}
+                  course={course}
                   enrolled={isEnrolled}
-                  progress={progress}
+                  progress={getProgress(course.id)}
                 />
               );
-            })
-          ) : (
-            <div className="col-span-full py-20 text-center text-gray-500 bg-white rounded-2xl border border-gray-100 shadow-sm">
-              <Search className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-              <p className="text-lg">No courses found matching "{searchQuery}"</p>
-            </div>
-          )}
-        </div>
+            })}
+          </div>
+        ) : (
+          <div className="py-20 text-center bg-card rounded-2xl border border-border">
+            <Search className="mx-auto h-10 w-10 text-muted-foreground/40 mb-4" />
+            <p className="text-muted-foreground">No courses found matching "{searchQuery}"</p>
+          </div>
+        )}
       </main>
 
       <Footer />
