@@ -16,6 +16,20 @@ const Header = () => {
     setIsMenuOpen(false);
   };
 
+  const handleAnchorNav = (hash: string) => {
+    setIsMenuOpen(false);
+    if (location.pathname === '/') {
+      // Already on home, just scroll
+      document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      // Navigate home then scroll after page loads
+      navigate('/');
+      setTimeout(() => {
+        document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  };
+
   const isActive = (path: string) =>
     location.pathname === path
       ? "text-primary font-bold border-b-2 border-primary pb-0.5"
@@ -37,9 +51,9 @@ const Header = () => {
               <a href="/dashboard" className={`text-sm ${isActive("/dashboard")}`}>Dashboard</a>
             ) : (
               <>
-                <a href="/#modules" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Modules</a>
-                <a href="/#benefits" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Benefits</a>
-                <a href="/#contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contact</a>
+                <button onClick={() => handleAnchorNav('modules')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Modules</button>
+                <button onClick={() => handleAnchorNav('benefits')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Benefits</button>
+                <button onClick={() => handleAnchorNav('contact')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contact</button>
               </>
             )}
           </nav>
@@ -94,9 +108,9 @@ const Header = () => {
                 <a href="/dashboard" className="px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-secondary transition-colors" onClick={() => setIsMenuOpen(false)}>Dashboard</a>
               ) : (
                 <>
-                  <a href="/#modules" className="px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-secondary transition-colors" onClick={() => setIsMenuOpen(false)}>Modules</a>
-                  <a href="/#benefits" className="px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-secondary transition-colors" onClick={() => setIsMenuOpen(false)}>Benefits</a>
-                  <a href="/#contact" className="px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-secondary transition-colors" onClick={() => setIsMenuOpen(false)}>Contact</a>
+                  <button onClick={() => handleAnchorNav('modules')} className="px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-secondary transition-colors text-left">Modules</button>
+                  <button onClick={() => handleAnchorNav('benefits')} className="px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-secondary transition-colors text-left">Benefits</button>
+                  <button onClick={() => handleAnchorNav('contact')} className="px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-secondary transition-colors text-left">Contact</button>
                 </>
               )}
               <div className="pt-3 mt-2 border-t border-border">
