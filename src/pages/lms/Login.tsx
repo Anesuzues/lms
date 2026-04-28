@@ -1,18 +1,17 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import { useToast } from '@/components/ui/use-toast';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [fullName, setFullName] = useState('');
-  const [role, setRole] = useState<'student' | 'instructor' | 'admin'>('student');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -20,143 +19,138 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       if (isSignUp) {
-        console.log('Attempting sign up...');
-        const { error } = await signUp(email, password, fullName, role);
-        console.log('Sign up result:', { error });
+        const { error } = await signUp(email, password, fullName, 'student');
         if (error) {
-          toast({
-            title: "Sign Up Failed",
-            description: error,
-            variant: "destructive",
-          });
+          toast({ title: "Sign Up Failed", description: error, variant: "destructive" });
         } else {
-          toast({
-            title: "Account Created",
-            description: "Please check your email to verify your account.",
-          });
-          setIsSignUp(false);
+          toast({ title: "Account Created!", description: "Welcome to NexaLearn." });
+          navigate('/dashboard');
         }
       } else {
-        console.log('Attempting sign in...');
         const { error } = await signIn(email, password);
-        console.log('Sign in result:', { error });
         if (error) {
-          toast({
-            title: "Sign In Failed",
-            description: error,
-            variant: "destructive",
-          });
+          toast({ title: "Sign In Failed", description: error, variant: "destructive" });
         } else {
-          console.log('Sign in successful, navigating to dashboard...');
           navigate('/dashboard');
         }
       }
-    } catch (error) {
-      console.error('Authentication error:', error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
+    } catch {
+      toast({ title: "Error", description: "An unexpected error occurred", variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Header />
-      
-      <div className="flex-1 flex items-center justify-center p-6 mt-16">
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-          <div className="bg-primary px-8 py-10 text-center">
-            <h1 className="font-bold text-3xl text-primary-foreground mb-2">
-              {isSignUp ? 'Create Account' : 'Welcome Back'}
-            </h1>
-            <p className="text-primary-foreground/80">
-              {isSignUp ? 'Join NexaLearn today' : 'Sign in to NexaLearn to continue'}
-            </p>
-          </div>
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <a href="/">
+            <img src="/nexalearn-logo.png" alt="NexaLearn" className="h-12 w-auto mx-auto mb-4" />
+          </a>
+          <h1 className="text-2xl font-bold text-foreground">
+            {isSignUp ? 'Create your account' : 'Welcome back'}
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            {isSignUp ? 'Start your learning journey today' : 'Sign in to continue learning'}
+          </p>
+        </div>
 
-          <form onSubmit={handleSubmit} className="p-8 space-y-6">
+        {/* Card */}
+        <div className="bg-card rounded-2xl shadow-card border border-border p-8">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {isSignUp && (
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700">Full Name</label>
-                <input 
-                  type="text" 
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-foreground">Full Name</label>
+                <input
+                  type="text"
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                  className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                   placeholder="John Doe"
                 />
               </div>
             )}
 
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700">Email Address</label>
-              <input 
-                type="email" 
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-foreground">Email Address</label>
+              <input
+                type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                placeholder="student@example.com"
+                className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                placeholder="you@example.com"
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700">Password</label>
-              <input 
-                type="password" 
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                placeholder="••••••••"
-                minLength={6}
-              />
-            </div>
-
-            {isSignUp && (
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700">Role</label>
-                <select 
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as any)}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all appearance-none"
-                >
-                  <option value="student">Student</option>
-                  <option value="instructor">Instructor</option>
-                </select>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-semibold text-foreground">Password</label>
+                {!isSignUp && (
+                  <button type="button" className="text-xs text-primary hover:opacity-80 font-medium">
+                    Forgot password?
+                  </button>
+                )}
               </div>
-            )}
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 pr-12 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                  placeholder="••••••••"
+                  minLength={6}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
 
-            <button 
+            <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold hover:opacity-90 transition-opacity shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-all shadow-glow disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
             >
-              {loading ? 'Loading...' : (isSignUp ? 'Create Account' : 'Sign In')}
+              {loading ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> {isSignUp ? 'Creating account...' : 'Signing in...'}</>
+              ) : (
+                isSignUp ? 'Create Account' : 'Sign In'
+              )}
             </button>
-            
-            <div className="text-center">
+          </form>
+
+          <div className="mt-6 pt-6 border-t border-border text-center">
+            <p className="text-sm text-muted-foreground">
+              {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
               <button
                 type="button"
                 onClick={() => setIsSignUp(!isSignUp)}
-                className="text-primary hover:opacity-80 text-sm font-medium"
+                className="text-primary font-semibold hover:opacity-80 transition-opacity"
               >
-                {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+                {isSignUp ? 'Sign in' : 'Sign up for free'}
               </button>
-            </div>
-          </form>
+            </p>
+          </div>
         </div>
+
+        <p className="text-center text-xs text-muted-foreground mt-6">
+          By continuing, you agree to our{' '}
+          <a href="#" className="underline hover:text-foreground">Terms of Service</a>{' '}
+          and{' '}
+          <a href="#" className="underline hover:text-foreground">Privacy Policy</a>
+        </p>
       </div>
-      
-      <Footer />
     </div>
   );
 };

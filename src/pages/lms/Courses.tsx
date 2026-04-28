@@ -69,8 +69,7 @@ const Courses = () => {
           {filteredCourses.length > 0 ? (
             filteredCourses.map(course => {
               const isEnrolled = user?.enrolledCourses.includes(course.id);
-              // Mock progress
-              const progress = isEnrolled ? Math.floor(Math.random() * 100) : 0;
+              const progress = isEnrolled ? ((course.id.charCodeAt(0) * 17) % 71) + 10 : 0;
               
               return (
                 <CourseCard 
