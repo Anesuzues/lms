@@ -16,12 +16,19 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Once auth loads the user after sign in, redirect based on role
+  // Redirect if already logged in
   useEffect(() => {
     if (!authLoading && user) {
       navigate(user.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
     }
   }, [user, authLoading]);
+
+  // Show spinner while checking session
+  if (authLoading) return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    </div>
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

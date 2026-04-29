@@ -38,13 +38,6 @@ const LessonViewer = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [loading, setLoading] = useState(true);
 
-  if (authLoading) return (
-    <div className="h-screen flex items-center justify-center bg-background">
-      <Loader2 className="w-8 h-8 animate-spin text-primary" />
-    </div>
-  );
-  if (!isAuthenticated) return <Navigate to="/login" />;
-
   useEffect(() => {
     if (!id || !user) return;
     const load = async () => {
@@ -95,6 +88,13 @@ const LessonViewer = () => {
     acc[mod].push(lesson);
     return acc;
   }, {} as Record<string, DBLesson[]>);
+
+  if (authLoading) return (
+    <div className="h-screen flex items-center justify-center bg-background">
+      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    </div>
+  );
+  if (!isAuthenticated) return <Navigate to="/login" />;
 
   if (loading) {
     return (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search, Loader2 } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -21,13 +21,16 @@ const mapCourse = (c: DBCourse): CourseCardCourse => ({
 });
 
 const Courses = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [courses, setCourses] = useState<ReturnType<typeof mapCourse>[]>([]);
   const [enrollments, setEnrollments] = useState<DBEnrollment[]>([]);
   const [loading, setLoading] = useState(true);
+  const loadedRef = useRef(false);
 
   useEffect(() => {
+    // Don't fetch until auth has resolved
+    if (authLoading) return;
     const load = async () => {
       setLoading(true);
       const [dbCourses, dbEnrollments] = await Promise.all([
@@ -39,7 +42,7 @@ const Courses = () => {
       setLoading(false);
     };
     load();
-  }, [user?.id]);
+  }, [authLoading, user?.id]);
 
   const filtered = courses.filter(c =>
     c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||

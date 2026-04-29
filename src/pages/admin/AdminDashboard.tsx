@@ -18,15 +18,8 @@ const AdminDashboard = () => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'completed' | 'in_progress' | 'not_started'>('all');
 
-  if (authLoading) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <Loader2 className="w-8 h-8 animate-spin text-primary" />
-    </div>
-  );
-  if (!isAuthenticated || !user) return <Navigate to="/login" />;
-  if (user.role !== 'admin') return <Navigate to="/dashboard" />;
-
   useEffect(() => {
+    if (!user || user.role !== 'admin') return;
     const load = async () => {
       setLoading(true);
       const [s, st] = await Promise.all([fetchAllStudents(), fetchAdminStats()]);
@@ -43,6 +36,14 @@ const AdminDashboard = () => {
     const matchFilter = filter === 'all' || s.status === filter;
     return matchSearch && matchFilter;
   });
+
+  if (authLoading) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    </div>
+  );
+  if (!isAuthenticated || !user) return <Navigate to="/login" />;
+  if (user.role !== 'admin') return <Navigate to="/dashboard" />;
 
   return (
     <div className="min-h-screen bg-gray-50">

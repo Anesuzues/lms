@@ -48,9 +48,9 @@ const CourseDetail = () => {
     setEnrolling(true);
     await enrollInCourse(course!.id);
     setIsEnrolled(true);
-    toast({ title: "Enrolled!", description: `You're now enrolled in ${course!.title}.` });
-    setTimeout(() => navigate(`/learn/${course!.id}`), 1000);
     setEnrolling(false);
+    toast({ title: "Enrolled!", description: `You're now enrolled in ${course!.title}.` });
+    navigate(`/learn/${course!.id}`);
   };
 
   const MODULE_NAMES = ['Workplace Foundations', 'CV Writing & AI Tools', 'Interview Readiness', 'Professional Conduct'];
