@@ -13,7 +13,7 @@ interface EnrolledCourse {
 }
 
 const Dashboard = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourse[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -40,6 +40,11 @@ const Dashboard = () => {
     load();
   }, [user?.id]);
 
+  if (authLoading) return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    </div>
+  );
   if (!isAuthenticated || !user) return <Navigate to="/login" />;
 
   const completedCount = enrolledCourses.filter(e => e.enrollment.progress >= 100).length;

@@ -11,13 +11,18 @@ const statusConfig = {
 };
 
 const AdminDashboard = () => {
-  const { user, isAuthenticated, signOut } = useAuth();
+  const { user, isAuthenticated, signOut, loading: authLoading } = useAuth();
   const [students, setStudents] = useState<StudentOverview[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'completed' | 'in_progress' | 'not_started'>('all');
 
+  if (authLoading) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    </div>
+  );
   if (!isAuthenticated || !user) return <Navigate to="/login" />;
   if (user.role !== 'admin') return <Navigate to="/dashboard" />;
 

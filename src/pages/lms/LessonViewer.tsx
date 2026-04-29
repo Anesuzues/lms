@@ -29,7 +29,7 @@ const getModuleName = (lesson: DBLesson) => {
 const LessonViewer = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
 
   const [course, setCourse] = useState<DBCourse | null>(null);
   const [lessons, setLessons] = useState<DBLesson[]>([]);
@@ -38,6 +38,11 @@ const LessonViewer = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [loading, setLoading] = useState(true);
 
+  if (authLoading) return (
+    <div className="h-screen flex items-center justify-center bg-background">
+      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    </div>
+  );
   if (!isAuthenticated) return <Navigate to="/login" />;
 
   useEffect(() => {
