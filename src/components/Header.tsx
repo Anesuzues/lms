@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, LogOut, GraduationCap } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -40,15 +40,15 @@ const Header = () => {
       <div className="container">
         <div className="flex items-center justify-between h-16 md:h-18">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2">
             <img src="/nexalearn-logo.png" alt="NexaLearn" className="h-9 w-auto" />
-          </a>
+          </Link>
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-8">
-            <a href="/courses" className={`text-sm ${isActive("/courses")}`}>Courses</a>
+            <Link to="/courses" className={`text-sm ${isActive("/courses")}`}>Courses</Link>
             {isAuthenticated ? (
-              <a href="/dashboard" className={`text-sm ${isActive("/dashboard")}`}>Dashboard</a>
+              <Link to="/dashboard" className={`text-sm ${isActive("/dashboard")}`}>Dashboard</Link>
             ) : (
               <>
                 <button onClick={() => handleAnchorNav('modules')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Modules</button>
@@ -103,9 +103,9 @@ const Header = () => {
               </div>
             )}
             <nav className="flex flex-col gap-1">
-              <a href="/courses" className="px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-secondary transition-colors" onClick={() => setIsMenuOpen(false)}>Courses</a>
+              <Link to="/courses" className="px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-secondary transition-colors" onClick={() => setIsMenuOpen(false)}>Courses</Link>
               {isAuthenticated ? (
-                <a href="/dashboard" className="px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-secondary transition-colors" onClick={() => setIsMenuOpen(false)}>Dashboard</a>
+                <Link to="/dashboard" className="px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-secondary transition-colors" onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
               ) : (
                 <>
                   <button onClick={() => handleAnchorNav('modules')} className="px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-secondary transition-colors text-left">Modules</button>
