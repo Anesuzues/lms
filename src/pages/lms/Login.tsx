@@ -31,10 +31,8 @@ const Login = () => {
         const { error } = await signUp(email, password, fullName, 'student');
         if (error) {
           toast({ title: "Sign Up Failed", description: error, variant: "destructive" });
-        } else {
-          toast({ title: "Account Created!", description: "Welcome to NexaLearn." });
-          // navigation handled by useEffect above
         }
+        // navigation handled by useEffect once user loads
       } else {
         const { error } = await signIn(email, password);
         if (error) {

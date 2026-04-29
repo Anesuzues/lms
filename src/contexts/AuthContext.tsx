@@ -98,14 +98,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) return { error: error.message };
 
-      // Profile is auto-created by the DB trigger (handle_new_user)
-      // If trigger isn't set up, create manually
+      // Create profile immediately
       if (data.user) {
-        const { error: profileError } = await supabase
+        await supabase
           .from('profiles')
           .upsert({ id: data.user.id, email, full_name: fullName, role }, { onConflict: 'id' });
+      }
 
-        if (profileError) console.error('Profile upsert error:', profileError);
+      // If email confirmation is disabled, user is already logged in.
+      // If not, sign them in manually so they don't have to confirm first.
+      if (!data.session) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInError) return { error: signInError.message };
       }
 
       return {};

@@ -133,9 +133,6 @@ DROP POLICY IF EXISTS "Admins can view all progress"        ON public.user_progr
 CREATE POLICY "Users can view their own profile"   ON public.profiles FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Users can update their own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 CREATE POLICY "Users can insert their own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
-CREATE POLICY "Admins can view all profiles"       ON public.profiles FOR SELECT USING (
-    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
-);
 
 -- Courses
 CREATE POLICY "Anyone can view courses"   ON public.courses FOR SELECT USING (true);
