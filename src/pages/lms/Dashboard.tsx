@@ -21,15 +21,21 @@ const Dashboard = () => {
     if (!user) return;
     const load = async () => {
       setLoading(true);
-      const enrollments = await fetchUserEnrollments(user.id);
-      const courses = await Promise.all(
-        enrollments.map(async (e) => {
-          const course = await fetchCourseById(e.course_id);
-          return course ? { course, enrollment: e } : null;
-        })
-      );
-      setEnrolledCourses(courses.filter(Boolean) as EnrolledCourse[]);
-      setLoading(false);
+      try {
+        const enrollments = await fetchUserEnrollments(user.id);
+        if (enrollments.length === 0) { setEnrolledCourses([]); setLoading(false); return; }
+        const courses = await Promise.all(
+          enrollments.map(async (e) => {
+            const course = await fetchCourseById(e.course_id);
+            return course ? { course, enrollment: e } : null;
+          })
+        );
+        setEnrolledCourses(courses.filter(Boolean) as EnrolledCourse[]);
+      } catch (err) {
+        console.error('Dashboard load error:', err);
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, [user?.id]);

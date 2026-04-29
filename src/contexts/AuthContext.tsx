@@ -56,33 +56,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadUserProfile = async (supabaseUser: SupabaseUser) => {
     try {
-      const { data: profile, error } = await supabase
+      const { data: profile } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', supabaseUser.id)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error loading profile:', error);
-        setLoading(false);
-        return;
+      // Always set user — fall back to session metadata if profile fetch fails
+      const name = profile?.full_name
+        || supabaseUser.user_metadata?.full_name
+        || supabaseUser.email?.split('@')[0]
+        || 'User';
+
+      const role = (profile?.role as UserRole)
+        || (supabaseUser.user_metadata?.role as UserRole)
+        || 'student';
+
+      // Fetch enrollments — don't block user load if this fails
+      let enrolledCourses: string[] = [];
+      try {
+        const enrollments = await fetchUserEnrollments(supabaseUser.id);
+        enrolledCourses = enrollments.map(e => e.course_id);
+      } catch {
+        // non-fatal
       }
-
-      const enrollments = await fetchUserEnrollments(supabaseUser.id);
-      const enrolledCourses = enrollments.map(e => e.course_id);
-
-      const name = profile?.full_name || supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User';
 
       setUser({
         id: supabaseUser.id,
         email: supabaseUser.email!,
         name,
-        role: (profile?.role as UserRole) || 'student',
-        avatar: profile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3B82F6&color=fff&bold=true`,
+        role,
+        avatar: profile?.avatar_url
+          || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3B82F6&color=fff&bold=true`,
         enrolledCourses,
       });
     } catch (err) {
       console.error('loadUserProfile error:', err);
+      // Still set a basic user so they aren't redirected to login
+      const name = supabaseUser.user_metadata?.full_name
+        || supabaseUser.email?.split('@')[0]
+        || 'User';
+      setUser({
+        id: supabaseUser.id,
+        email: supabaseUser.email!,
+        name,
+        role: (supabaseUser.user_metadata?.role as UserRole) || 'student',
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3B82F6&color=fff&bold=true`,
+        enrolledCourses: [],
+      });
     } finally {
       setLoading(false);
     }
