@@ -16,14 +16,17 @@ export interface DBCourse {
 export interface DBLesson {
   id: string;
   course_id: string;
+  module_id: string;
   title: string;
   description: string | null;
   video_url: string | null;
   video_type: 'youtube' | 'vimeo' | 'direct' | 'embed';
   duration_minutes: number;
+  duration: string | null;
   order_index: number;
+  position: number;
+  type: string;
   is_free: boolean;
-  module_name?: string;
 }
 
 export interface DBEnrollment {
@@ -71,7 +74,7 @@ export async function fetchLessonsByCourse(courseId: string): Promise<DBLesson[]
     .from('lessons')
     .select('*')
     .eq('course_id', courseId)
-    .order('order_index', { ascending: true });
+    .order('position', { ascending: true });
 
   if (error) { console.error('fetchLessonsByCourse error:', error); return []; }
   return data ?? [];
@@ -112,7 +115,7 @@ export async function updateEnrollmentProgress(userId: string, courseId: string,
 
 export async function fetchLessonProgress(userId: string, courseId: string): Promise<LessonProgress[]> {
   const { data, error } = await supabase
-    .from('lesson_progress')
+    .from('user_progress')
     .select('lesson_id, completed, completed_at')
     .eq('user_id', userId)
     .eq('course_id', courseId);
@@ -123,12 +126,13 @@ export async function fetchLessonProgress(userId: string, courseId: string): Pro
 
 export async function markLessonComplete(userId: string, courseId: string, lessonId: string): Promise<void> {
   const { error } = await supabase
-    .from('lesson_progress')
+    .from('user_progress')
     .upsert({
       user_id: userId,
       course_id: courseId,
       lesson_id: lessonId,
       completed: true,
+      is_completed: true,
       completed_at: new Date().toISOString(),
     }, { onConflict: 'user_id,lesson_id' });
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
@@ -12,9 +12,16 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Once auth loads the user after sign in, redirect based on role
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate(user.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
+    }
+  }, [user, authLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,15 +33,14 @@ const Login = () => {
           toast({ title: "Sign Up Failed", description: error, variant: "destructive" });
         } else {
           toast({ title: "Account Created!", description: "Welcome to NexaLearn." });
-          navigate('/dashboard');
+          // navigation handled by useEffect above
         }
       } else {
         const { error } = await signIn(email, password);
         if (error) {
           toast({ title: "Sign In Failed", description: error, variant: "destructive" });
-        } else {
-          navigate('/dashboard');
         }
+        // navigation handled by useEffect above once user loads
       }
     } catch {
       toast({ title: "Error", description: "An unexpected error occurred", variant: "destructive" });

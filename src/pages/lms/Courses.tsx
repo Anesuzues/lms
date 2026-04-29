@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Search, Loader2 } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import CourseCard from '@/components/lms/CourseCard';
+import CourseCard, { CourseCardCourse } from '@/components/lms/CourseCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { fetchCourses, fetchUserEnrollments, DBCourse, DBEnrollment } from '@/services/courseService';
 
 // Map DB course to the shape CourseCard expects
-const mapCourse = (c: DBCourse) => ({
+const mapCourse = (c: DBCourse): CourseCardCourse => ({
   id: c.id,
   title: c.title,
   description: c.description || '',

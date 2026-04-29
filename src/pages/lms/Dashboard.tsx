@@ -3,7 +3,7 @@ import { Navigate, Link } from 'react-router-dom';
 import { BookOpen, Trophy, Clock, ArrowRight, PlayCircle, Compass, Loader2 } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import CourseCard from '@/components/lms/CourseCard';
+import CourseCard, { CourseCardCourse } from '@/components/lms/CourseCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchCourseById, fetchUserEnrollments, DBCourse, DBEnrollment } from '@/services/courseService';
 
@@ -40,7 +40,7 @@ const Dashboard = () => {
   const totalMinutes = enrolledCourses.length * 45;
   const lastEnrolled = enrolledCourses[enrolledCourses.length - 1];
 
-  const mapCourse = (c: DBCourse) => ({
+  const mapCourse = (c: DBCourse): CourseCardCourse => ({
     id: c.id,
     title: c.title,
     description: c.description || '',

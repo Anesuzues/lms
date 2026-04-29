@@ -1,11 +1,23 @@
 import React from 'react';
 import { PlayCircle, Clock, BookOpen, ArrowRight, User } from 'lucide-react';
-import { Course } from '@/services/mockData';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
+// Minimal course shape used across the app
+export interface CourseCardCourse {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+  instructor: string;
+  level: 'Beginner' | 'Intermediate' | 'Advanced';
+  duration: string;
+  price: number | 'Free';
+  modules: any[];
+}
+
 interface CourseCardProps {
-  course: Course;
+  course: CourseCardCourse;
   enrolled?: boolean;
   progress?: number;
 }

@@ -14,12 +14,16 @@ import {
   LessonProgress,
 } from '@/services/courseService';
 
-// Group lessons by module name (derived from order_index ranges)
-const getModuleName = (lesson: DBLesson, allLessons: DBLesson[]) => {
-  const modules = ['Foundations', 'CV & AI', 'Interview Readiness', 'Work Conduct & WIL Readiness'];
-  const perModule = Math.ceil(allLessons.length / 4);
-  const idx = Math.floor((lesson.order_index - 1) / perModule);
-  return modules[Math.min(idx, modules.length - 1)];
+// Each lesson's position (1-4) maps directly to a module
+const MODULE_NAMES = [
+  'Workplace Foundations',
+  'CV Writing & AI Tools',
+  'Interview Readiness',
+  'Professional Conduct',
+];
+
+const getModuleName = (lesson: DBLesson) => {
+  return MODULE_NAMES[(lesson.position ?? lesson.order_index) - 1] ?? `Module ${lesson.position}`;
 };
 
 const LessonViewer = () => {
@@ -81,7 +85,7 @@ const LessonViewer = () => {
 
   // Group lessons by module
   const moduleGroups = lessons.reduce((acc, lesson) => {
-    const mod = getModuleName(lesson, lessons);
+    const mod = getModuleName(lesson);
     if (!acc[mod]) acc[mod] = [];
     acc[mod].push(lesson);
     return acc;

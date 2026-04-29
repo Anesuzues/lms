@@ -11,6 +11,7 @@ import Courses from "./pages/lms/Courses";
 import CourseDetail from "./pages/lms/CourseDetail";
 import Dashboard from "./pages/lms/Dashboard";
 import LessonViewer from "./pages/lms/LessonViewer";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,8 @@ const App = () => (
             <Route path="/courses/:id" element={<CourseDetail />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/learn/:id" element={<LessonViewer />} />
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminDashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
