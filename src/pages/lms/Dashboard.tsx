@@ -48,7 +48,13 @@ const Dashboard = () => {
   if (!isAuthenticated || !user) return <Navigate to="/login" />;
 
   const completedCount = enrolledCourses.filter(e => e.enrollment.progress >= 100).length;
-  const totalMinutes = enrolledCourses.length * 45;
+
+  // Calculate real hours spent based on progress percentage × total lesson duration
+  // Each course has 4 lessons totalling 112 minutes (25+20+22+45)
+  const COURSE_TOTAL_MINUTES = 112;
+  const totalMinutes = enrolledCourses.reduce((sum, { enrollment }) => {
+    return sum + Math.round((enrollment.progress / 100) * COURSE_TOTAL_MINUTES);
+  }, 0);
   const lastEnrolled = enrolledCourses[enrolledCourses.length - 1];
 
   const mapCourse = (c: DBCourse): CourseCardCourse => ({
@@ -92,7 +98,7 @@ const Dashboard = () => {
           {[
             { icon: BookOpen, label: 'Enrolled', value: enrolledCourses.length, color: 'text-primary', bg: 'bg-primary/10' },
             { icon: Trophy, label: 'Completed', value: completedCount, color: 'text-amber-500', bg: 'bg-amber-50' },
-            { icon: Clock, label: 'Hours Spent', value: `${Math.round(totalMinutes / 60)}h`, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+            { icon: Clock, label: 'Hours Spent', value: totalMinutes < 60 ? `${totalMinutes}m` : `${Math.round(totalMinutes / 60)}h`, color: 'text-emerald-500', bg: 'bg-emerald-50' },
           ].map(({ icon: Icon, label, value, color, bg }) => (
             <div key={label} className="bg-card rounded-2xl p-5 border border-border shadow-soft flex items-center gap-4">
               <div className={`w-11 h-11 rounded-xl ${bg} flex items-center justify-center shrink-0`}>
