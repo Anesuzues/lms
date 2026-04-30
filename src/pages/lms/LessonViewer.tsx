@@ -115,7 +115,11 @@ const LessonViewer = () => {
 
   const handleNextLesson = () => {
     const currentIdx = lessons.findIndex(l => l.id === activeLessonId);
-    if (currentIdx < lessons.length - 1) setActiveLessonId(lessons[currentIdx + 1].id);
+    if (currentIdx < lessons.length - 1) {
+      const nextLesson = lessons[currentIdx + 1];
+      if (isLessonLocked(nextLesson)) return; // blocked
+      setActiveLessonId(nextLesson.id);
+    }
   };
 
   const moduleGroups = lessons.reduce((acc, lesson) => {
@@ -234,7 +238,11 @@ const LessonViewer = () => {
                   )}
                   <button
                     onClick={handleNextLesson}
-                    disabled={lessons.findIndex(l => l.id === activeLessonId) >= lessons.length - 1}
+                    disabled={(() => {
+                      const currentIdx = lessons.findIndex(l => l.id === activeLessonId);
+                      if (currentIdx >= lessons.length - 1) return true;
+                      return isLessonLocked(lessons[currentIdx + 1]);
+                    })()}
                     className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Next <ChevronRight size={15} />
