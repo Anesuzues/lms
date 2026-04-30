@@ -7,57 +7,50 @@ import { Loader2, Eye, EyeOff } from 'lucide-react';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isSignUp, setIsSignUp] = useState(false);
   const [fullName, setFullName] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const { signIn, signUp, user, loading: authLoading } = useAuth();
+  const { signIn, signUp, user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Redirect as soon as user is set in context
+  // Redirect when user is set
   useEffect(() => {
     if (user) {
       navigate(user.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
     }
-  }, [user, navigate]);
+  }, [user]);
 
-  // Show spinner while initial session check runs
-  if (authLoading && !user) return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <Loader2 className="w-8 h-8 animate-spin text-primary" />
-    </div>
-  );
+  // While auth is initialising show spinner
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    try {
-      if (isSignUp) {
-        const { error } = await signUp(email, password, fullName, 'student');
-        if (error) {
-          toast({ title: "Sign Up Failed", description: error, variant: "destructive" });
-        }
-        // On success: navigation handled by useEffect once user is set in context
-      } else {
-        const { error } = await signIn(email, password);
-        if (error) {
-          toast({ title: "Sign In Failed", description: error, variant: "destructive" });
-        }
-        // On success: navigation handled by useEffect once user is set in context
-      }
-    } catch {
-      toast({ title: "Error", description: "An unexpected error occurred", variant: "destructive" });
-    } finally {
-      // Always reset the button — navigation (if successful) happens via useEffect
-      setLoading(false);
+    setSubmitting(true);
+
+    const result = isSignUp
+      ? await signUp(email, password, fullName, 'student')
+      : await signIn(email, password);
+
+    if (result.error) {
+      toast({ title: isSignUp ? 'Sign Up Failed' : 'Sign In Failed', description: result.error, variant: 'destructive' });
+      setSubmitting(false);
     }
+    // On success: useEffect above handles redirect when user is set
   };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
+
         {/* Logo */}
         <div className="text-center mb-8">
           <a href="/">
@@ -74,6 +67,7 @@ const Login = () => {
         {/* Card */}
         <div className="bg-card rounded-2xl shadow-card border border-border p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
+
             {isSignUp && (
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-foreground">Full Name</label>
@@ -81,7 +75,7 @@ const Login = () => {
                   type="text"
                   required
                   value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  onChange={e => setFullName(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                   placeholder="John Doe"
                 />
@@ -94,7 +88,7 @@ const Login = () => {
                 type="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                 placeholder="you@example.com"
               />
@@ -113,16 +107,16 @@ const Login = () => {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
+                  minLength={6}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={e => setPassword(e.target.value)}
                   className="w-full px-4 py-3 pr-12 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                   placeholder="••••••••"
-                  minLength={6}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -131,14 +125,13 @@ const Login = () => {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={submitting}
               className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-all shadow-glow disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
             >
-              {loading ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> {isSignUp ? 'Creating account...' : 'Signing in...'}</>
-              ) : (
-                isSignUp ? 'Create Account' : 'Sign In'
-              )}
+              {submitting
+                ? <><Loader2 className="w-4 h-4 animate-spin" /> {isSignUp ? 'Creating account...' : 'Signing in...'}</>
+                : isSignUp ? 'Create Account' : 'Sign In'
+              }
             </button>
           </form>
 
@@ -148,7 +141,7 @@ const Login = () => {
               <button
                 type="button"
                 onClick={() => setIsSignUp(!isSignUp)}
-                className="text-primary font-semibold hover:opacity-80 transition-opacity"
+                className="text-primary font-semibold hover:opacity-80"
               >
                 {isSignUp ? 'Sign in' : 'Sign up for free'}
               </button>
