@@ -167,10 +167,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return { error: error.message };
-      // Immediately load profile so Login page useEffect fires
-      if (data.user) await loadUserProfile(data.user);
+      // onAuthStateChange SIGNED_IN will call loadUserProfile and set user
       return {};
     } catch (err: any) {
       return { error: err.message || 'Sign in failed' };

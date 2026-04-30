@@ -16,15 +16,15 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Redirect if already logged in
+  // Redirect as soon as user is set in context
   useEffect(() => {
-    if (!authLoading && user) {
+    if (user) {
       navigate(user.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
     }
-  }, [user, authLoading]);
+  }, [user]);
 
-  // Show spinner while checking session
-  if (authLoading) return (
+  // Show spinner while initial session check runs
+  if (authLoading && !user) return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <Loader2 className="w-8 h-8 animate-spin text-primary" />
     </div>
@@ -38,18 +38,19 @@ const Login = () => {
         const { error } = await signUp(email, password, fullName, 'student');
         if (error) {
           toast({ title: "Sign Up Failed", description: error, variant: "destructive" });
+          setLoading(false);
         }
         // navigation handled by useEffect once user loads
       } else {
         const { error } = await signIn(email, password);
         if (error) {
           toast({ title: "Sign In Failed", description: error, variant: "destructive" });
+          setLoading(false);
         }
-        // navigation handled by useEffect above once user loads
+        // navigation handled by useEffect once user loads
       }
     } catch {
       toast({ title: "Error", description: "An unexpected error occurred", variant: "destructive" });
-    } finally {
       setLoading(false);
     }
   };
