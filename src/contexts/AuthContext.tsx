@@ -75,11 +75,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadUserProfile = async (supabaseUser: SupabaseUser) => {
     try {
-      const { data: profile } = await supabase
+      // Add timeout to profile fetch so it never hangs
+      const profilePromise = supabase
         .from('profiles')
         .select('*')
         .eq('id', supabaseUser.id)
         .single();
+
+      const timeoutPromise = new Promise<{ data: null }>((resolve) =>
+        setTimeout(() => resolve({ data: null }), 4000)
+      );
+
+      const { data: profile } = await Promise.race([profilePromise, timeoutPromise]) as any;
 
       // Always set user — fall back to session metadata if profile fetch fails
       const name = profile?.full_name
@@ -160,8 +167,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return { error: error.message };
+      // Immediately load profile so Login page useEffect fires
+      if (data.user) await loadUserProfile(data.user);
       return {};
     } catch (err: any) {
       return { error: err.message || 'Sign in failed' };
