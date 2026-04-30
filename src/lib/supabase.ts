@@ -3,19 +3,8 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-console.log('🔧 Supabase config check:', {
-  url: supabaseUrl,
-  key: supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : 'undefined',
-  hasUrl: !!supabaseUrl,
-  hasKey: !!supabaseAnonKey
-});
-
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('❌ Missing Supabase environment variables:', {
-    VITE_SUPABASE_URL: !!supabaseUrl,
-    VITE_SUPABASE_ANON_KEY: !!supabaseAnonKey
-  });
-  throw new Error('Missing Supabase environment variables')
+  throw new Error('Missing Supabase environment variables: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are required')
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -26,8 +15,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     storageKey: 'nexalearn-auth',
   }
 })
-
-console.log('✅ Supabase client created successfully');
 
 export type Database = {
   public: {
