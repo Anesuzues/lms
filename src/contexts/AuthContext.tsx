@@ -167,9 +167,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return { error: error.message };
-      // onAuthStateChange SIGNED_IN will call loadUserProfile and set user
+      // Set user immediately from session data — don't wait for onAuthStateChange
+      if (data.user) {
+        const name = data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User';
+        const role = (data.user.user_metadata?.role as UserRole) || 'student';
+        // Set basic user immediately so Login redirects right away
+        setUser({
+          id: data.user.id,
+          email: data.user.email!,
+          name,
+          role,
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3B82F6&color=fff&bold=true`,
+          enrolledCourses: [],
+        });
+        // Load full profile in background (non-blocking)
+        loadUserProfile(data.user);
+      }
       return {};
     } catch (err: unknown) {
       return { error: err instanceof Error ? err.message : 'Sign in failed' };
