@@ -99,7 +99,7 @@ const LessonViewer = () => {
 
   const handleMarkComplete = async () => {
     if (!user || !id || !activeLessonId || !activeLesson) return;
-    await markLessonComplete(user.id, id, activeLessonId);
+    await markLessonComplete(user.id, id, activeLessonId, watchSeconds);
     const updated = [
       ...progress.filter(p => p.lesson_id !== activeLessonId),
       { lesson_id: activeLessonId, completed: true, completed_at: new Date().toISOString() },

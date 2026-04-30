@@ -124,7 +124,7 @@ export async function fetchLessonProgress(userId: string, courseId: string): Pro
   return data ?? [];
 }
 
-export async function markLessonComplete(userId: string, courseId: string, lessonId: string): Promise<void> {
+export async function markLessonComplete(userId: string, courseId: string, lessonId: string, timeSpentSeconds: number = 0): Promise<void> {
   const { error } = await supabase
     .from('user_progress')
     .upsert({
@@ -134,7 +134,19 @@ export async function markLessonComplete(userId: string, courseId: string, lesso
       completed: true,
       is_completed: true,
       completed_at: new Date().toISOString(),
+      time_spent_seconds: timeSpentSeconds,
     }, { onConflict: 'user_id,lesson_id' });
 
   if (error) console.error('markLessonComplete error:', error);
+}
+
+export async function fetchTotalTimeSpent(userId: string): Promise<number> {
+  const { data, error } = await supabase
+    .from('user_progress')
+    .select('time_spent_seconds')
+    .eq('user_id', userId)
+    .eq('completed', true);
+
+  if (error) { console.error('fetchTotalTimeSpent error:', error); return 0; }
+  return (data ?? []).reduce((sum, row) => sum + (row.time_spent_seconds ?? 0), 0);
 }

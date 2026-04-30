@@ -5,7 +5,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CourseCard, { CourseCardCourse } from '@/components/lms/CourseCard';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchCourseById, fetchUserEnrollments, DBCourse, DBEnrollment } from '@/services/courseService';
+import { fetchCourseById, fetchUserEnrollments, fetchTotalTimeSpent, DBCourse, DBEnrollment } from '@/services/courseService';
 
 interface EnrolledCourse {
   course: DBCourse;
@@ -15,6 +15,7 @@ interface EnrolledCourse {
 const Dashboard = () => {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourse[]>([]);
+  const [totalSeconds, setTotalSeconds] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,13 +25,15 @@ const Dashboard = () => {
       try {
         const enrollments = await fetchUserEnrollments(user.id);
         if (enrollments.length === 0) { setEnrolledCourses([]); setLoading(false); return; }
-        const courses = await Promise.all(
-          enrollments.map(async (e) => {
+        const [courses, seconds] = await Promise.all([
+          Promise.all(enrollments.map(async (e) => {
             const course = await fetchCourseById(e.course_id);
             return course ? { course, enrollment: e } : null;
-          })
-        );
+          })),
+          fetchTotalTimeSpent(user.id),
+        ]);
         setEnrolledCourses(courses.filter(Boolean) as EnrolledCourse[]);
+        setTotalSeconds(seconds);
       } catch (err) {
         console.error('Dashboard load error:', err);
       } finally {
@@ -49,12 +52,11 @@ const Dashboard = () => {
 
   const completedCount = enrolledCourses.filter(e => e.enrollment.progress >= 100).length;
 
-  // Calculate real hours spent based on progress percentage × total lesson duration
-  // Each course has 4 lessons totalling 112 minutes (25+20+22+45)
-  const COURSE_TOTAL_MINUTES = 112;
-  const totalMinutes = enrolledCourses.reduce((sum, { enrollment }) => {
-    return sum + Math.round((enrollment.progress / 100) * COURSE_TOTAL_MINUTES);
-  }, 0);
+  // Real time spent from actual watch data
+  const totalMinutes = Math.round(totalSeconds / 60);
+  const timeDisplay = totalSeconds < 60 ? `${totalSeconds}s`
+    : totalMinutes < 60 ? `${totalMinutes}m`
+    : `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m`;
   const lastEnrolled = enrolledCourses[enrolledCourses.length - 1];
 
   const mapCourse = (c: DBCourse): CourseCardCourse => ({
@@ -98,7 +100,7 @@ const Dashboard = () => {
           {[
             { icon: BookOpen, label: 'Enrolled', value: enrolledCourses.length, color: 'text-primary', bg: 'bg-primary/10' },
             { icon: Trophy, label: 'Completed', value: completedCount, color: 'text-amber-500', bg: 'bg-amber-50' },
-            { icon: Clock, label: 'Hours Spent', value: totalMinutes < 60 ? `${totalMinutes}m` : `${Math.round(totalMinutes / 60)}h`, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+            { icon: Clock, label: 'Time Spent', value: timeDisplay, color: 'text-emerald-500', bg: 'bg-emerald-50' },
           ].map(({ icon: Icon, label, value, color, bg }) => (
             <div key={label} className="bg-card rounded-2xl p-5 border border-border shadow-soft flex items-center gap-4">
               <div className={`w-11 h-11 rounded-xl ${bg} flex items-center justify-center shrink-0`}>
