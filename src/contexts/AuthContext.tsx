@@ -137,52 +137,63 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, fullName: string, role: UserRole = 'student') => {
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { full_name: fullName, role } },
-      });
+      // Wrap entire signup in a timeout so it never hangs forever
+      const signUpPromise = async () => {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { full_name: fullName, role } },
+        });
 
-      if (error) return { error: error.message };
+        if (error) return { error: error.message };
 
-      // Create profile immediately
-      if (data.user) {
-        await supabase
-          .from('profiles')
-          .upsert({ id: data.user.id, email, full_name: fullName, role }, { onConflict: 'id' });
-      }
+        // Create profile (non-blocking — don't await failure)
+        if (data.user) {
+          supabase.from('profiles')
+            .upsert({ id: data.user.id, email, full_name: fullName, role }, { onConflict: 'id' })
+            .then(() => {}).catch(() => {});
+        }
 
-      // If no session (email confirmation required), sign in manually
-      if (!data.session) {
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-        if (signInError) return { error: signInError.message };
-        if (signInData.user) {
-          const name = fullName || email.split('@')[0];
+        // Set user immediately from signup data
+        const name = fullName || email.split('@')[0];
+        if (data.user) {
           setUser({
-            id: signInData.user.id,
-            email: signInData.user.email!,
+            id: data.user.id,
+            email: data.user.email!,
             name,
             role,
             avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3B82F6&color=fff&bold=true`,
             enrolledCourses: [],
           });
-          loadUserProfile(signInData.user);
+          // Load full profile in background
+          loadUserProfile(data.user);
         }
-      } else if (data.user) {
-        // Already has session — set user immediately
-        const name = fullName || email.split('@')[0];
-        setUser({
-          id: data.user.id,
-          email: data.user.email!,
-          name,
-          role,
-          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3B82F6&color=fff&bold=true`,
-          enrolledCourses: [],
-        });
-        loadUserProfile(data.user);
-      }
 
-      return {};
+        // If no session, sign in manually
+        if (!data.session && data.user) {
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+          if (signInError) return { error: signInError.message };
+          if (signInData.user) {
+            setUser({
+              id: signInData.user.id,
+              email: signInData.user.email!,
+              name,
+              role,
+              avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3B82F6&color=fff&bold=true`,
+              enrolledCourses: [],
+            });
+            loadUserProfile(signInData.user);
+          }
+        }
+
+        return {};
+      };
+
+      const timeoutPromise = new Promise<{ error: string }>((_, reject) =>
+        setTimeout(() => reject(new Error('Sign up timed out. Please try again.')), 10000)
+      );
+
+      return await Promise.race([signUpPromise(), timeoutPromise]);
     } catch (err: unknown) {
       return { error: err instanceof Error ? err.message : 'Sign up failed' };
     }
