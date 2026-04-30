@@ -216,3 +216,39 @@ CREATE TRIGGER courses_updated_at
 CREATE TRIGGER lessons_updated_at
     BEFORE UPDATE ON public.lessons
     FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+-- ─── Quiz Tables ──────────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS public.quiz_questions (
+    id           UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    course_id    UUID REFERENCES public.courses(id) ON DELETE CASCADE,
+    module_id    TEXT REFERENCES public.modules(id) ON DELETE CASCADE,
+    question     TEXT NOT NULL,
+    options      JSONB NOT NULL, -- array of strings e.g. ["Option A","Option B","Option C","Option D"]
+    correct      INTEGER NOT NULL, -- 0-based index of correct option
+    position     INTEGER DEFAULT 1,
+    created_at   TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.quiz_attempts (
+    id           UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id      UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    course_id    UUID REFERENCES public.courses(id) ON DELETE CASCADE,
+    module_id    TEXT REFERENCES public.modules(id) ON DELETE CASCADE,
+    score        INTEGER NOT NULL, -- percentage 0-100
+    passed       BOOLEAN DEFAULT false,
+    answers      JSONB, -- array of selected answer indices
+    attempted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.quiz_questions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.quiz_attempts  ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view quiz questions"        ON public.quiz_questions FOR SELECT USING (true);
+CREATE POLICY "Admins can manage quiz questions"      ON public.quiz_questions FOR ALL USING (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin','instructor'))
+);
+CREATE POLICY "Users can manage their own attempts"   ON public.quiz_attempts FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Admins can view all attempts"          ON public.quiz_attempts FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+);
