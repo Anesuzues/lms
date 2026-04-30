@@ -38,19 +38,19 @@ const Login = () => {
         const { error } = await signUp(email, password, fullName, 'student');
         if (error) {
           toast({ title: "Sign Up Failed", description: error, variant: "destructive" });
-          setLoading(false);
         }
-        // navigation handled by useEffect once user loads
+        // On success: navigation handled by useEffect once user is set in context
       } else {
         const { error } = await signIn(email, password);
         if (error) {
           toast({ title: "Sign In Failed", description: error, variant: "destructive" });
-          setLoading(false);
         }
-        // navigation handled by useEffect once user loads
+        // On success: navigation handled by useEffect once user is set in context
       }
     } catch {
       toast({ title: "Error", description: "An unexpected error occurred", variant: "destructive" });
+    } finally {
+      // Always reset the button — navigation (if successful) happens via useEffect
       setLoading(false);
     }
   };
