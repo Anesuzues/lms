@@ -1,4 +1,5 @@
-import { Mail, MapPin, Heart, GraduationCap } from "lucide-react";
+import { Mail, MapPin, Heart } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
@@ -17,9 +18,9 @@ const Footer = () => {
           <div>
             <h4 className="font-semibold text-foreground text-sm mb-4">Platform</h4>
             <ul className="space-y-2.5 text-sm text-muted-foreground">
-              <li><a href="/courses" className="hover:text-primary transition-colors">Course Catalog</a></li>
-              <li><a href="/dashboard" className="hover:text-primary transition-colors">My Dashboard</a></li>
-              <li><a href="/login" className="hover:text-primary transition-colors">Sign In</a></li>
+              <li><Link to="/courses" className="hover:text-primary transition-colors">Course Catalog</Link></li>
+              <li><Link to="/dashboard" className="hover:text-primary transition-colors">My Dashboard</Link></li>
+              <li><Link to="/login" className="hover:text-primary transition-colors">Sign In</Link></li>
             </ul>
           </div>
 

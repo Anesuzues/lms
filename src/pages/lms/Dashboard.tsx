@@ -38,7 +38,7 @@ const Dashboard = () => {
       }
     };
     load();
-  }, [user?.id]);
+  }, [user?.id, user]);
 
   if (authLoading) return (
     <div className="min-h-screen flex items-center justify-center bg-background">

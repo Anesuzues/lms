@@ -13,7 +13,7 @@ export interface CourseCardCourse {
   level: 'Beginner' | 'Intermediate' | 'Advanced';
   duration: string;
   price: number | 'Free';
-  modules: any[];
+  modules: unknown[];
 }
 
 interface CourseCardProps {

@@ -59,7 +59,7 @@ const LessonViewer = () => {
       setLoading(false);
     };
     load();
-  }, [id, user?.id]);
+  }, [id, user?.id, user]);
 
   const activeLesson = lessons.find(l => l.id === activeLessonId);
   const isCompleted = (lessonId: string) => progress.some(p => p.lesson_id === lessonId && p.completed);

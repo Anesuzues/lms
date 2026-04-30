@@ -21,7 +21,7 @@ const Login = () => {
     if (user) {
       navigate(user.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
     }
-  }, [user]);
+  }, [user, navigate]);
 
   // Show spinner while initial session check runs
   if (authLoading && !user) return (

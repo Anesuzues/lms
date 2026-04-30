@@ -37,7 +37,7 @@ const CourseDetail = () => {
       setLoading(false);
     };
     load();
-  }, [id, user?.id]);
+  }, [id, user?.id, user]);
 
   const handleEnroll = async () => {
     if (!user) {

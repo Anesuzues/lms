@@ -28,7 +28,7 @@ const AdminDashboard = () => {
       setLoading(false);
     };
     load();
-  }, []);
+  }, [user]);
 
   const filtered = students.filter(s => {
     const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) ||

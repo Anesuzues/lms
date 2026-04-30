@@ -86,7 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setTimeout(() => resolve({ data: null }), 4000)
       );
 
-      const { data: profile } = await Promise.race([profilePromise, timeoutPromise]) as any;
+      const { data: profile } = await Promise.race([profilePromise, timeoutPromise]) as { data: Record<string, unknown> | null };
 
       // Always set user — fall back to session metadata if profile fetch fails
       const name = profile?.full_name
@@ -160,8 +160,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       return {};
-    } catch (err: any) {
-      return { error: err.message || 'Sign up failed' };
+    } catch (err: unknown) {
+      return { error: err instanceof Error ? err.message : 'Sign up failed' };
     }
   };
 
@@ -171,8 +171,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) return { error: error.message };
       // onAuthStateChange SIGNED_IN will call loadUserProfile and set user
       return {};
-    } catch (err: any) {
-      return { error: err.message || 'Sign in failed' };
+    } catch (err: unknown) {
+      return { error: err instanceof Error ? err.message : 'Sign in failed' };
     }
   };
 

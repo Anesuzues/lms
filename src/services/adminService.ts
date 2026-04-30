@@ -37,7 +37,20 @@ export async function fetchAllStudents(): Promise<StudentOverview[]> {
 
   if (error) { console.error('fetchAllStudents error:', error); return []; }
 
-  return (data ?? []).map((row: any) => {
+  type EnrollmentRow = {
+    user_id: string;
+    enrolled_at: string;
+    progress: number | null;
+    completed_at: string | null;
+    profiles: {
+      id: string;
+      full_name: string | null;
+      email: string | null;
+      avatar_url: string | null;
+    } | null;
+  };
+
+  return (data ?? []).map((row: EnrollmentRow) => {
     const profile = row.profiles;
     const name = profile?.full_name || profile?.email?.split('@')[0] || 'Unknown';
     return {
@@ -48,8 +61,8 @@ export async function fetchAllStudents(): Promise<StudentOverview[]> {
       enrolled_at: row.enrolled_at,
       progress: row.progress ?? 0,
       completed_at: row.completed_at,
-      status: row.completed_at ? 'completed' : row.progress > 0 ? 'in_progress' : 'not_started',
-    };
+      status: row.completed_at ? 'completed' : (row.progress ?? 0) > 0 ? 'in_progress' : 'not_started',
+    } as StudentOverview;
   });
 }
 

@@ -15,16 +15,16 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 }) => {
   const getEmbedUrl = (url: string, type: string) => {
     switch (type) {
-      case 'youtube':
+      case 'youtube': {
         // Convert YouTube watch URL to embed URL
         const youtubeId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/)?.[1];
         return youtubeId ? `https://www.youtube.com/embed/${youtubeId}` : url;
-      
-      case 'vimeo':
+      }
+      case 'vimeo': {
         // Convert Vimeo URL to embed URL
         const vimeoId = url.match(/vimeo\.com\/(\d+)/)?.[1];
         return vimeoId ? `https://player.vimeo.com/video/${vimeoId}` : url;
-      
+      }
       case 'direct':
         return url; // Direct video file URL
       
@@ -44,7 +44,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         className={className}
         controls
         preload="metadata"
-        poster="/api/placeholder/800/450"
       >
         <source src={videoUrl} type="video/mp4" />
         <source src={videoUrl} type="video/webm" />
