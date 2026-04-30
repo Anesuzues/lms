@@ -201,13 +201,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const signInPromise = supabase.auth.signInWithPassword({ email, password });
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Sign in timed out. Please check your connection and try again.')), 8000)
+      );
+
+      const { data, error } = await Promise.race([signInPromise, timeoutPromise]);
       if (error) return { error: error.message };
-      // Set user immediately from session data — don't wait for onAuthStateChange
+
       if (data.user) {
         const name = data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User';
         const role = (data.user.user_metadata?.role as UserRole) || 'student';
-        // Set basic user immediately so Login redirects right away
         setUser({
           id: data.user.id,
           email: data.user.email!,
@@ -216,7 +220,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3B82F6&color=fff&bold=true`,
           enrolledCourses: [],
         });
-        // Load full profile in background (non-blocking)
         loadUserProfile(data.user);
       }
       return {};
