@@ -119,7 +119,7 @@ const Quiz: React.FC<QuizProps> = ({ questions, courseId, moduleId, moduleName, 
             </>
           )}
 
-          {/* Answer review */}
+          {/* Answer review - show right/wrong only, no correct answers */}
           <div className="mt-6 text-left space-y-3">
             <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Your Answers</p>
             {questions.map((q, i) => {
@@ -129,8 +129,7 @@ const Quiz: React.FC<QuizProps> = ({ questions, courseId, moduleId, moduleName, 
                 <div key={q.id} className={`p-3 rounded-xl border text-sm ${correct ? 'border-emerald-800 bg-emerald-900/20' : 'border-red-800 bg-red-900/20'}`}>
                   <p className="text-gray-300 font-medium mb-1">{i + 1}. {q.question}</p>
                   <p className={`text-xs ${correct ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {correct ? '✓' : '✗'} {q.options[userAnswer] ?? 'No answer'}
-                    {!correct && <span className="text-gray-400"> · Correct: {q.options[q.correct]}</span>}
+                    {correct ? '✓ Correct' : '✗ Incorrect'} — {q.options[userAnswer] ?? 'No answer'}
                   </p>
                 </div>
               );
