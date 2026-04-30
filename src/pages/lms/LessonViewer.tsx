@@ -65,8 +65,16 @@ const LessonViewer = () => {
   const isCompleted = (lessonId: string) => progress.some(p => p.lesson_id === lessonId && p.completed);
   const isModulePassed = (moduleId: string) => passedModules.includes(moduleId);
 
-  // No lessons are locked — users can navigate freely
-  const isLessonLocked = (_lesson: DBLesson) => false;
+  // A lesson is locked if the previous module's video isn't completed OR quiz not passed
+  const isLessonLocked = (lesson: DBLesson) => {
+    const pos = lesson.position ?? lesson.order_index;
+    if (pos <= 1) return false; // first module always unlocked
+    const prevLesson = lessons.find(l => (l.position ?? l.order_index) === pos - 1);
+    if (!prevLesson) return false;
+    const prevVideoComplete = isCompleted(prevLesson.id);
+    const prevQuizPassed = isModulePassed(prevLesson.module_id);
+    return !prevVideoComplete || !prevQuizPassed;
+  };
 
   const handleMarkComplete = async () => {
     if (!user || !id || !activeLessonId || !activeLesson) return;
