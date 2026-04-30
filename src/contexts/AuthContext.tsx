@@ -34,29 +34,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let mounted = true;
 
-    // Get initial session first
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Safety timeout — never stay loading forever
+    const timeout = setTimeout(() => {
+      if (mounted) setLoading(false);
+    }, 5000);
+
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (!mounted) return;
-      if (session?.user) {
-        loadUserProfile(session.user);
-      } else {
+      if (error || !session?.user) {
         setLoading(false);
+        clearTimeout(timeout);
+        return;
       }
+      loadUserProfile(session.user).finally(() => clearTimeout(timeout));
+    }).catch(() => {
+      if (mounted) setLoading(false);
+      clearTimeout(timeout);
     });
 
-    // Listen for auth state changes (sign in, sign out, token refresh)
+    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
       if (event === 'SIGNED_OUT') {
         setUser(null);
         setLoading(false);
-      } else if (session?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED')) {
+      } else if (session?.user && event === 'SIGNED_IN') {
+        await loadUserProfile(session.user);
+      } else if (session?.user && (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED')) {
         await loadUserProfile(session.user);
       }
     });
 
     return () => {
       mounted = false;
+      clearTimeout(timeout);
       subscription.unsubscribe();
     };
   }, []);
