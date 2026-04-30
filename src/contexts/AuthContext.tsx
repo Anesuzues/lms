@@ -152,11 +152,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .upsert({ id: data.user.id, email, full_name: fullName, role }, { onConflict: 'id' });
       }
 
-      // If email confirmation is disabled, user is already logged in.
-      // If not, sign them in manually so they don't have to confirm first.
+      // If no session (email confirmation required), sign in manually
       if (!data.session) {
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) return { error: signInError.message };
+        if (signInData.user) {
+          const name = fullName || email.split('@')[0];
+          setUser({
+            id: signInData.user.id,
+            email: signInData.user.email!,
+            name,
+            role,
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3B82F6&color=fff&bold=true`,
+            enrolledCourses: [],
+          });
+          loadUserProfile(signInData.user);
+        }
+      } else if (data.user) {
+        // Already has session — set user immediately
+        const name = fullName || email.split('@')[0];
+        setUser({
+          id: data.user.id,
+          email: data.user.email!,
+          name,
+          role,
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3B82F6&color=fff&bold=true`,
+          enrolledCourses: [],
+        });
+        loadUserProfile(data.user);
       }
 
       return {};
