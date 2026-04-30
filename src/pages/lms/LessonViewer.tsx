@@ -40,6 +40,21 @@ const LessonViewer = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('video');
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [loadingQuiz, setLoadingQuiz] = useState(false);
+  const [watchSeconds, setWatchSeconds] = useState(0);
+  const [timerActive, setTimerActive] = useState(false);
+
+  // Timer — counts seconds while video is in view
+  useEffect(() => {
+    if (!timerActive) return;
+    const interval = setInterval(() => setWatchSeconds(s => s + 1), 1000);
+    return () => clearInterval(interval);
+  }, [timerActive]);
+
+  // Reset timer when lesson changes
+  useEffect(() => {
+    setWatchSeconds(0);
+    setTimerActive(true); // start counting when lesson loads
+  }, [activeLessonId]);
 
   useEffect(() => {
     if (!id || !user) return;
@@ -64,6 +79,12 @@ const LessonViewer = () => {
   const activeLesson = lessons.find(l => l.id === activeLessonId);
   const isCompleted = (lessonId: string) => progress.some(p => p.lesson_id === lessonId && p.completed);
   const isModulePassed = (moduleId: string) => passedModules.includes(moduleId);
+
+  // Required watch time = 80% of lesson duration in seconds
+  const requiredSeconds = activeLesson ? Math.floor((activeLesson.duration_minutes * 60) * 0.8) : 0;
+  const hasWatchedEnough = watchSeconds >= requiredSeconds;
+  const watchProgress = requiredSeconds > 0 ? Math.min((watchSeconds / requiredSeconds) * 100, 100) : 100;
+  const remainingMinutes = Math.ceil((requiredSeconds - watchSeconds) / 60);
 
   // A lesson is locked if the previous module's video isn't completed OR quiz not passed
   const isLessonLocked = (lesson: DBLesson) => {
@@ -214,9 +235,20 @@ const LessonViewer = () => {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {activeLesson && !isCompleted(activeLesson.id) && (
-                    <button onClick={handleMarkComplete} className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-colors">
-                      <CheckCircle size={15} /> Mark Complete
-                    </button>
+                    hasWatchedEnough ? (
+                      <button onClick={handleMarkComplete} className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-colors">
+                        <CheckCircle size={15} /> Mark Complete
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gray-800 text-gray-400 text-sm">
+                          <div className="w-16 h-1 bg-gray-700 rounded-full overflow-hidden">
+                            <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${watchProgress}%` }} />
+                          </div>
+                          <span>{remainingMinutes > 0 ? `~${remainingMinutes}m left` : 'Almost done...'}</span>
+                        </div>
+                      </div>
+                    )
                   )}
                   {activeLesson && isCompleted(activeLesson.id) && !isModulePassed(activeLesson.module_id) && quizQuestions.length === 0 && (
                     <button
