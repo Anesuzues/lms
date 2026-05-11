@@ -13,7 +13,14 @@ import Dashboard from "./pages/lms/Dashboard";
 import LessonViewer from "./pages/lms/LessonViewer";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,  // 5 minutes before refetch
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

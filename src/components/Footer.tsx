@@ -4,8 +4,8 @@ import { Link } from "react-router-dom";
 const Footer = () => {
   return (
     <footer className="bg-card border-t border-border">
-      <div className="container py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
+      <div className="container py-10 sm:py-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-10 mb-8 sm:mb-10">
           {/* Brand */}
           <div>
             <img src="/nexalearn-logo.png" alt="NexaLearn" className="h-8 w-auto mb-3" />
@@ -40,12 +40,10 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="pt-8 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-muted-foreground">
-          <div className="flex items-center gap-4">
+        <div className="pt-6 sm:pt-8 border-t border-border flex flex-col gap-3 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
             <p>© {new Date().getFullYear()} NexaLearn. All rights reserved.</p>
-            <span className="hidden sm:block">·</span>
             <a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a>
-            <span>·</span>
             <a href="#" className="hover:text-foreground transition-colors">Terms of Service</a>
           </div>
           <p className="flex items-center gap-1">

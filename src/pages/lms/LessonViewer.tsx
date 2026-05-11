@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { ChevronLeft, Maximize2, Menu, CheckCircle, Loader2, ChevronRight, Lock, ClipboardList } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/components/ui/use-toast';
 import VideoPlayer from '@/components/VideoPlayer';
 import Quiz from '@/components/lms/Quiz';
 import {
@@ -35,13 +36,16 @@ const LessonViewer = () => {
   const [progress, setProgress] = useState<LessonProgress[]>([]);
   const [passedModules, setPassedModules] = useState<string[]>([]);
   const [activeLessonId, setActiveLessonId] = useState<string>('');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth >= 768 : true
+  );
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('video');
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [loadingQuiz, setLoadingQuiz] = useState(false);
   const [watchSeconds, setWatchSeconds] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
+  const { toast } = useToast();
 
   // Timer — counts seconds while video is in view
   useEffect(() => {
@@ -60,18 +64,24 @@ const LessonViewer = () => {
     if (!id || !user) return;
     const load = async () => {
       setLoading(true);
-      const [c, l, p, passed] = await Promise.all([
-        fetchCourseById(id),
-        fetchLessonsByCourse(id),
-        fetchLessonProgress(user.id, id),
-        fetchAllPassedModules(user.id, id),
-      ]);
-      setCourse(c);
-      setLessons(l);
-      setProgress(p);
-      setPassedModules(passed);
-      if (l.length > 0) setActiveLessonId(l[0].id);
-      setLoading(false);
+      try {
+        const [c, l, p, passed] = await Promise.all([
+          fetchCourseById(id),
+          fetchLessonsByCourse(id),
+          fetchLessonProgress(user.id, id),
+          fetchAllPassedModules(user.id, id),
+        ]);
+        setCourse(c);
+        setLessons(l);
+        setProgress(p);
+        setPassedModules(passed);
+        if (l.length > 0) setActiveLessonId(l[0].id);
+      } catch (err) {
+        console.error('LessonViewer load error:', err);
+        toast({ title: 'Failed to load course', description: 'Please refresh the page.', variant: 'destructive' });
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, [id, user?.id, user]);
@@ -150,25 +160,25 @@ const LessonViewer = () => {
     return acc;
   }, {} as Record<string, DBLesson[]>);
 
-  if (authLoading) return <div className="h-screen flex items-center justify-center bg-background"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (authLoading) return <div className="h-dvh flex items-center justify-center bg-background"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (!isAuthenticated) return <Navigate to="/login" />;
-  if (loading) return <div className="h-screen flex items-center justify-center bg-background"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
-  if (!course) return <div className="h-screen flex items-center justify-center bg-background text-foreground"><p>Course not found.</p></div>;
+  if (loading) return <div className="h-dvh flex items-center justify-center bg-background"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (!course) return <div className="h-dvh flex items-center justify-center bg-background text-foreground"><p>Course not found.</p></div>;
 
   const completedCount = progress.filter(p => p.completed).length;
   const overallProgress = lessons.length > 0 ? Math.round((completedCount / lessons.length) * 100) : 0;
 
   return (
-    <div className="h-screen flex flex-col bg-gray-950 overflow-hidden">
+    <div className="h-dvh flex flex-col bg-gray-950 overflow-hidden">
 
       {/* Top Navbar */}
       <div className="h-14 shrink-0 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-4 z-20">
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/dashboard')} className="p-1.5 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors">
+        <div className="flex items-center gap-3 min-w-0">
+          <button onClick={() => navigate('/dashboard')} className="p-1.5 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors shrink-0">
             <ChevronLeft size={22} />
           </button>
-          <div className="h-5 w-px bg-gray-700" />
-          <span className="font-semibold text-white text-sm hidden md:block truncate max-w-xs">{course.title}</span>
+          <div className="h-5 w-px bg-gray-700 shrink-0" />
+          <span className="font-semibold text-white text-sm truncate max-w-[140px] md:max-w-xs">{course.title}</span>
         </div>
         <div className="hidden md:flex items-center gap-3">
           <div className="w-32 h-1.5 bg-gray-700 rounded-full overflow-hidden">
@@ -177,20 +187,28 @@ const LessonViewer = () => {
           <span className="text-xs text-gray-400 font-medium">{completedCount}/{lessons.length} lessons</span>
         </div>
         <div className="flex items-center gap-2">
-          <button className="p-1.5 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors" onClick={() => document.documentElement.requestFullscreen?.()}>
+          <button className="p-1.5 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors hidden md:flex" onClick={() => document.documentElement.requestFullscreen?.()}>
             <Maximize2 size={18} />
           </button>
-          <button className="p-1.5 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors md:hidden" onClick={() => setSidebarOpen(!sidebarOpen)}>
+          <button className="p-1.5 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors" onClick={() => setSidebarOpen(!sidebarOpen)}>
             <Menu size={18} />
           </button>
         </div>
       </div>
 
       {/* Main */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
+
+        {/* Mobile sidebar backdrop */}
+        {sidebarOpen && (
+          <div
+            className="md:hidden absolute inset-0 z-10 bg-black/60"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
 
         {/* Content Area */}
-        <div className="flex-1 flex flex-col bg-black">
+        <div className="flex-1 flex flex-col bg-black min-w-0">
 
           {viewMode === 'quiz' && activeLesson ? (
             <Quiz
@@ -228,25 +246,23 @@ const LessonViewer = () => {
               </div>
 
               {/* Bottom bar */}
-              <div className="h-16 bg-gray-900 border-t border-gray-800 flex items-center justify-between px-5 shrink-0">
+              <div className="bg-gray-900 border-t border-gray-800 flex items-center justify-between px-4 py-3 shrink-0 gap-3 flex-wrap">
                 <div className="min-w-0">
                   <p className="text-xs text-gray-500 mb-0.5">Now Playing</p>
-                  <p className="text-sm font-semibold text-white truncate max-w-xs">{activeLesson?.title || 'No lesson selected'}</p>
+                  <p className="text-sm font-semibold text-white truncate max-w-[200px] md:max-w-xs">{activeLesson?.title || 'No lesson selected'}</p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 flex-wrap">
                   {activeLesson && !isCompleted(activeLesson.id) && (
                     hasWatchedEnough ? (
-                      <button onClick={handleMarkComplete} className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-colors">
-                        <CheckCircle size={15} /> Mark Complete
+                      <button onClick={handleMarkComplete} className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-colors">
+                        <CheckCircle size={15} /> <span className="hidden sm:inline">Mark Complete</span><span className="sm:hidden">Complete</span>
                       </button>
                     ) : (
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gray-800 text-gray-400 text-sm">
-                          <div className="w-16 h-1 bg-gray-700 rounded-full overflow-hidden">
-                            <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${watchProgress}%` }} />
-                          </div>
-                          <span>{remainingMinutes > 0 ? `~${remainingMinutes}m left` : 'Almost done...'}</span>
+                      <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-800 text-gray-400 text-sm">
+                        <div className="w-14 h-1 bg-gray-700 rounded-full overflow-hidden">
+                          <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${watchProgress}%` }} />
                         </div>
+                        <span className="text-xs">{remainingMinutes > 0 ? `~${remainingMinutes}m` : '...'}</span>
                       </div>
                     )
                   )}
@@ -258,13 +274,13 @@ const LessonViewer = () => {
                         setLoadingQuiz(false);
                         if (q.length > 0) { setQuizQuestions(q); setViewMode('quiz'); }
                       }}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-semibold transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-semibold transition-colors"
                     >
-                      <ClipboardList size={15} /> Take Quiz
+                      <ClipboardList size={15} /> Quiz
                     </button>
                   )}
                   {activeLesson && isCompleted(activeLesson.id) && isModulePassed(activeLesson.module_id) && (
-                    <span className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-900/50 text-emerald-400 text-sm font-semibold">
+                    <span className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-900/50 text-emerald-400 text-sm font-semibold">
                       <CheckCircle size={15} /> Passed
                     </span>
                   )}
@@ -275,7 +291,7 @@ const LessonViewer = () => {
                       if (currentIdx >= lessons.length - 1) return true;
                       return isLessonLocked(lessons[currentIdx + 1]);
                     })()}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Next <ChevronRight size={15} />
                   </button>
@@ -285,8 +301,14 @@ const LessonViewer = () => {
           )}
         </div>
 
-        {/* Sidebar */}
-        <div className={`w-72 shrink-0 absolute md:relative right-0 top-0 bottom-0 z-10 bg-gray-900 border-l border-gray-800 transform transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0 md:w-0 md:overflow-hidden'}`}>
+        {/* Sidebar — fixed overlay on mobile, inline on desktop */}
+        <div className={`
+          absolute md:relative right-0 top-0 bottom-0 z-20
+          w-72 shrink-0 bg-gray-900 border-l border-gray-800
+          transform transition-transform duration-300
+          ${sidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
+          md:block
+        `}>
           <div className="h-full flex flex-col">
             <div className="p-4 border-b border-gray-800">
               <h3 className="font-bold text-white text-sm">{course.title}</h3>

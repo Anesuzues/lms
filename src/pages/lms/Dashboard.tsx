@@ -5,7 +5,8 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CourseCard, { CourseCardCourse } from '@/components/lms/CourseCard';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchCourseById, fetchUserEnrollments, fetchTotalTimeSpent, DBCourse, DBEnrollment } from '@/services/courseService';
+import { useToast } from '@/components/ui/use-toast';
+import { fetchCoursesByIds, fetchUserEnrollments, fetchTotalTimeSpent, DBCourse, DBEnrollment } from '@/services/courseService';
 
 interface EnrolledCourse {
   course: DBCourse;
@@ -17,31 +18,35 @@ const Dashboard = () => {
   const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourse[]>([]);
   const [totalSeconds, setTotalSeconds] = useState(0);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
       setLoading(true);
       try {
-        const enrollments = await fetchUserEnrollments(user.id);
-        if (enrollments.length === 0) { setEnrolledCourses([]); setLoading(false); return; }
-        const [courses, seconds] = await Promise.all([
-          Promise.all(enrollments.map(async (e) => {
-            const course = await fetchCourseById(e.course_id);
-            return course ? { course, enrollment: e } : null;
-          })),
+        const [enrollments, seconds] = await Promise.all([
+          fetchUserEnrollments(user.id),
           fetchTotalTimeSpent(user.id),
         ]);
-        setEnrolledCourses(courses.filter(Boolean) as EnrolledCourse[]);
         setTotalSeconds(seconds);
+        if (enrollments.length === 0) { setEnrolledCourses([]); setLoading(false); return; }
+        const courseIds = enrollments.map(e => e.course_id);
+        const courses = await fetchCoursesByIds(courseIds);
+        const courseMap = new Map(courses.map(c => [c.id, c]));
+        const paired = enrollments
+          .map(e => { const course = courseMap.get(e.course_id); return course ? { course, enrollment: e } : null; })
+          .filter(Boolean) as EnrolledCourse[];
+        setEnrolledCourses(paired);
       } catch (err) {
         console.error('Dashboard load error:', err);
+        toast({ title: 'Failed to load courses', description: 'Please refresh the page.', variant: 'destructive' });
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, [user?.id, user]);
+  }, [user?.id]);
 
   if (authLoading) return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -78,36 +83,36 @@ const Dashboard = () => {
       <main className="flex-1 container mx-auto px-4 md:px-6 py-10 mt-16 max-w-7xl">
 
         {/* Welcome Banner */}
-        <div className="relative overflow-hidden rounded-3xl bg-hero-gradient p-8 mb-8 text-primary-foreground">
+        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-hero-gradient p-5 sm:p-8 mb-6 sm:mb-8 text-primary-foreground">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-40" />
-          <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="flex items-center gap-5">
-              <img src={user.avatar} alt={user.name} className="w-16 h-16 rounded-2xl object-cover ring-4 ring-white/30 shadow-lg" />
+          <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
+            <div className="flex items-center gap-4">
+              <img src={user.avatar} alt={user.name} className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl object-cover ring-4 ring-white/30 shadow-lg shrink-0" />
               <div>
-                <p className="text-white/70 text-sm font-medium mb-0.5">Welcome back,</p>
-                <h1 className="text-2xl md:text-3xl font-bold text-white">{user.name}</h1>
+                <p className="text-white/70 text-xs sm:text-sm font-medium mb-0.5">Welcome back,</p>
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-tight">{user.name}</h1>
                 <span className="inline-block mt-1 px-2.5 py-0.5 rounded-full bg-white/20 text-white text-xs font-semibold capitalize">{user.role}</span>
               </div>
             </div>
-            <Link to="/courses" className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white font-semibold text-sm transition-colors backdrop-blur-sm border border-white/20">
-              <Compass size={16} /> Browse Courses
+            <Link to="/courses" className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white font-semibold text-sm transition-colors backdrop-blur-sm border border-white/20 self-start sm:self-auto whitespace-nowrap">
+              <Compass size={15} /> Browse Courses
             </Link>
           </div>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
           {[
             { icon: BookOpen, label: 'Enrolled', value: enrolledCourses.length, color: 'text-primary', bg: 'bg-primary/10' },
             { icon: Trophy, label: 'Completed', value: completedCount, color: 'text-amber-500', bg: 'bg-amber-50' },
             { icon: Clock, label: 'Time Spent', value: timeDisplay, color: 'text-emerald-500', bg: 'bg-emerald-50' },
           ].map(({ icon: Icon, label, value, color, bg }) => (
-            <div key={label} className="bg-card rounded-2xl p-5 border border-border shadow-soft flex items-center gap-4">
-              <div className={`w-11 h-11 rounded-xl ${bg} flex items-center justify-center shrink-0`}>
-                <Icon size={20} className={color} />
+            <div key={label} className="bg-card rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-border shadow-soft flex items-center gap-3 sm:gap-4">
+              <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl ${bg} flex items-center justify-center shrink-0`}>
+                <Icon size={18} className={color} />
               </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{value}</p>
+              <div className="min-w-0">
+                <p className="text-xl sm:text-2xl font-bold text-foreground truncate">{value}</p>
                 <p className="text-xs text-muted-foreground font-medium">{label}</p>
               </div>
             </div>
@@ -128,7 +133,7 @@ const Dashboard = () => {
                   <img
                     src={lastEnrolled.course.thumbnail_url || 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=800'}
                     alt={lastEnrolled.course.title}
-                    className="w-full sm:w-32 h-24 rounded-xl object-cover shrink-0"
+                    className="w-full sm:w-32 h-40 sm:h-24 rounded-xl object-cover shrink-0"
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-muted-foreground font-medium mb-1">NexaLearn Team</p>

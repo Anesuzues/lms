@@ -20,6 +20,8 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName: string, role?: UserRole) => Promise<{ error?: string }>;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error?: string }>;
+  updateProfile: (updates: { full_name?: string; avatar_url?: string }) => Promise<{ error?: string }>;
   enrollInCourse: (courseId: string) => Promise<void>;
   refreshEnrollments: () => Promise<void>;
 }
@@ -125,6 +127,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/login?reset=true`,
+    });
+    if (error) return { error: error.message };
+    return {};
+  };
+
+  const updateProfile = async (updates: { full_name?: string; avatar_url?: string }) => {
+    if (!user) return { error: 'Not authenticated' };
+    const { error } = await supabase
+      .from('profiles')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', user.id);
+    if (error) return { error: error.message };
+    setUser(prev => prev ? {
+      ...prev,
+      name: updates.full_name ?? prev.name,
+      avatar: updates.avatar_url ?? prev.avatar,
+    } : prev);
+    return {};
+  };
+
   const enrollInCourse = async (courseId: string) => {
     if (!user) return;
     await supabase.from('enrollments').upsert({ user_id: user.id, course_id: courseId, progress: 0 }, { onConflict: 'user_id,course_id' });
@@ -141,7 +166,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, loading, signIn, signUp, signOut, enrollInCourse, refreshEnrollments }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, loading, signIn, signUp, signOut, resetPassword, updateProfile, enrollInCourse, refreshEnrollments }}>
       {children}
     </AuthContext.Provider>
   );

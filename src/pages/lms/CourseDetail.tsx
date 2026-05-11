@@ -96,20 +96,20 @@ const CourseDetail = () => {
           <ArrowLeft size={16} /> Back to Courses
         </button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-10">
 
-          {/* Left: Info */}
-          <div className="lg:col-span-2 space-y-8">
+          {/* Left: Info — shown second on mobile, first on desktop */}
+          <div className="lg:col-span-2 space-y-6 sm:space-y-8 order-2 lg:order-1">
             <div>
               <span className="inline-block px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold mb-3 capitalize">
                 {course.level}
               </span>
-              <h1 className="font-bold text-3xl md:text-4xl mb-4 text-foreground leading-tight">{course.title}</h1>
+              <h1 className="font-bold text-2xl sm:text-3xl md:text-4xl mb-4 text-foreground leading-tight">{course.title}</h1>
               <p className="text-muted-foreground text-base leading-relaxed">{course.description}</p>
             </div>
 
             {/* Meta */}
-            <div className="flex flex-wrap gap-6 py-6 border-y border-border">
+            <div className="flex flex-wrap gap-4 sm:gap-6 py-5 sm:py-6 border-y border-border">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                   <Clock size={20} />
@@ -165,9 +165,9 @@ const CourseDetail = () => {
             )}
           </div>
 
-          {/* Right: CTA */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-24">
+          {/* Right: CTA — shown first on mobile, second on desktop */}
+          <div className="lg:col-span-1 order-1 lg:order-2">
+            <div className="lg:sticky lg:top-24">
               <div className="rounded-2xl bg-card border border-border shadow-card overflow-hidden">
                 <div className="relative">
                   <img src={thumbnail} alt={course.title} className="w-full h-48 object-cover" />

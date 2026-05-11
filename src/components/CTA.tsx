@@ -6,7 +6,7 @@ const CTA = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="py-20 lg:py-32 relative overflow-hidden">
+    <section className="py-16 sm:py-20 lg:py-32 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-hero-gradient" />
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
@@ -18,11 +18,11 @@ const CTA = () => {
             Start Your Journey Today
           </div>
 
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
             Ready to Become Workplace Ready?
           </h2>
 
-          <p className="text-lg md:text-xl opacity-90 mb-10 max-w-xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl opacity-90 mb-8 sm:mb-10 max-w-xl mx-auto">
             Sign up and get instant access to all 4 modules. Complete them to qualify for our workplace readiness workshops.
           </p>
 

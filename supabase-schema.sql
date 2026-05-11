@@ -69,14 +69,14 @@ CREATE TABLE IF NOT EXISTS public.enrollments (
 );
 
 CREATE TABLE IF NOT EXISTS public.user_progress (
-    id           UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id      UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-    course_id    UUID REFERENCES public.courses(id) ON DELETE CASCADE,
-    lesson_id    UUID REFERENCES public.lessons(id) ON DELETE CASCADE,
-    completed    BOOLEAN DEFAULT false,
-    is_completed BOOLEAN DEFAULT false,
-    completed_at TIMESTAMP WITH TIME ZONE,
-    created_at   TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    id                 UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id            UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    course_id          UUID REFERENCES public.courses(id) ON DELETE CASCADE,
+    lesson_id          UUID REFERENCES public.lessons(id) ON DELETE CASCADE,
+    completed          BOOLEAN DEFAULT false,
+    completed_at       TIMESTAMP WITH TIME ZONE,
+    time_spent_seconds INTEGER DEFAULT 0,
+    created_at         TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE(user_id, lesson_id)
 );
 
@@ -93,7 +93,10 @@ ALTER TABLE public.lessons     ADD COLUMN IF NOT EXISTS is_free BOOLEAN DEFAULT 
 ALTER TABLE public.lessons     ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 ALTER TABLE public.user_progress ADD COLUMN IF NOT EXISTS course_id UUID REFERENCES public.courses(id) ON DELETE CASCADE;
 ALTER TABLE public.user_progress ADD COLUMN IF NOT EXISTS completed BOOLEAN DEFAULT false;
+ALTER TABLE public.user_progress ADD COLUMN IF NOT EXISTS time_spent_seconds INTEGER DEFAULT 0;
 ALTER TABLE public.user_progress ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+-- Drop redundant is_completed column if it exists (completed is the canonical field)
+ALTER TABLE public.user_progress DROP COLUMN IF EXISTS is_completed;
 
 -- ─── Row Level Security ───────────────────────────────────────────────────────
 

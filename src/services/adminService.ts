@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { DBCourse } from './courseService';
 
 export interface StudentOverview {
   id: string;
@@ -64,6 +65,55 @@ export async function fetchAllStudents(): Promise<StudentOverview[]> {
       status: row.completed_at ? 'completed' : (row.progress ?? 0) > 0 ? 'in_progress' : 'not_started',
     } as StudentOverview;
   });
+}
+
+// ─── Course Management ────────────────────────────────────────────────────────
+
+export interface CourseFormData {
+  title: string;
+  description: string;
+  level: 'beginner' | 'intermediate' | 'advanced';
+  category: string;
+  price: number;
+  duration: string;
+  thumbnail_url: string;
+}
+
+export async function adminFetchCourses(): Promise<DBCourse[]> {
+  const { data, error } = await supabase
+    .from('courses')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) { console.error('adminFetchCourses error:', error); return []; }
+  return data ?? [];
+}
+
+export async function adminCreateCourse(form: CourseFormData, instructorId: string): Promise<{ data?: DBCourse; error?: string }> {
+  const { data, error } = await supabase
+    .from('courses')
+    .insert({ ...form, instructor_id: instructorId })
+    .select()
+    .single();
+  if (error) return { error: error.message };
+  return { data };
+}
+
+export async function adminUpdateCourse(id: string, form: Partial<CourseFormData>): Promise<{ error?: string }> {
+  const { error } = await supabase
+    .from('courses')
+    .update(form)
+    .eq('id', id);
+  if (error) return { error: error.message };
+  return {};
+}
+
+export async function adminDeleteCourse(id: string): Promise<{ error?: string }> {
+  const { error } = await supabase
+    .from('courses')
+    .delete()
+    .eq('id', id);
+  if (error) return { error: error.message };
+  return {};
 }
 
 export async function fetchAdminStats(): Promise<AdminStats> {

@@ -59,14 +59,14 @@ const Courses = () => {
 
       <main className="flex-1 container mx-auto px-4 md:px-6 py-10 mt-16 max-w-7xl">
         {/* Page Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6 mb-8 sm:mb-10">
           <div>
-            <h1 className="font-bold text-4xl text-foreground mb-2">Course Catalog</h1>
-            <p className="text-muted-foreground max-w-xl">
+            <h1 className="font-bold text-2xl sm:text-3xl md:text-4xl text-foreground mb-2">Course Catalog</h1>
+            <p className="text-muted-foreground max-w-xl text-sm sm:text-base">
               Build the skills you need to thrive in the modern workplace.
             </p>
           </div>
-          <div className="relative w-full md:w-80">
+          <div className="relative w-full md:w-80 shrink-0">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               type="text"

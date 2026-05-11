@@ -67,6 +67,17 @@ export async function fetchCourseById(id: string): Promise<DBCourse | null> {
   return data;
 }
 
+export async function fetchCoursesByIds(ids: string[]): Promise<DBCourse[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase
+    .from('courses')
+    .select('*')
+    .in('id', ids);
+
+  if (error) { console.error('fetchCoursesByIds error:', error); return []; }
+  return data ?? [];
+}
+
 // ─── Lessons ────────────────────────────────────────────────────────────────
 
 export async function fetchLessonsByCourse(courseId: string): Promise<DBLesson[]> {
@@ -132,7 +143,6 @@ export async function markLessonComplete(userId: string, courseId: string, lesso
       course_id: courseId,
       lesson_id: lessonId,
       completed: true,
-      is_completed: true,
       completed_at: new Date().toISOString(),
       time_spent_seconds: timeSpentSeconds,
     }, { onConflict: 'user_id,lesson_id' });

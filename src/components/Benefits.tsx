@@ -35,27 +35,27 @@ const benefits = [
 
 const Benefits = () => {
   return (
-    <section className="py-20 lg:py-32 bg-secondary/50">
+    <section className="py-16 sm:py-20 lg:py-32 bg-secondary/50">
       <div className="container">
         {/* Header */}
-        <div className="text-center max-w-2xl mx-auto mb-16">
+        <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-16">
           <span className="inline-block px-4 py-1.5 bg-card text-foreground rounded-full text-sm font-medium mb-4">
             Why NexaLearn?
           </span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
             Everything You Need to <span className="text-gradient">Succeed</span>
           </h2>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-base sm:text-lg text-muted-foreground">
             We've designed this course specifically for students preparing for their first professional experiences.
           </p>
         </div>
 
         {/* Benefits Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           {benefits.map((benefit, index) => (
-            <div 
+            <div
               key={benefit.title}
-              className="group p-6 lg:p-8 glass-panel hover-glow transition-all duration-300 hover:-translate-y-1 opacity-0 animate-fade-in"
+              className="group p-5 sm:p-6 lg:p-8 glass-panel hover-glow transition-all duration-300 hover:-translate-y-1 opacity-0 animate-fade-in"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-5 group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-glow transition-all duration-300">

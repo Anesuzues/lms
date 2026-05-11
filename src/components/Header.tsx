@@ -1,11 +1,13 @@
 import { Button } from "@/components/ui/button";
-import { Menu, X, LogOut, GraduationCap } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation, Link } from "react-router-dom";
+import ProfileEditModal from "@/components/ProfileEditModal";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const { user, isAuthenticated, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -36,6 +38,7 @@ const Header = () => {
       : "text-muted-foreground hover:text-foreground transition-colors";
 
   return (
+    <>
     <header className="fixed top-0 left-0 right-0 z-50 glass-panel border-b border-border/40 transition-all duration-300">
       <div className="container">
         <div className="flex items-center justify-between h-16 md:h-18">
@@ -62,13 +65,17 @@ const Header = () => {
           <div className="hidden md:flex items-center gap-3">
             {isAuthenticated ? (
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2.5 pl-3 pr-4 py-1.5 rounded-full bg-secondary border border-border">
+                <button
+                  onClick={() => setShowProfile(true)}
+                  className="flex items-center gap-2.5 pl-3 pr-4 py-1.5 rounded-full bg-secondary border border-border hover:border-primary/40 transition-colors"
+                  title="Edit profile"
+                >
                   <img src={user?.avatar} alt={user?.name} className="w-7 h-7 rounded-full object-cover ring-2 ring-primary/20" />
                   <div className="leading-tight">
                     <p className="text-sm font-semibold text-foreground">{user?.name}</p>
                     <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
                   </div>
-                </div>
+                </button>
                 <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-muted-foreground hover:text-destructive gap-1.5">
                   <LogOut className="w-4 h-4" />
                   Sign Out
@@ -129,6 +136,9 @@ const Header = () => {
         )}
       </div>
     </header>
+
+    {showProfile && <ProfileEditModal onClose={() => setShowProfile(false)} />}
+    </>
   );
 };
 

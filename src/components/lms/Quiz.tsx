@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CheckCircle, XCircle, RotateCcw, ArrowRight, Trophy, AlertCircle } from 'lucide-react';
 import { QuizQuestion, PASS_MARK, submitQuizAttempt } from '@/services/quizService';
+import { useToast } from '@/components/ui/use-toast';
 
 interface QuizProps {
   questions: QuizQuestion[];
@@ -13,6 +14,7 @@ interface QuizProps {
 }
 
 const Quiz: React.FC<QuizProps> = ({ questions, courseId, moduleId, moduleName, userId, onPass, onRetry }) => {
+  const { toast } = useToast();
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<number[]>(Array(questions.length).fill(-1));
   const [submitted, setSubmitted] = useState(false);
@@ -58,6 +60,7 @@ const Quiz: React.FC<QuizProps> = ({ questions, courseId, moduleId, moduleName, 
       setSubmitted(true);
     } catch (err) {
       console.error('Quiz submit error:', err);
+      toast({ title: 'Submission failed', description: 'Could not save your quiz attempt. Please try again.', variant: 'destructive' });
     } finally {
       setSubmitting(false);
     }
@@ -76,8 +79,8 @@ const Quiz: React.FC<QuizProps> = ({ questions, courseId, moduleId, moduleName, 
   // Results screen
   if (submitted) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-gray-950 p-6">
-        <div className="bg-gray-900 rounded-2xl border border-gray-800 p-8 max-w-md w-full text-center">
+      <div className="flex-1 flex items-center justify-center bg-gray-950 p-4 sm:p-6 overflow-y-auto">
+        <div className="bg-gray-900 rounded-2xl border border-gray-800 p-5 sm:p-8 max-w-md w-full text-center my-4">
           {passed ? (
             <>
               <div className="w-20 h-20 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-5">
@@ -142,8 +145,8 @@ const Quiz: React.FC<QuizProps> = ({ questions, courseId, moduleId, moduleName, 
 
   // Quiz screen
   return (
-    <div className="flex-1 flex items-center justify-center bg-gray-950 p-6">
-      <div className="bg-gray-900 rounded-2xl border border-gray-800 p-8 max-w-lg w-full">
+    <div className="flex-1 flex items-center justify-center bg-gray-950 p-4 sm:p-6 overflow-y-auto">
+      <div className="bg-gray-900 rounded-2xl border border-gray-800 p-5 sm:p-8 max-w-lg w-full my-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -168,15 +171,15 @@ const Quiz: React.FC<QuizProps> = ({ questions, courseId, moduleId, moduleName, 
         <h3 className="text-white font-bold text-lg mb-5 leading-snug">{question.question}</h3>
 
         {/* Options */}
-        <div className="space-y-3 mb-8">
+        <div className="space-y-2.5 sm:space-y-3 mb-6 sm:mb-8">
           {question.options.map((option, idx) => (
             <button
               key={idx}
               onClick={() => handleSelect(idx)}
-              className={`w-full text-left p-4 rounded-xl border transition-all text-sm font-medium ${
+              className={`w-full text-left p-3.5 sm:p-4 rounded-xl border transition-all text-sm font-medium min-h-[52px] ${
                 selected === idx
                   ? 'border-primary bg-primary/20 text-white'
-                  : 'border-gray-700 bg-gray-800 text-gray-300 hover:border-gray-600 hover:bg-gray-750'
+                  : 'border-gray-700 bg-gray-800 text-gray-300 hover:border-gray-600'
               }`}
             >
               <span className={`inline-flex w-6 h-6 rounded-full items-center justify-center text-xs font-bold mr-3 shrink-0 ${
