@@ -25,7 +25,7 @@
     --secondary-foreground: 222 47% 11%;
 
     --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted-foreground: 215 16% 38%;
 
     /* Accent - Cyan/Teal glow */
     --accent: 199 89% 48%;
@@ -117,6 +117,18 @@
   input, textarea, select, button {
     font-family: inherit;
   }
+
+  /* Keyboard focus: visible ring on all interactive elements */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  /* Remove outline for mouse/touch users */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
 }
 
 @layer utilities {
@@ -143,6 +155,17 @@
 
   .shadow-glass {
     box-shadow: var(--shadow-glass);
+  }
+
+  /* Horizontal scroll shadow — indicates scrollable table on mobile */
+  .scroll-shadow {
+    background:
+      linear-gradient(to right, white 30%, rgba(255,255,255,0)) left / 40px 100% no-repeat,
+      linear-gradient(to left, white 30%, rgba(255,255,255,0)) right / 40px 100% no-repeat,
+      radial-gradient(farthest-side at 0 50%, rgba(0,0,0,0.08), transparent) left / 16px 100% no-repeat,
+      radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,0.08), transparent) right / 16px 100% no-repeat;
+    background-attachment: local, local, scroll, scroll;
+    overflow-x: auto;
   }
 
   /* Premium Glassmorphism */

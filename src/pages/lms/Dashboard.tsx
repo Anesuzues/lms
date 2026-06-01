@@ -224,7 +224,15 @@ const Dashboard = () => {
                 </Link>
               </div>
 
-              {quizAttempts.length > 0 && (
+              <div className="mt-10">
+                <h2 className="font-bold text-xl text-foreground mb-5">Quiz History</h2>
+              {quizAttempts.length === 0 ? (
+                <div className="bg-card border border-border rounded-2xl py-14 text-center">
+                  <BarChart2 size={36} className="mx-auto mb-3 text-muted-foreground/30" />
+                  <p className="font-semibold text-muted-foreground text-sm">No quiz attempts yet</p>
+                  <p className="text-xs text-muted-foreground/70 mt-1">Complete a lesson and take the quiz to see your results here.</p>
+                </div>
+              ) : (
                 <div className="mt-10">
                   <h2 className="font-bold text-xl text-foreground mb-5">Quiz History</h2>
                   <div className="bg-card border border-border rounded-2xl overflow-hidden">
@@ -271,6 +279,7 @@ const Dashboard = () => {
                   </div>
                 </div>
               )}
+              </div>
 
               {enrolledCourses.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

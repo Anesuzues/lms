@@ -16,6 +16,8 @@ const Dashboard     = lazy(() => import("./pages/lms/Dashboard"));
 const LessonViewer  = lazy(() => import("./pages/lms/LessonViewer"));
 const AdminDashboard      = lazy(() => import("./pages/admin/AdminDashboard"));
 const VerifyCertificate   = lazy(() => import("./pages/lms/VerifyCertificate"));
+const Terms               = lazy(() => import("./pages/Terms"));
+const Privacy             = lazy(() => import("./pages/Privacy"));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
@@ -52,6 +54,9 @@ const App = () => (
               <Route path="/admin" element={<AdminDashboard />} />
               {/* Certificate verification */}
               <Route path="/verify" element={<VerifyCertificate />} />
+              {/* Legal */}
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

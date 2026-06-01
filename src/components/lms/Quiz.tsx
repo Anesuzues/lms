@@ -182,18 +182,18 @@ const Quiz: React.FC<QuizProps> = ({ questions, courseId, moduleId, moduleName, 
               role="radio"
               aria-checked={selected === idx}
               aria-label={`Option ${String.fromCharCode(65 + idx)}: ${option}`}
-              className={`w-full text-left p-3.5 sm:p-4 rounded-xl border transition-all text-sm font-medium min-h-[52px] ${
+              className={`w-full text-left p-3 sm:p-4 rounded-xl border transition-all text-sm font-medium min-h-[48px] flex items-start gap-3 ${
                 selected === idx
                   ? 'border-primary bg-primary/20 text-white'
                   : 'border-gray-700 bg-gray-800 text-gray-300 hover:border-gray-600'
               }`}
             >
-              <span className={`inline-flex w-6 h-6 rounded-full items-center justify-center text-xs font-bold mr-3 shrink-0 ${
+              <span className={`inline-flex w-6 h-6 rounded-full items-center justify-center text-xs font-bold shrink-0 mt-0.5 ${
                 selected === idx ? 'bg-primary text-white' : 'bg-gray-700 text-gray-400'
               }`}>
                 {String.fromCharCode(65 + idx)}
               </span>
-              {option}
+              <span className="break-words min-w-0">{option}</span>
             </button>
           ))}
         </div>

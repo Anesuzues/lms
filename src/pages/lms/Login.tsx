@@ -6,6 +6,8 @@ import { Loader2, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 
 type Mode = 'signin' | 'signup' | 'forgot';
 
+interface FieldErrors { email?: string; password?: string; fullName?: string; }
+
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,6 +16,8 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null);
 
   const { signIn, signUp, signInWithGoogle, resetPassword, user, loading } = useAuth();
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -26,6 +30,19 @@ const Login = () => {
     }
   }, [user]);
 
+  // Auto-redirect to sign-in after password reset email is sent
+  useEffect(() => {
+    if (!resetSent) return;
+    setRedirectCountdown(5);
+    const interval = setInterval(() => {
+      setRedirectCountdown(prev => {
+        if (prev === null || prev <= 1) { clearInterval(interval); switchMode('signin'); return null; }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [resetSent]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -34,8 +51,22 @@ const Login = () => {
     );
   }
 
+  const validate = (): boolean => {
+    const errors: FieldErrors = {};
+    if (!email.trim()) errors.email = 'Email is required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = 'Enter a valid email address';
+    if (mode !== 'forgot') {
+      if (!password) errors.password = 'Password is required';
+      else if (password.length < 8) errors.password = 'Password must be at least 8 characters';
+    }
+    if (mode === 'signup' && !fullName.trim()) errors.fullName = 'Full name is required';
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validate()) return;
     setSubmitting(true);
 
     if (mode === 'forgot') {
@@ -69,6 +100,8 @@ const Login = () => {
     setEmail('');
     setPassword('');
     setFullName('');
+    setFieldErrors({});
+    setRedirectCountdown(null);
   };
 
   return (
@@ -144,9 +177,14 @@ const Login = () => {
                 </svg>
               </div>
               <h2 className="text-lg font-bold text-foreground mb-2">Check your inbox</h2>
-              <p className="text-sm text-muted-foreground mb-6">
+              <p className="text-sm text-muted-foreground mb-4">
                 We sent a password reset link to <span className="font-semibold text-foreground">{email}</span>
               </p>
+              {redirectCountdown !== null && (
+                <p className="text-xs text-muted-foreground mb-4">
+                  Redirecting to sign in in <span className="font-bold text-primary">{redirectCountdown}s</span>…
+                </p>
+              )}
               <button
                 onClick={() => switchMode('signin')}
                 className="text-sm font-semibold text-primary hover:opacity-80"
@@ -172,12 +210,14 @@ const Login = () => {
                   <label className="text-sm font-semibold text-foreground">Full Name</label>
                   <input
                     type="text"
-                    required
                     value={fullName}
-                    onChange={e => setFullName(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                    onChange={e => { setFullName(e.target.value); setFieldErrors(p => ({ ...p, fullName: undefined })); }}
+                    aria-invalid={!!fieldErrors.fullName}
+                    aria-describedby={fieldErrors.fullName ? 'fullname-error' : undefined}
+                    className={`w-full px-4 py-3 rounded-xl bg-secondary border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all ${fieldErrors.fullName ? 'border-destructive focus:border-destructive' : 'border-border focus:border-primary'}`}
                     placeholder="John Doe"
                   />
+                  {fieldErrors.fullName && <p id="fullname-error" className="text-xs text-destructive mt-1">{fieldErrors.fullName}</p>}
                 </div>
               )}
 
@@ -185,12 +225,14 @@ const Login = () => {
                 <label className="text-sm font-semibold text-foreground">Email Address</label>
                 <input
                   type="email"
-                  required
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                  onChange={e => { setEmail(e.target.value); setFieldErrors(p => ({ ...p, email: undefined })); }}
+                  aria-invalid={!!fieldErrors.email}
+                  aria-describedby={fieldErrors.email ? 'email-error' : undefined}
+                  className={`w-full px-4 py-3 rounded-xl bg-secondary border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all ${fieldErrors.email ? 'border-destructive focus:border-destructive' : 'border-border focus:border-primary'}`}
                   placeholder="you@example.com"
                 />
+                {fieldErrors.email && <p id="email-error" className="text-xs text-destructive mt-1">{fieldErrors.email}</p>}
               </div>
 
               {mode !== 'forgot' && (
@@ -210,21 +252,24 @@ const Login = () => {
                   <div className="relative">
                     <input
                       type={showPassword ? 'text' : 'password'}
-                      required
                       minLength={8}
                       value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      className="w-full px-4 py-3 pr-12 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                      onChange={e => { setPassword(e.target.value); setFieldErrors(p => ({ ...p, password: undefined })); }}
+                      aria-invalid={!!fieldErrors.password}
+                      aria-describedby={fieldErrors.password ? 'password-error' : undefined}
+                      className={`w-full px-4 py-3 pr-12 rounded-xl bg-secondary border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all ${fieldErrors.password ? 'border-destructive focus:border-destructive' : 'border-border focus:border-primary'}`}
                       placeholder="••••••••"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
+                  {fieldErrors.password && <p id="password-error" className="text-xs text-destructive mt-1">{fieldErrors.password}</p>}
                 </div>
               )}
 
@@ -259,9 +304,9 @@ const Login = () => {
 
         <p className="text-center text-xs text-muted-foreground mt-6">
           By continuing, you agree to our{' '}
-          <a href="#" className="underline hover:text-foreground">Terms of Service</a>{' '}
+          <a href="/terms" className="underline hover:text-foreground">Terms of Service</a>{' '}
           and{' '}
-          <a href="#" className="underline hover:text-foreground">Privacy Policy</a>
+          <a href="/privacy" className="underline hover:text-foreground">Privacy Policy</a>
         </p>
       </div>
     </div>

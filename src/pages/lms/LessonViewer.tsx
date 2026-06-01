@@ -336,9 +336,18 @@ const LessonViewer = () => {
           md:block
         `}>
           <div className="h-full flex flex-col">
-            <div className="p-4 border-b border-gray-800">
-              <h3 className="font-bold text-white text-sm">{course.title}</h3>
-              <p className="text-xs text-gray-400 mt-0.5">{lessons.length} lessons • {overallProgress}% complete</p>
+            <div className="p-4 border-b border-gray-800 flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <h3 className="font-bold text-white text-sm truncate">{course.title}</h3>
+                <p className="text-xs text-gray-400 mt-0.5">{lessons.length} lessons • {overallProgress}% complete</p>
+              </div>
+              <button
+                className="md:hidden p-1 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 transition-colors shrink-0 mt-0.5"
+                onClick={() => setSidebarOpen(false)}
+                aria-label="Close lesson sidebar"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
               <div className="mt-2 h-1 bg-gray-700 rounded-full overflow-hidden">
                 <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${overallProgress}%` }} />
               </div>

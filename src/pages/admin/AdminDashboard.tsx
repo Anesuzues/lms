@@ -369,7 +369,7 @@ const AdminDashboard = () => {
                     <p className="font-medium">No students found</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto scroll-shadow">
                   <table className="w-full min-w-[560px]">
                     <thead>
                       <tr className="border-b border-gray-100 bg-gray-50">

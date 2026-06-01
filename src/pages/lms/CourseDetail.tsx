@@ -170,7 +170,7 @@ const CourseDetail = () => {
             <div className="lg:sticky lg:top-24">
               <div className="rounded-2xl bg-card border border-border shadow-card overflow-hidden">
                 <div className="relative">
-                  <img src={thumbnail} alt={course.title} className="w-full h-48 object-cover" />
+                  <img src={thumbnail} alt={course.title} loading="lazy" className="w-full h-48 object-cover" />
                   <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                     <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
                       <PlayCircle size={28} className="text-primary ml-0.5" />
