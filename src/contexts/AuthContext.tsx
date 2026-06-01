@@ -19,6 +19,7 @@ interface AuthContextType {
   loading: boolean;
   signUp: (email: string, password: string, fullName: string, role?: UserRole) => Promise<{ error?: string }>;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
+  signInWithGoogle: () => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error?: string }>;
   updateProfile: (updates: { full_name?: string; avatar_url?: string }) => Promise<{ error?: string }>;
@@ -55,8 +56,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT' || !session) {
         setUser(null);
+      } else if (event === 'SIGNED_IN' && session.user) {
+        // Handles OAuth redirects (Google etc.) where signIn function isn't called directly
+        setUser(buildUser(session.user));
+        enrichUser(session.user);
       }
-      // SIGNED_IN handled directly in signIn/signUp for speed
     });
 
     return () => subscription.unsubscribe();
@@ -122,6 +126,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return {};
   };
 
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/dashboard` },
+    });
+    if (error) return { error: error.message };
+    return {};
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
@@ -166,7 +179,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, loading, signIn, signUp, signOut, resetPassword, updateProfile, enrollInCourse, refreshEnrollments }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, loading, signIn, signUp, signInWithGoogle, signOut, resetPassword, updateProfile, enrollInCourse, refreshEnrollments }}>
       {children}
     </AuthContext.Provider>
   );
