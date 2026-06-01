@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
-import { ChevronLeft, Maximize2, Menu, CheckCircle, Loader2, ChevronRight, Lock, ClipboardList } from 'lucide-react';
+import { ChevronLeft, Menu, CheckCircle, Loader2, ChevronRight, Lock, ClipboardList, BookOpen } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
-import VideoPlayer from '@/components/VideoPlayer';
 import Quiz from '@/components/lms/Quiz';
+import ReactMarkdown from 'react-markdown';
 import {
   fetchCourseById, fetchLessonsByCourse, fetchLessonProgress,
   markLessonComplete, updateEnrollmentProgress,
@@ -14,7 +14,7 @@ import {
   fetchQuizQuestions, fetchAllPassedModules, QuizQuestion,
 } from '@/services/quizService';
 
-const MODULE_NAMES = [
+const FALLBACK_MODULE_NAMES = [
   'Workplace Foundations',
   'CV Writing & AI Tools',
   'Interview Readiness',
@@ -22,14 +22,17 @@ const MODULE_NAMES = [
 ];
 
 const getModuleName = (lesson: DBLesson) =>
-  MODULE_NAMES[(lesson.position ?? lesson.order_index) - 1] ?? `Module ${lesson.position}`;
+  lesson.modules?.title ??
+  FALLBACK_MODULE_NAMES[(lesson.position ?? lesson.order_index) - 1] ??
+  `Module ${lesson.position ?? lesson.order_index}`;
 
-type ViewMode = 'video' | 'quiz';
+type ViewMode = 'reading' | 'quiz';
 
 const LessonViewer = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { toast } = useToast();
 
   const [course, setCourse] = useState<DBCourse | null>(null);
   const [lessons, setLessons] = useState<DBLesson[]>([]);
@@ -40,25 +43,10 @@ const LessonViewer = () => {
     typeof window !== 'undefined' ? window.innerWidth >= 768 : true
   );
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<ViewMode>('video');
+  const [viewMode, setViewMode] = useState<ViewMode>('reading');
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [loadingQuiz, setLoadingQuiz] = useState(false);
-  const [watchSeconds, setWatchSeconds] = useState(0);
-  const [timerActive, setTimerActive] = useState(false);
-  const { toast } = useToast();
-
-  // Timer — counts seconds while video is in view
-  useEffect(() => {
-    if (!timerActive) return;
-    const interval = setInterval(() => setWatchSeconds(s => s + 1), 1000);
-    return () => clearInterval(interval);
-  }, [timerActive]);
-
-  // Reset timer when lesson changes
-  useEffect(() => {
-    setWatchSeconds(0);
-    setTimerActive(true); // start counting when lesson loads
-  }, [activeLessonId]);
+  const [marking, setMarking] = useState(false);
 
   useEffect(() => {
     if (!id || !user) return;
@@ -76,40 +64,31 @@ const LessonViewer = () => {
         setProgress(p);
         setPassedModules(passed);
         if (l.length > 0) setActiveLessonId(l[0].id);
-      } catch (err) {
-        console.error('LessonViewer load error:', err);
+      } catch {
         toast({ title: 'Failed to load course', description: 'Please refresh the page.', variant: 'destructive' });
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, [id, user?.id, user]);
+  }, [id, user?.id]);
 
   const activeLesson = lessons.find(l => l.id === activeLessonId);
   const isCompleted = (lessonId: string) => progress.some(p => p.lesson_id === lessonId && p.completed);
   const isModulePassed = (moduleId: string) => passedModules.includes(moduleId);
 
-  // Required watch time = 80% of lesson duration in seconds
-  const requiredSeconds = activeLesson ? Math.floor((activeLesson.duration_minutes * 60) * 0.8) : 0;
-  const hasWatchedEnough = watchSeconds >= requiredSeconds;
-  const watchProgress = requiredSeconds > 0 ? Math.min((watchSeconds / requiredSeconds) * 100, 100) : 100;
-  const remainingMinutes = Math.ceil((requiredSeconds - watchSeconds) / 60);
-
-  // A lesson is locked if the previous module's video isn't completed OR quiz not passed
   const isLessonLocked = (lesson: DBLesson) => {
     const pos = lesson.position ?? lesson.order_index;
-    if (pos <= 1) return false; // first module always unlocked
+    if (pos <= 1) return false;
     const prevLesson = lessons.find(l => (l.position ?? l.order_index) === pos - 1);
     if (!prevLesson) return false;
-    const prevVideoComplete = isCompleted(prevLesson.id);
-    const prevQuizPassed = isModulePassed(prevLesson.module_id);
-    return !prevVideoComplete || !prevQuizPassed;
+    return !isCompleted(prevLesson.id) || !isModulePassed(prevLesson.module_id);
   };
 
-  const handleMarkComplete = async () => {
-    if (!user || !id || !activeLessonId || !activeLesson) return;
-    await markLessonComplete(user.id, id, activeLessonId, watchSeconds);
+  const handleMarkRead = async () => {
+    if (!user || !id || !activeLessonId || !activeLesson || marking) return;
+    setMarking(true);
+    await markLessonComplete(user.id, id, activeLessonId, 0);
     const updated = [
       ...progress.filter(p => p.lesson_id !== activeLessonId),
       { lesson_id: activeLessonId, completed: true, completed_at: new Date().toISOString() },
@@ -118,15 +97,15 @@ const LessonViewer = () => {
     const pct = Math.round((updated.filter(p => p.completed).length / lessons.length) * 100);
     await updateEnrollmentProgress(user.id, id, pct);
 
-    // Load and show quiz for this module
     setLoadingQuiz(true);
     const questions = await fetchQuizQuestions(id, activeLesson.module_id);
     setLoadingQuiz(false);
+    setMarking(false);
+
     if (questions.length > 0) {
       setQuizQuestions(questions);
       setViewMode('quiz');
     } else {
-      // No quiz — just advance
       const currentIdx = lessons.findIndex(l => l.id === activeLessonId);
       if (currentIdx < lessons.length - 1) setActiveLessonId(lessons[currentIdx + 1].id);
     }
@@ -135,22 +114,18 @@ const LessonViewer = () => {
   const handleQuizPass = () => {
     if (!activeLesson) return;
     setPassedModules(prev => [...new Set([...prev, activeLesson.module_id])]);
-    setViewMode('video');
+    setViewMode('reading');
     const currentIdx = lessons.findIndex(l => l.id === activeLessonId);
     if (currentIdx < lessons.length - 1) setActiveLessonId(lessons[currentIdx + 1].id);
   };
 
-  const handleQuizRetry = () => {
-    setViewMode('video'); // go back to video to re-watch
-  };
+  const handleQuizRetry = () => setViewMode('reading');
 
   const handleNextLesson = () => {
     const currentIdx = lessons.findIndex(l => l.id === activeLessonId);
-    if (currentIdx < lessons.length - 1) {
-      const nextLesson = lessons[currentIdx + 1];
-      if (isLessonLocked(nextLesson)) return; // blocked
-      setActiveLessonId(nextLesson.id);
-    }
+    if (currentIdx >= lessons.length - 1) return;
+    const next = lessons[currentIdx + 1];
+    if (!isLessonLocked(next)) setActiveLessonId(next.id);
   };
 
   const moduleGroups = lessons.reduce((acc, lesson) => {
@@ -186,29 +161,21 @@ const LessonViewer = () => {
           </div>
           <span className="text-xs text-gray-400 font-medium">{completedCount}/{lessons.length} lessons</span>
         </div>
-        <div className="flex items-center gap-2">
-          <button className="p-1.5 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors hidden md:flex" onClick={() => document.documentElement.requestFullscreen?.()}>
-            <Maximize2 size={18} />
-          </button>
-          <button className="p-1.5 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors" onClick={() => setSidebarOpen(!sidebarOpen)}>
-            <Menu size={18} />
-          </button>
-        </div>
+        <button className="p-1.5 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors" onClick={() => setSidebarOpen(!sidebarOpen)}>
+          <Menu size={18} />
+        </button>
       </div>
 
       {/* Main */}
       <div className="flex-1 flex overflow-hidden relative">
 
-        {/* Mobile sidebar backdrop */}
+        {/* Mobile backdrop */}
         {sidebarOpen && (
-          <div
-            className="md:hidden absolute inset-0 z-10 bg-black/60"
-            onClick={() => setSidebarOpen(false)}
-          />
+          <div className="md:hidden absolute inset-0 z-10 bg-black/60" onClick={() => setSidebarOpen(false)} />
         )}
 
         {/* Content Area */}
-        <div className="flex-1 flex flex-col bg-black min-w-0">
+        <div className="flex-1 flex flex-col bg-gray-950 min-w-0">
 
           {viewMode === 'quiz' && activeLesson ? (
             <Quiz
@@ -222,86 +189,125 @@ const LessonViewer = () => {
             />
           ) : (
             <>
-              <div className="flex-1 relative">
+              {/* Reading pane */}
+              <div className="flex-1 overflow-y-auto">
                 {loadingQuiz ? (
-                  <div className="absolute inset-0 flex items-center justify-center bg-gray-950">
+                  <div className="flex items-center justify-center h-full">
                     <div className="text-center">
                       <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-3" />
                       <p className="text-gray-400 text-sm">Loading quiz...</p>
                     </div>
                   </div>
                 ) : activeLesson ? (
-                  <VideoPlayer videoUrl={activeLesson.video_url || ''} videoType={activeLesson.video_type} title={activeLesson.title} className="w-full h-full" />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center text-center p-8">
-                    <div>
-                      <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4 animate-pulse">
-                        <div className="w-12 h-12 rounded-full bg-primary" />
-                      </div>
-                      <h2 className="text-2xl font-bold text-white mb-2">Select a Lesson</h2>
-                      <p className="text-gray-400">Choose a lesson from the sidebar to start learning</p>
+                  <div className="max-w-3xl mx-auto px-5 sm:px-8 py-8 sm:py-12">
+                    {/* Lesson header */}
+                    <div className="mb-8">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary uppercase tracking-wide mb-3">
+                        <BookOpen size={12} /> {getModuleName(activeLesson)}
+                      </span>
+                      <h1 className="text-2xl sm:text-3xl font-bold text-white leading-tight mb-2">
+                        {activeLesson.title}
+                      </h1>
+                      {activeLesson.description && (
+                        <p className="text-gray-400 text-base leading-relaxed">{activeLesson.description}</p>
+                      )}
                     </div>
+
+                    {/* Lesson content */}
+                    {(activeLesson as any).content ? (
+                      <div className="prose prose-invert prose-sm sm:prose-base max-w-none
+                        prose-headings:text-white prose-headings:font-bold
+                        prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:border-b prose-h2:border-gray-800 prose-h2:pb-2
+                        prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-3 prose-h3:text-gray-200
+                        prose-p:text-gray-300 prose-p:leading-relaxed prose-p:mb-4
+                        prose-ul:text-gray-300 prose-ul:space-y-1 prose-ul:my-3
+                        prose-ol:text-gray-300 prose-ol:space-y-1 prose-ol:my-3
+                        prose-li:marker:text-primary
+                        prose-strong:text-white prose-strong:font-semibold
+                        prose-blockquote:border-l-primary prose-blockquote:text-gray-400
+                        prose-code:text-primary prose-code:bg-gray-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+                      ">
+                        <ReactMarkdown>{(activeLesson as any).content}</ReactMarkdown>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-20 text-center">
+                        <BookOpen className="w-12 h-12 text-gray-700 mb-4" />
+                        <p className="text-gray-500 text-sm">Lesson content coming soon.</p>
+                      </div>
+                    )}
+
+                    {/* End of lesson action */}
+                    {!isCompleted(activeLesson.id) && (
+                      <div className="mt-12 pt-8 border-t border-gray-800 text-center">
+                        <p className="text-gray-400 text-sm mb-4">Done reading? Mark this lesson complete to unlock the quiz.</p>
+                        <button
+                          onClick={handleMarkRead}
+                          disabled={marking}
+                          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          {marking ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
+                          {marking ? 'Saving...' : 'Mark as Read'}
+                        </button>
+                      </div>
+                    )}
+
+                    {isCompleted(activeLesson.id) && !isModulePassed(activeLesson.module_id) && (
+                      <div className="mt-12 pt-8 border-t border-gray-800 text-center">
+                        <p className="text-gray-400 text-sm mb-4">Lesson complete! Take the quiz to unlock the next lesson.</p>
+                        <button
+                          onClick={async () => {
+                            setLoadingQuiz(true);
+                            const q = await fetchQuizQuestions(id!, activeLesson.module_id);
+                            setLoadingQuiz(false);
+                            if (q.length > 0) { setQuizQuestions(q); setViewMode('quiz'); }
+                          }}
+                          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold transition-colors"
+                        >
+                          <ClipboardList size={16} /> Take Quiz
+                        </button>
+                      </div>
+                    )}
+
+                    {isCompleted(activeLesson.id) && isModulePassed(activeLesson.module_id) && (
+                      <div className="mt-12 pt-8 border-t border-gray-800 text-center">
+                        <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-900/40 text-emerald-400 font-semibold text-sm border border-emerald-800">
+                          <CheckCircle size={15} /> Lesson & Quiz Complete
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                    <BookOpen className="w-16 h-16 text-gray-800 mb-4" />
+                    <h2 className="text-xl font-bold text-white mb-2">Select a Lesson</h2>
+                    <p className="text-gray-500 text-sm">Choose a lesson from the sidebar to start reading</p>
                   </div>
                 )}
               </div>
 
               {/* Bottom bar */}
-              <div className="bg-gray-900 border-t border-gray-800 flex items-center justify-between px-4 py-3 shrink-0 gap-3 flex-wrap">
+              <div className="bg-gray-900 border-t border-gray-800 flex items-center justify-between px-4 py-3 shrink-0 gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs text-gray-500 mb-0.5">Now Playing</p>
-                  <p className="text-sm font-semibold text-white truncate max-w-[200px] md:max-w-xs">{activeLesson?.title || 'No lesson selected'}</p>
+                  <p className="text-xs text-gray-500 mb-0.5">Now Reading</p>
+                  <p className="text-sm font-semibold text-white truncate max-w-[180px] sm:max-w-xs">{activeLesson?.title || 'No lesson selected'}</p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                  {activeLesson && !isCompleted(activeLesson.id) && (
-                    hasWatchedEnough ? (
-                      <button onClick={handleMarkComplete} className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-colors">
-                        <CheckCircle size={15} /> <span className="hidden sm:inline">Mark Complete</span><span className="sm:hidden">Complete</span>
-                      </button>
-                    ) : (
-                      <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-800 text-gray-400 text-sm">
-                        <div className="w-14 h-1 bg-gray-700 rounded-full overflow-hidden">
-                          <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${watchProgress}%` }} />
-                        </div>
-                        <span className="text-xs">{remainingMinutes > 0 ? `~${remainingMinutes}m` : '...'}</span>
-                      </div>
-                    )
-                  )}
-                  {activeLesson && isCompleted(activeLesson.id) && !isModulePassed(activeLesson.module_id) && quizQuestions.length === 0 && (
-                    <button
-                      onClick={async () => {
-                        setLoadingQuiz(true);
-                        const q = await fetchQuizQuestions(id!, activeLesson.module_id);
-                        setLoadingQuiz(false);
-                        if (q.length > 0) { setQuizQuestions(q); setViewMode('quiz'); }
-                      }}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-semibold transition-colors"
-                    >
-                      <ClipboardList size={15} /> Quiz
-                    </button>
-                  )}
-                  {activeLesson && isCompleted(activeLesson.id) && isModulePassed(activeLesson.module_id) && (
-                    <span className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-900/50 text-emerald-400 text-sm font-semibold">
-                      <CheckCircle size={15} /> Passed
-                    </span>
-                  )}
-                  <button
-                    onClick={handleNextLesson}
-                    disabled={(() => {
-                      const currentIdx = lessons.findIndex(l => l.id === activeLessonId);
-                      if (currentIdx >= lessons.length - 1) return true;
-                      return isLessonLocked(lessons[currentIdx + 1]);
-                    })()}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    Next <ChevronRight size={15} />
-                  </button>
-                </div>
+                <button
+                  onClick={handleNextLesson}
+                  disabled={(() => {
+                    const idx = lessons.findIndex(l => l.id === activeLessonId);
+                    if (idx >= lessons.length - 1) return true;
+                    return isLessonLocked(lessons[idx + 1]);
+                  })()}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                >
+                  Next <ChevronRight size={15} />
+                </button>
               </div>
             </>
           )}
         </div>
 
-        {/* Sidebar — fixed overlay on mobile, inline on desktop */}
+        {/* Sidebar */}
         <div className={`
           absolute md:relative right-0 top-0 bottom-0 z-20
           w-72 shrink-0 bg-gray-900 border-l border-gray-800
@@ -345,7 +351,7 @@ const LessonViewer = () => {
                             onClick={() => {
                               if (lessonLocked) return;
                               setActiveLessonId(lesson.id);
-                              setViewMode('video');
+                              setViewMode('reading');
                               if (window.innerWidth < 768) setSidebarOpen(false);
                             }}
                             disabled={lessonLocked}
@@ -361,7 +367,7 @@ const LessonViewer = () => {
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className={`text-xs font-medium leading-tight mb-1 ${active ? 'text-white' : 'text-gray-300'}`}>{lesson.title}</p>
-                              <span className="text-xs text-gray-500">{lesson.duration_minutes} min</span>
+                              <span className="text-xs text-gray-500">{lesson.duration_minutes} min read</span>
                             </div>
                           </button>
                         );

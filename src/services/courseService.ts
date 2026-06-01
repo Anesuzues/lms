@@ -26,7 +26,9 @@ export interface DBLesson {
   order_index: number;
   position: number;
   type: string;
+  content: string | null;
   is_free: boolean;
+  modules?: { title: string } | null;
 }
 
 export interface DBEnrollment {
@@ -83,9 +85,9 @@ export async function fetchCoursesByIds(ids: string[]): Promise<DBCourse[]> {
 export async function fetchLessonsByCourse(courseId: string): Promise<DBLesson[]> {
   const { data, error } = await supabase
     .from('lessons')
-    .select('*')
+    .select('*,modules(title)')
     .eq('course_id', courseId)
-    .order('position', { ascending: true });
+    .order('order_index', { ascending: true });
 
   if (error) { console.error('fetchLessonsByCourse error:', error); return []; }
   return data ?? [];
