@@ -8,7 +8,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
   fetchCourseById, fetchLessonsByCourse, fetchLessonProgress,
-  markLessonComplete, updateEnrollmentProgress,
+  markLessonComplete, updateEnrollmentProgress, fetchUserEnrollments,
   DBCourse, DBLesson, LessonProgress,
 } from '@/services/courseService';
 import {
@@ -44,6 +44,7 @@ const LessonViewer = () => {
     typeof window !== 'undefined' ? window.innerWidth >= 768 : true
   );
   const [loading, setLoading] = useState(true);
+  const [notEnrolled, setNotEnrolled] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('reading');
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [loadingQuiz, setLoadingQuiz] = useState(false);
@@ -54,6 +55,10 @@ const LessonViewer = () => {
     const load = async () => {
       setLoading(true);
       try {
+        const enrollments = await fetchUserEnrollments(user.id);
+        const isEnrolled = enrollments.some(e => e.course_id === id);
+        if (!isEnrolled) { setNotEnrolled(true); setLoading(false); return; }
+
         const [c, l, p, passed] = await Promise.all([
           fetchCourseById(id),
           fetchLessonsByCourse(id),
@@ -139,6 +144,15 @@ const LessonViewer = () => {
   if (authLoading) return <div className="h-dvh flex items-center justify-center bg-background"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (!isAuthenticated) return <Navigate to="/login" />;
   if (loading) return <div className="h-dvh flex items-center justify-center bg-background"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (notEnrolled) return (
+    <div className="h-dvh flex flex-col items-center justify-center bg-background text-center p-8">
+      <h2 className="text-2xl font-bold text-foreground mb-2">Not Enrolled</h2>
+      <p className="text-muted-foreground mb-6">You must enroll in this course before accessing lessons.</p>
+      <button onClick={() => navigate('/courses')} className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors">
+        Browse Courses
+      </button>
+    </div>
+  );
   if (!course) return <div className="h-dvh flex items-center justify-center bg-background text-foreground"><p>Course not found.</p></div>;
 
   const completedCount = progress.filter(p => p.completed).length;

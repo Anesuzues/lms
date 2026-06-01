@@ -59,8 +59,8 @@ const Login = () => {
         description: result.error,
         variant: 'destructive',
       });
-      setSubmitting(false);
     }
+    setSubmitting(false);
   };
 
   const switchMode = (next: Mode) => {
@@ -211,7 +211,7 @@ const Login = () => {
                     <input
                       type={showPassword ? 'text' : 'password'}
                       required
-                      minLength={6}
+                      minLength={8}
                       value={password}
                       onChange={e => setPassword(e.target.value)}
                       className="w-full px-4 py-3 pr-12 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"

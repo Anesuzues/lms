@@ -26,10 +26,10 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, enrolled = false, progr
   const { isAuthenticated, enrollInCourse } = useAuth();
   const navigate = useNavigate();
 
-  const handleEnroll = (e: React.MouseEvent) => {
+  const handleEnroll = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (!isAuthenticated) { navigate('/login'); return; }
-    enrollInCourse(course.id);
+    await enrollInCourse(course.id);
     navigate(`/learn/${course.id}`);
   };
 

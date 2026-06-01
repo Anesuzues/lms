@@ -25,7 +25,10 @@ const Quiz: React.FC<QuizProps> = ({ questions, courseId, moduleId, moduleName, 
 
   const question = questions[current];
   const isLast = current === questions.length - 1;
-  const allAnswered = answers.every(a => a !== -1);
+  // Include current selection when checking if all questions have been answered
+  const effectiveAnswers = answers.map((a, i) => (i === current ? selected : a));
+  const allAnswered = effectiveAnswers.every(a => a !== -1);
+  const answeredCount = effectiveAnswers.filter(a => a !== -1).length;
 
   const handleSelect = (idx: number) => {
     if (submitted) return;
@@ -203,13 +206,20 @@ const Quiz: React.FC<QuizProps> = ({ questions, courseId, moduleId, moduleName, 
           </button>
 
           {isLast ? (
-            <button
-              onClick={handleSubmit}
-              disabled={selected === -1 || submitting}
-              className="flex-1 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {submitting ? 'Submitting...' : 'Submit Quiz'}
-            </button>
+            <div className="flex-1 flex flex-col gap-1.5">
+              {!allAnswered && (
+                <p className="text-xs text-amber-400 text-center">
+                  {answeredCount}/{questions.length} answered — go back and complete all questions
+                </p>
+              )}
+              <button
+                onClick={handleSubmit}
+                disabled={!allAnswered || submitting}
+                className="w-full py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {submitting ? 'Submitting...' : 'Submit Quiz'}
+              </button>
+            </div>
           ) : (
             <button
               onClick={handleNext}

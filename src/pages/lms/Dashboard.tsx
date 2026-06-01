@@ -6,7 +6,7 @@ import Footer from '@/components/Footer';
 import CourseCard, { CourseCardCourse } from '@/components/lms/CourseCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
-import { fetchCoursesByIds, fetchUserEnrollments, fetchTotalTimeSpent, DBCourse, DBEnrollment } from '@/services/courseService';
+import { fetchCoursesByIds, fetchUserEnrollments, fetchTotalTimeSpent, fetchCoursesWithPassedQuiz, DBCourse, DBEnrollment } from '@/services/courseService';
 import { generateCertificate } from '@/lib/generateCertificate';
 
 interface EnrolledCourse {
@@ -20,6 +20,7 @@ const Dashboard = () => {
   const [totalSeconds, setTotalSeconds] = useState(0);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [quizPassedCourses, setQuizPassedCourses] = useState<string[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -40,6 +41,13 @@ const Dashboard = () => {
           .map(e => { const course = courseMap.get(e.course_id); return course ? { course, enrollment: e } : null; })
           .filter(Boolean) as EnrolledCourse[];
         setEnrolledCourses(paired);
+
+        // Check which completed courses have a passed quiz (required for certificate)
+        const completedIds = enrollments.filter(e => e.progress >= 100).map(e => e.course_id);
+        if (completedIds.length > 0) {
+          const passed = await fetchCoursesWithPassedQuiz(user.id, completedIds);
+          setQuizPassedCourses(passed);
+        }
       } catch (err) {
         console.error('Dashboard load error:', err);
         toast({ title: 'Failed to load courses', description: 'Please refresh the page.', variant: 'destructive' });
@@ -192,7 +200,7 @@ const Dashboard = () => {
                         enrolled
                         progress={enrollment.progress}
                       />
-                      {enrollment.progress >= 100 && (
+                      {enrollment.progress >= 100 && quizPassedCourses.includes(course.id) && (
                         <button
                           onClick={() => handleDownloadCertificate(course.id)}
                           disabled={downloading === course.id}
@@ -204,6 +212,11 @@ const Dashboard = () => {
                             <><Download size={14} /> Download Certificate</>
                           )}
                         </button>
+                      )}
+                      {enrollment.progress >= 100 && !quizPassedCourses.includes(course.id) && (
+                        <p className="text-center text-xs text-amber-500/80 py-1.5">
+                          Pass the module quiz to unlock your certificate
+                        </p>
                       )}
                     </div>
                   ))}

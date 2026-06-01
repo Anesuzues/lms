@@ -152,6 +152,20 @@ export async function markLessonComplete(userId: string, courseId: string, lesso
   if (error) console.error('markLessonComplete error:', error);
 }
 
+// Returns courseIds where the user has at least one passed quiz attempt
+export async function fetchCoursesWithPassedQuiz(userId: string, courseIds: string[]): Promise<string[]> {
+  if (courseIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from('quiz_attempts')
+    .select('course_id')
+    .eq('user_id', userId)
+    .eq('passed', true)
+    .in('course_id', courseIds);
+
+  if (error) { console.error('fetchCoursesWithPassedQuiz error:', error); return []; }
+  return [...new Set((data ?? []).map((a: any) => a.course_id))];
+}
+
 export async function fetchTotalTimeSpent(userId: string): Promise<number> {
   const { data, error } = await supabase
     .from('user_progress')

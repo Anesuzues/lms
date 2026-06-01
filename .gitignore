@@ -24,6 +24,12 @@ client_secret*.json
 # Claude internal files
 .claude/
 
+# Database seed/migration scripts contain service role keys — keep local only
+scripts/
+
+# Development artifacts not for production
+public/certificate-preview.html
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
