@@ -1,5 +1,5 @@
 import React from 'react';
-import { PlayCircle, Clock, BookOpen, ArrowRight, User } from 'lucide-react';
+import { BookOpen, Clock, ArrowRight, User, BookMarked } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -38,10 +38,10 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, enrolled = false, progr
       {/* Thumbnail */}
       <div className="relative h-48 overflow-hidden bg-secondary">
         <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-        {/* Hover overlay with play button */}
+        {/* Hover overlay with read icon */}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
           <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
-            <PlayCircle size={24} className="text-primary ml-0.5" />
+            <BookOpen size={22} className="text-primary" />
           </div>
         </div>
         <div className="absolute top-3 right-3">
@@ -76,8 +76,8 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, enrolled = false, progr
             <span>{course.duration}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <BookOpen size={13} className="text-primary" />
-            <span>{course.modules.length} Modules</span>
+            <BookMarked size={13} className="text-primary" />
+            <span>Reading</span>
           </div>
         </div>
 
@@ -96,7 +96,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, enrolled = false, progr
               to={`/learn/${course.id}`}
               className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 font-semibold text-sm transition-colors"
             >
-              <PlayCircle size={15} /> Continue Learning
+              <BookOpen size={15} /> Continue Learning
             </Link>
           </div>
         ) : (
