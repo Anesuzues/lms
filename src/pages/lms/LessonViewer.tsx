@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import Quiz from '@/components/lms/Quiz';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   fetchCourseById, fetchLessonsByCourse, fetchLessonProgress,
   markLessonComplete, updateEnrollmentProgress,
@@ -226,8 +227,12 @@ const LessonViewer = () => {
                         prose-strong:text-white prose-strong:font-semibold
                         prose-blockquote:border-l-primary prose-blockquote:text-gray-400
                         prose-code:text-primary prose-code:bg-gray-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+                        prose-table:w-full prose-table:border-collapse
+                        prose-th:bg-gray-800 prose-th:text-white prose-th:font-semibold prose-th:px-4 prose-th:py-2 prose-th:border prose-th:border-gray-700 prose-th:text-left
+                        prose-td:text-gray-300 prose-td:px-4 prose-td:py-2 prose-td:border prose-td:border-gray-700
+                        prose-tr:even:bg-gray-900/50
                       ">
-                        <ReactMarkdown>{(activeLesson as any).content}</ReactMarkdown>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{(activeLesson as any).content}</ReactMarkdown>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-20 text-center">
