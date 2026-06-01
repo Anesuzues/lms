@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
-import { BookOpen, Trophy, Clock, ArrowRight, PlayCircle, Compass, Loader2 } from 'lucide-react';
+import { BookOpen, Trophy, Clock, ArrowRight, PlayCircle, Compass, Loader2, Download } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CourseCard, { CourseCardCourse } from '@/components/lms/CourseCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { fetchCoursesByIds, fetchUserEnrollments, fetchTotalTimeSpent, DBCourse, DBEnrollment } from '@/services/courseService';
+import { generateCertificate } from '@/lib/generateCertificate';
 
 interface EnrolledCourse {
   course: DBCourse;
@@ -18,6 +19,7 @@ const Dashboard = () => {
   const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourse[]>([]);
   const [totalSeconds, setTotalSeconds] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -56,6 +58,23 @@ const Dashboard = () => {
   if (!isAuthenticated || !user) return <Navigate to="/login" />;
 
   const completedCount = enrolledCourses.filter(e => e.enrollment.progress >= 100).length;
+
+  const handleDownloadCertificate = async (courseId: string) => {
+    const item = enrolledCourses.find(e => e.course.id === courseId);
+    if (!item || !user) return;
+    setDownloading(courseId);
+    try {
+      await generateCertificate({
+        userName: user.name,
+        courseName: item.course.title,
+        completedAt: item.enrollment.completed_at,
+      });
+    } catch {
+      toast({ title: 'Download failed', description: 'Could not generate certificate. Please try again.', variant: 'destructive' });
+    } finally {
+      setDownloading(null);
+    }
+  };
 
   // Real time spent from actual watch data
   const totalMinutes = Math.round(totalSeconds / 60);
@@ -167,12 +186,26 @@ const Dashboard = () => {
               {enrolledCourses.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {enrolledCourses.map(({ course, enrollment }) => (
-                    <CourseCard
-                      key={course.id}
-                      course={mapCourse(course)}
-                      enrolled
-                      progress={enrollment.progress}
-                    />
+                    <div key={course.id} className="flex flex-col gap-2">
+                      <CourseCard
+                        course={mapCourse(course)}
+                        enrolled
+                        progress={enrollment.progress}
+                      />
+                      {enrollment.progress >= 100 && (
+                        <button
+                          onClick={() => handleDownloadCertificate(course.id)}
+                          disabled={downloading === course.id}
+                          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 transition-colors text-sm font-semibold disabled:opacity-60"
+                        >
+                          {downloading === course.id ? (
+                            <><Loader2 size={14} className="animate-spin" /> Generating...</>
+                          ) : (
+                            <><Download size={14} /> Download Certificate</>
+                          )}
+                        </button>
+                      )}
+                    </div>
                   ))}
                 </div>
               ) : (
