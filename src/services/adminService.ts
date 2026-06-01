@@ -116,6 +116,44 @@ export async function adminDeleteCourse(id: string): Promise<{ error?: string }>
   return {};
 }
 
+export interface CourseAnalytics {
+  course_id: string;
+  title: string;
+  total_enrollments: number;
+  completed: number;
+  completion_rate: number;
+  avg_progress: number;
+}
+
+export async function fetchCourseAnalytics(): Promise<CourseAnalytics[]> {
+  const [enrollmentsRes, coursesRes] = await Promise.all([
+    supabase.from('enrollments').select('course_id, progress, completed_at'),
+    supabase.from('courses').select('id, title').order('created_at', { ascending: true }),
+  ]);
+
+  const enrollments = enrollmentsRes.data ?? [];
+  const courses = coursesRes.data ?? [];
+
+  return courses
+    .map(course => {
+      const ce = enrollments.filter(e => e.course_id === course.id);
+      const completed = ce.filter(e => e.completed_at).length;
+      const avgProgress = ce.length > 0
+        ? Math.round(ce.reduce((s, e) => s + (e.progress ?? 0), 0) / ce.length)
+        : 0;
+      return {
+        course_id: course.id,
+        title: course.title,
+        total_enrollments: ce.length,
+        completed,
+        completion_rate: ce.length > 0 ? Math.round((completed / ce.length) * 100) : 0,
+        avg_progress: avgProgress,
+      };
+    })
+    .filter(c => c.total_enrollments > 0)
+    .sort((a, b) => b.total_enrollments - a.total_enrollments);
+}
+
 export async function fetchAdminStats(): Promise<AdminStats> {
   const { count: totalStudents } = await supabase
     .from('profiles')

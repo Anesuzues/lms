@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Users, Trophy, BookOpen, Search, Loader2, LogOut, TrendingUp, ChevronLeft, ChevronRight, Plus, Pencil, Trash2, X, Menu } from 'lucide-react';
+import { Users, Trophy, BookOpen, Search, Loader2, LogOut, TrendingUp, ChevronLeft, ChevronRight, Plus, Pencil, Trash2, X, Menu, BarChart2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import {
   fetchAllStudents, fetchAdminStats, adminFetchCourses, adminCreateCourse, adminUpdateCourse, adminDeleteCourse,
-  StudentOverview, AdminStats, CourseFormData,
+  fetchCourseAnalytics,
+  StudentOverview, AdminStats, CourseFormData, CourseAnalytics,
 } from '@/services/adminService';
 import { DBCourse } from '@/services/courseService';
 
@@ -112,7 +113,7 @@ const AdminDashboard = () => {
   const { user, isAuthenticated, signOut, loading: authLoading } = useAuth();
   const { toast } = useToast();
 
-  const [tab, setTab] = useState<'students' | 'courses'>('students');
+  const [tab, setTab] = useState<'students' | 'courses' | 'analytics'>('students');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Students state
@@ -126,6 +127,10 @@ const AdminDashboard = () => {
   // Courses state
   const [courses, setCourses] = useState<DBCourse[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
+
+  // Analytics state
+  const [analytics, setAnalytics] = useState<CourseAnalytics[]>([]);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
   const [courseModal, setCourseModal] = useState<'create' | DBCourse | null>(null);
   const [savingCourse, setSavingCourse] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -149,12 +154,24 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     if (tab !== 'courses' || !user || user.role !== 'admin') return;
-    if (courses.length > 0) return; // already loaded
+    if (courses.length > 0) return;
     const load = async () => {
       setLoadingCourses(true);
       const data = await adminFetchCourses();
       setCourses(data);
       setLoadingCourses(false);
+    };
+    load();
+  }, [tab]);
+
+  useEffect(() => {
+    if (tab !== 'analytics' || !user || user.role !== 'admin') return;
+    if (analytics.length > 0) return;
+    const load = async () => {
+      setLoadingAnalytics(true);
+      const data = await fetchCourseAnalytics();
+      setAnalytics(data);
+      setLoadingAnalytics(false);
     };
     load();
   }, [tab]);
@@ -255,6 +272,12 @@ const AdminDashboard = () => {
           >
             <BookOpen size={16} /> Courses
           </button>
+          <button
+            onClick={() => { setTab('analytics'); setMobileSidebarOpen(false); }}
+            className={`w-full px-3 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-3 transition-colors ${tab === 'analytics' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+          >
+            <BarChart2 size={16} /> Analytics
+          </button>
         </nav>
 
         <div className="p-4 border-t border-gray-800">
@@ -284,7 +307,7 @@ const AdminDashboard = () => {
           </button>
           <div>
             <p className="font-bold text-gray-900 text-sm">Admin Panel</p>
-            <p className="text-xs text-gray-500 capitalize">{tab === 'students' ? 'Student Overview' : 'Course Management'}</p>
+            <p className="text-xs text-gray-500 capitalize">{tab === 'students' ? 'Student Overview' : tab === 'courses' ? 'Course Management' : 'Analytics'}</p>
           </div>
         </div>
         <div className="max-w-6xl mx-auto">
@@ -501,6 +524,71 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ── Analytics Tab ── */}
+          {tab === 'analytics' && (
+            <>
+              <div className="mb-6 md:mb-8">
+                <h1 className="text-xl md:text-2xl font-bold text-gray-900">Course Analytics</h1>
+                <p className="text-gray-500 text-sm mt-1">Completion rates and engagement across all courses</p>
+              </div>
+
+              {loadingAnalytics ? (
+                <div className="flex items-center justify-center py-24"><Loader2 className="w-7 h-7 animate-spin text-primary" /></div>
+              ) : analytics.length === 0 ? (
+                <div className="py-24 text-center rounded-2xl border-2 border-dashed border-gray-200 bg-white">
+                  <BarChart2 size={40} className="mx-auto mb-3 text-gray-300" />
+                  <p className="font-semibold text-gray-500">No enrollment data yet</p>
+                </div>
+              ) : (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[600px]">
+                      <thead>
+                        <tr className="border-b border-gray-100 bg-gray-50">
+                          <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Course</th>
+                          <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Enrollments</th>
+                          <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Completed</th>
+                          <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Completion Rate</th>
+                          <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Avg Progress</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {analytics.map(row => (
+                          <tr key={row.course_id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-6 py-4 text-sm font-semibold text-gray-900 max-w-[220px] truncate">{row.title}</td>
+                            <td className="px-6 py-4 text-sm text-gray-600">{row.total_enrollments}</td>
+                            <td className="px-6 py-4 text-sm text-gray-600">{row.completed}</td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full transition-all ${row.completion_rate >= 70 ? 'bg-emerald-500' : row.completion_rate >= 40 ? 'bg-amber-500' : 'bg-red-400'}`}
+                                    style={{ width: `${row.completion_rate}%` }}
+                                  />
+                                </div>
+                                <span className={`text-xs font-bold ${row.completion_rate >= 70 ? 'text-emerald-600' : row.completion_rate >= 40 ? 'text-amber-600' : 'text-red-500'}`}>
+                                  {row.completion_rate}%
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                  <div className="h-full bg-primary rounded-full" style={{ width: `${row.avg_progress}%` }} />
+                                </div>
+                                <span className="text-xs font-bold text-primary">{row.avg_progress}%</span>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </>

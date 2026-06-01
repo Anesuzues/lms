@@ -14,7 +14,8 @@ const Courses       = lazy(() => import("./pages/lms/Courses"));
 const CourseDetail  = lazy(() => import("./pages/lms/CourseDetail"));
 const Dashboard     = lazy(() => import("./pages/lms/Dashboard"));
 const LessonViewer  = lazy(() => import("./pages/lms/LessonViewer"));
-const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminDashboard      = lazy(() => import("./pages/admin/AdminDashboard"));
+const VerifyCertificate   = lazy(() => import("./pages/lms/VerifyCertificate"));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
@@ -49,6 +50,8 @@ const App = () => (
               <Route path="/learn/:id" element={<LessonViewer />} />
               {/* Admin Routes */}
               <Route path="/admin" element={<AdminDashboard />} />
+              {/* Certificate verification */}
+              <Route path="/verify" element={<VerifyCertificate />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

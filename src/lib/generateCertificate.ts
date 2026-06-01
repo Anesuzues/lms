@@ -16,6 +16,18 @@ async function loadImageAsBase64(url: string): Promise<string | null> {
   }
 }
 
+function generateCertId(userName: string, courseName: string, completedAt: string | null): string {
+  const raw = `${userName}|${courseName}|${completedAt ?? 'unknown'}`;
+  // Simple deterministic hash from the data, formatted as readable groups
+  let hash = 0;
+  for (let i = 0; i < raw.length; i++) {
+    hash = ((hash << 5) - hash + raw.charCodeAt(i)) | 0;
+  }
+  const hex = Math.abs(hash).toString(16).toUpperCase().padStart(8, '0');
+  const extra = Math.abs(raw.length * 31 + hash).toString(16).toUpperCase().padStart(8, '0');
+  return `NBZ-${hex.slice(0, 4)}-${hex.slice(4)}-${extra.slice(0, 4)}`;
+}
+
 export async function generateCertificate({
   userName,
   courseName,
@@ -25,6 +37,7 @@ export async function generateCertificate({
   courseName: string;
   completedAt: string | null;
 }) {
+  const certId = generateCertId(userName, courseName, completedAt);
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const W = 297;
   const H = 210;
@@ -134,6 +147,13 @@ export async function generateCertificate({
   doc.setFontSize(9);
   doc.setTextColor(120, 165, 195);
   doc.text(`Completed on ${dateStr}`, W / 2, 143, { align: 'center' });
+
+  // ── Certificate ID ────────────────────────────────────────────────────────
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(60, 100, 130);
+  doc.text(`Certificate ID: ${certId}`, W / 2, 158, { align: 'center' });
+  doc.text('Verify at: nobztech.com/verify', W / 2, 163, { align: 'center' });
 
   // ── Bottom branding ───────────────────────────────────────────────────────
   doc.setDrawColor(0, 80, 120);

@@ -174,11 +174,14 @@ const Quiz: React.FC<QuizProps> = ({ questions, courseId, moduleId, moduleName, 
         <h3 className="text-white font-bold text-lg mb-5 leading-snug">{question.question}</h3>
 
         {/* Options */}
-        <div className="space-y-2.5 sm:space-y-3 mb-6 sm:mb-8">
+        <div className="space-y-2.5 sm:space-y-3 mb-6 sm:mb-8" role="radiogroup" aria-label={`Options for question ${current + 1}`}>
           {question.options.map((option, idx) => (
             <button
               key={idx}
               onClick={() => handleSelect(idx)}
+              role="radio"
+              aria-checked={selected === idx}
+              aria-label={`Option ${String.fromCharCode(65 + idx)}: ${option}`}
               className={`w-full text-left p-3.5 sm:p-4 rounded-xl border transition-all text-sm font-medium min-h-[52px] ${
                 selected === idx
                   ? 'border-primary bg-primary/20 text-white'
@@ -200,6 +203,7 @@ const Quiz: React.FC<QuizProps> = ({ questions, courseId, moduleId, moduleName, 
           <button
             onClick={handleBack}
             disabled={current === 0}
+            aria-label="Go to previous question"
             className="px-5 py-2.5 rounded-xl border border-gray-700 text-gray-400 hover:text-white hover:border-gray-600 text-sm font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           >
             Back
@@ -224,6 +228,7 @@ const Quiz: React.FC<QuizProps> = ({ questions, courseId, moduleId, moduleName, 
             <button
               onClick={handleNext}
               disabled={selected === -1}
+              aria-label={`Go to question ${current + 2}`}
               className="flex-1 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               Next <ArrowRight size={15} />

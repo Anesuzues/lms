@@ -61,6 +61,18 @@ export async function fetchAllPassedModules(userId: string, courseId: string): P
   return [...new Set((data ?? []).map(a => a.module_id))];
 }
 
+export async function fetchAllQuizAttempts(userId: string): Promise<QuizAttempt[]> {
+  const { data, error } = await supabase
+    .from('quiz_attempts')
+    .select('*')
+    .eq('user_id', userId)
+    .order('attempted_at', { ascending: false })
+    .limit(30);
+
+  if (error) { console.error('fetchAllQuizAttempts error:', error); return []; }
+  return data ?? [];
+}
+
 export async function submitQuizAttempt(
   userId: string,
   courseId: string,

@@ -23,6 +23,7 @@ const mapCourse = (c: DBCourse): CourseCardCourse => ({
 const Courses = () => {
   const { user, loading: authLoading } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
+  const [levelFilter, setLevelFilter] = useState<'all' | 'beginner' | 'intermediate' | 'advanced'>('all');
   const [courses, setCourses] = useState<ReturnType<typeof mapCourse>[]>([]);
   const [enrollments, setEnrollments] = useState<DBEnrollment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,10 +44,12 @@ const Courses = () => {
     load();
   }, [authLoading, user?.id, user]);
 
-  const filtered = courses.filter(c =>
-    c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filtered = courses.filter(c => {
+    const matchSearch = c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchLevel = levelFilter === 'all' || c.level.toLowerCase() === levelFilter;
+    return matchSearch && matchLevel;
+  });
 
   const getProgress = (courseId: string) => {
     const e = enrollments.find(e => e.course_id === courseId);
@@ -76,6 +79,24 @@ const Courses = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+        </div>
+
+        {/* Level filters */}
+        <div className="flex flex-wrap gap-2 mb-6" role="group" aria-label="Filter by level">
+          {(['all', 'beginner', 'intermediate', 'advanced'] as const).map(level => (
+            <button
+              key={level}
+              onClick={() => setLevelFilter(level)}
+              aria-pressed={levelFilter === level}
+              className={`px-4 py-2 rounded-full text-sm font-semibold border transition-colors capitalize ${
+                levelFilter === level
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-card text-muted-foreground border-border hover:border-primary hover:text-primary'
+              }`}
+            >
+              {level === 'all' ? 'All Levels' : level}
+            </button>
+          ))}
         </div>
 
         {/* User strip */}

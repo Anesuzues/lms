@@ -164,7 +164,7 @@ const LessonViewer = () => {
       {/* Top Navbar */}
       <div className="h-14 shrink-0 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-4 z-20">
         <div className="flex items-center gap-3 min-w-0">
-          <button onClick={() => navigate('/dashboard')} className="p-1.5 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors shrink-0">
+          <button onClick={() => navigate('/dashboard')} aria-label="Back to dashboard" className="p-1.5 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors shrink-0">
             <ChevronLeft size={22} />
           </button>
           <div className="h-5 w-px bg-gray-700 shrink-0" />
@@ -176,7 +176,7 @@ const LessonViewer = () => {
           </div>
           <span className="text-xs text-gray-400 font-medium">{completedCount}/{lessons.length} lessons</span>
         </div>
-        <button className="p-1.5 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors" onClick={() => setSidebarOpen(!sidebarOpen)}>
+        <button aria-label={sidebarOpen ? 'Close lesson sidebar' : 'Open lesson sidebar'} className="p-1.5 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors" onClick={() => setSidebarOpen(!sidebarOpen)}>
           <Menu size={18} />
         </button>
       </div>
@@ -317,6 +317,7 @@ const LessonViewer = () => {
                     if (idx >= lessons.length - 1) return true;
                     return isLessonLocked(lessons[idx + 1]);
                   })()}
+                  aria-label="Go to next lesson"
                   className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
                 >
                   Next <ChevronRight size={15} />

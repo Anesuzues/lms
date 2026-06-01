@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
-import { BookOpen, Trophy, Clock, ArrowRight, PlayCircle, Compass, Loader2, Download } from 'lucide-react';
+import { BookOpen, Trophy, Clock, ArrowRight, PlayCircle, Compass, Loader2, Download, CheckCircle2, XCircle, BarChart2 } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CourseCard, { CourseCardCourse } from '@/components/lms/CourseCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { fetchCoursesByIds, fetchUserEnrollments, fetchTotalTimeSpent, fetchCoursesWithPassedQuiz, DBCourse, DBEnrollment } from '@/services/courseService';
+import { fetchAllQuizAttempts, QuizAttempt } from '@/services/quizService';
 import { generateCertificate } from '@/lib/generateCertificate';
+
+const TOTAL_PROGRAMME_COURSES = 21;
 
 interface EnrolledCourse {
   course: DBCourse;
@@ -21,6 +24,8 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState<string | null>(null);
   const [quizPassedCourses, setQuizPassedCourses] = useState<string[]>([]);
+  const [quizAttempts, setQuizAttempts] = useState<QuizAttempt[]>([]);
+  const [courseNameMap, setCourseNameMap] = useState<Record<string, string>>({});
   const { toast } = useToast();
 
   useEffect(() => {
@@ -48,6 +53,14 @@ const Dashboard = () => {
           const passed = await fetchCoursesWithPassedQuiz(user.id, completedIds);
           setQuizPassedCourses(passed);
         }
+
+        // Quiz attempt history + course name lookup
+        const [attempts, allCourses] = await Promise.all([
+          fetchAllQuizAttempts(user.id),
+          fetchCoursesByIds(enrollments.map(e => e.course_id)),
+        ]);
+        setQuizAttempts(attempts);
+        setCourseNameMap(Object.fromEntries(allCourses.map(c => [c.id, c.title])));
       } catch (err) {
         console.error('Dashboard load error:', err);
         toast({ title: 'Failed to load courses', description: 'Please refresh the page.', variant: 'destructive' });
@@ -127,6 +140,26 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* Programme Progress Banner */}
+        <div className="bg-card border border-border rounded-2xl p-5 mb-6 sm:mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <BarChart2 size={16} className="text-primary" />
+              <span className="font-bold text-foreground text-sm">Programme Progress</span>
+            </div>
+            <span className="text-sm font-bold text-primary">{completedCount}/{TOTAL_PROGRAMME_COURSES} courses</span>
+          </div>
+          <div className="w-full h-2.5 bg-secondary rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-700"
+              style={{ width: `${Math.round((completedCount / TOTAL_PROGRAMME_COURSES) * 100)}%` }}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            {Math.round((completedCount / TOTAL_PROGRAMME_COURSES) * 100)}% of the full NobzTech learning programme complete
+          </p>
+        </div>
+
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
           {[
@@ -190,6 +223,54 @@ const Dashboard = () => {
                   Browse all <ArrowRight size={14} />
                 </Link>
               </div>
+
+              {quizAttempts.length > 0 && (
+                <div className="mt-10">
+                  <h2 className="font-bold text-xl text-foreground mb-5">Quiz History</h2>
+                  <div className="bg-card border border-border rounded-2xl overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-[480px]">
+                        <thead>
+                          <tr className="border-b border-border bg-secondary/40">
+                            <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Course</th>
+                            <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Score</th>
+                            <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Result</th>
+                            <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Date</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                          {quizAttempts.map(attempt => (
+                            <tr key={attempt.id} className="hover:bg-secondary/30 transition-colors">
+                              <td className="px-5 py-3 text-sm text-foreground font-medium truncate max-w-[200px]">
+                                {courseNameMap[attempt.course_id] ?? 'Unknown Course'}
+                              </td>
+                              <td className="px-5 py-3">
+                                <span className={`text-sm font-bold ${attempt.passed ? 'text-emerald-500' : 'text-red-400'}`}>
+                                  {attempt.score}%
+                                </span>
+                              </td>
+                              <td className="px-5 py-3">
+                                {attempt.passed ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-xs font-semibold">
+                                    <CheckCircle2 size={11} /> Passed
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-500/10 text-red-400 text-xs font-semibold">
+                                    <XCircle size={11} /> Failed
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-5 py-3 text-xs text-muted-foreground">
+                                {new Date(attempt.attempted_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {enrolledCourses.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
