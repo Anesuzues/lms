@@ -88,7 +88,7 @@ const LessonViewer = () => {
     if (pos <= 1) return false;
     const prevLesson = lessons.find(l => (l.position ?? l.order_index) === pos - 1);
     if (!prevLesson) return false;
-    return !isCompleted(prevLesson.id) || !isModulePassed(prevLesson.module_id);
+    return !isCompleted(prevLesson.id); // Quiz no longer gates lesson progression
   };
 
   const handleMarkRead = async () => {
@@ -102,18 +102,12 @@ const LessonViewer = () => {
     setProgress(updated);
     const pct = Math.round((updated.filter(p => p.completed).length / lessons.length) * 100);
     await updateEnrollmentProgress(user.id, id, pct);
-
-    setLoadingQuiz(true);
-    const questions = await fetchQuizQuestions(id, activeLesson.module_id);
-    setLoadingQuiz(false);
     setMarking(false);
 
-    if (questions.length > 0) {
-      setQuizQuestions(questions);
-      setViewMode('quiz');
-    } else {
-      const currentIdx = lessons.findIndex(l => l.id === activeLessonId);
-      if (currentIdx < lessons.length - 1) setActiveLessonId(lessons[currentIdx + 1].id);
+    // Move to next lesson automatically (quiz only shows after all lessons are done)
+    const currentIdx = lessons.findIndex(l => l.id === activeLessonId);
+    if (currentIdx < lessons.length - 1) {
+      setActiveLessonId(lessons[currentIdx + 1].id);
     }
   };
 
@@ -121,8 +115,7 @@ const LessonViewer = () => {
     if (!activeLesson) return;
     setPassedModules(prev => [...new Set([...prev, activeLesson.module_id])]);
     setViewMode('reading');
-    const currentIdx = lessons.findIndex(l => l.id === activeLessonId);
-    if (currentIdx < lessons.length - 1) setActiveLessonId(lessons[currentIdx + 1].id);
+    // Stay on the last lesson — completion state will show in the content area
   };
 
   const handleQuizRetry = () => setViewMode('reading');
@@ -256,44 +249,79 @@ const LessonViewer = () => {
                     )}
 
                     {/* End of lesson action */}
-                    {!isCompleted(activeLesson.id) && (
-                      <div className="mt-12 pt-8 border-t border-gray-800 text-center">
-                        <p className="text-gray-400 text-sm mb-4">Done reading? Mark this lesson complete to unlock the quiz.</p>
-                        <button
-                          onClick={handleMarkRead}
-                          disabled={marking}
-                          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                        >
-                          {marking ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
-                          {marking ? 'Saving...' : 'Mark as Read'}
-                        </button>
-                      </div>
-                    )}
+                    {(() => {
+                      const allDone = lessons.length > 0 && lessons.every(l => isCompleted(l.id));
+                      const quizPassed = isModulePassed(activeLesson.module_id);
 
-                    {isCompleted(activeLesson.id) && !isModulePassed(activeLesson.module_id) && (
-                      <div className="mt-12 pt-8 border-t border-gray-800 text-center">
-                        <p className="text-gray-400 text-sm mb-4">Lesson complete! Take the quiz to unlock the next lesson.</p>
-                        <button
-                          onClick={async () => {
-                            setLoadingQuiz(true);
-                            const q = await fetchQuizQuestions(id!, activeLesson.module_id);
-                            setLoadingQuiz(false);
-                            if (q.length > 0) { setQuizQuestions(q); setViewMode('quiz'); }
-                          }}
-                          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold transition-colors"
-                        >
-                          <ClipboardList size={16} /> Take Quiz
-                        </button>
-                      </div>
-                    )}
+                      // Lesson not yet marked as read
+                      if (!isCompleted(activeLesson.id)) {
+                        return (
+                          <div className="mt-12 pt-8 border-t border-gray-800 text-center">
+                            <p className="text-gray-400 text-sm mb-4">Done reading? Mark this lesson complete to continue.</p>
+                            <button
+                              type="button"
+                              onClick={handleMarkRead}
+                              disabled={marking}
+                              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                              {marking ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
+                              {marking ? 'Saving...' : 'Mark as Read'}
+                            </button>
+                          </div>
+                        );
+                      }
 
-                    {isCompleted(activeLesson.id) && isModulePassed(activeLesson.module_id) && (
-                      <div className="mt-12 pt-8 border-t border-gray-800 text-center">
-                        <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-900/40 text-emerald-400 font-semibold text-sm border border-emerald-800">
-                          <CheckCircle size={15} /> Lesson & Quiz Complete
-                        </span>
-                      </div>
-                    )}
+                      // All lessons done + quiz not yet passed → show quiz button
+                      if (allDone && !quizPassed) {
+                        return (
+                          <div className="mt-12 pt-8 border-t border-gray-800 text-center">
+                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-900/30 text-emerald-400 text-sm font-semibold border border-emerald-800 mb-5">
+                              <CheckCircle size={14} /> All lessons complete!
+                            </div>
+                            <p className="text-gray-400 text-sm mb-4">
+                              You've finished all lessons. Take the quiz to complete this course.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                setLoadingQuiz(true);
+                                const q = await fetchQuizQuestions(id!, activeLesson.module_id);
+                                setLoadingQuiz(false);
+                                if (q.length > 0) { setQuizQuestions(q); setViewMode('quiz'); }
+                              }}
+                              disabled={loadingQuiz}
+                              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-white font-bold transition-colors disabled:opacity-60"
+                            >
+                              {loadingQuiz ? <Loader2 size={16} className="animate-spin" /> : <ClipboardList size={16} />}
+                              {loadingQuiz ? 'Loading...' : 'Take Course Quiz'}
+                            </button>
+                          </div>
+                        );
+                      }
+
+                      // All done + quiz passed → full completion
+                      if (allDone && quizPassed) {
+                        return (
+                          <div className="mt-12 pt-8 border-t border-gray-800 text-center space-y-3">
+                            <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-900/40 text-emerald-400 font-semibold text-sm border border-emerald-800">
+                              <CheckCircle size={15} /> Course Complete!
+                            </span>
+                            <p className="text-gray-500 text-xs">
+                              Head to your dashboard to download your certificate.
+                            </p>
+                          </div>
+                        );
+                      }
+
+                      // Lesson done but not the last one — simple tick
+                      return (
+                        <div className="mt-12 pt-8 border-t border-gray-800 text-center">
+                          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-900/30 text-emerald-400 text-sm font-semibold border border-emerald-800">
+                            <CheckCircle size={14} /> Lesson complete — continue to the next one
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full text-center p-8">
