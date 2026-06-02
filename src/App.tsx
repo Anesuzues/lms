@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./contexts/AuthContext";
+import SessionTimeoutModal from "./components/SessionTimeoutModal";
 
 const Login         = lazy(() => import("./pages/lms/Login"));
 const Courses       = lazy(() => import("./pages/lms/Courses"));
@@ -40,6 +41,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <SessionTimeoutModal />
         <BrowserRouter>
           <Suspense fallback={<PageLoader />}>
             <Routes>

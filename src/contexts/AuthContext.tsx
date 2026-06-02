@@ -1,6 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User as SupabaseUser } from '@supabase/supabase-js';
+
+const IDLE_MS = 28 * 60 * 1000;   // Show warning after 28 min of inactivity
+const WARNING_S = 120;              // 2-minute countdown before auto-logout
+const ACTIVITY_THROTTLE_MS = 20_000; // Only reset timer once per 20 s of activity
 
 export type UserRole = 'student' | 'instructor' | 'admin';
 
@@ -17,6 +21,9 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   loading: boolean;
+  showTimeoutWarning: boolean;
+  timeoutCountdown: number;
+  extendSession: () => void;
   signUp: (email: string, password: string, fullName: string, role?: UserRole) => Promise<{ error?: string }>;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   signInWithGoogle: () => Promise<{ error?: string }>;
@@ -40,6 +47,74 @@ function buildUser(supabaseUser: SupabaseUser, profile?: Record<string, any> | n
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // ── Session timeout ──────────────────────────────────────────────────────
+  const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
+  const [timeoutCountdown, setTimeoutCountdown] = useState(WARNING_S);
+  const idleTimer   = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const countdownTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastActivity = useRef(Date.now());
+
+  const clearTimers = useCallback(() => {
+    if (idleTimer.current)    clearTimeout(idleTimer.current);
+    if (countdownTimer.current) clearInterval(countdownTimer.current);
+  }, []);
+
+  const startWarningCountdown = useCallback((signOutFn: () => Promise<void>) => {
+    setShowTimeoutWarning(true);
+    setTimeoutCountdown(WARNING_S);
+    countdownTimer.current = setInterval(() => {
+      setTimeoutCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(countdownTimer.current!);
+          signOutFn();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, []);
+
+  const resetIdleTimer = useCallback((signOutFn: () => Promise<void>) => {
+    clearTimers();
+    setShowTimeoutWarning(false);
+    setTimeoutCountdown(WARNING_S);
+    idleTimer.current = setTimeout(() => startWarningCountdown(signOutFn), IDLE_MS);
+  }, [clearTimers, startWarningCountdown]);
+
+  // ── Activity listeners ───────────────────────────────────────────────────
+  useEffect(() => {
+    if (!user) { clearTimers(); return; }
+
+    // Lazy signOut ref so resetIdleTimer doesn't depend on signOut directly
+    const doSignOut = async () => {
+      await supabase.auth.signOut();
+      setUser(null);
+    };
+
+    const onActivity = () => {
+      const now = Date.now();
+      if (now - lastActivity.current < ACTIVITY_THROTTLE_MS) return;
+      lastActivity.current = now;
+      if (!showTimeoutWarning) resetIdleTimer(doSignOut);
+    };
+
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'] as const;
+    events.forEach(e => window.addEventListener(e, onActivity, { passive: true }));
+    resetIdleTimer(doSignOut);
+
+    return () => {
+      events.forEach(e => window.removeEventListener(e, onActivity));
+      clearTimers();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  const extendSession = useCallback(() => {
+    const doSignOut = async () => { await supabase.auth.signOut(); setUser(null); };
+    lastActivity.current = Date.now();
+    resetIdleTimer(doSignOut);
+  }, [resetIdleTimer]);
 
   useEffect(() => {
     // On mount: check for existing session
@@ -179,7 +254,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, loading, signIn, signUp, signInWithGoogle, signOut, resetPassword, updateProfile, enrollInCourse, refreshEnrollments }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, loading, showTimeoutWarning, timeoutCountdown, extendSession, signIn, signUp, signInWithGoogle, signOut, resetPassword, updateProfile, enrollInCourse, refreshEnrollments }}>
       {children}
     </AuthContext.Provider>
   );
