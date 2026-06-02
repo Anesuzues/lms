@@ -152,8 +152,9 @@ export async function generateCertificate({
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(60, 100, 130);
+  const verifyUrl = `${window.location.origin}/verify`;
   doc.text(`Certificate ID: ${certId}`, W / 2, 158, { align: 'center' });
-  doc.text('Verify at: nobztech.com/verify', W / 2, 163, { align: 'center' });
+  doc.text(`Verify at: ${verifyUrl}`, W / 2, 163, { align: 'center' });
 
   // ── Bottom branding ───────────────────────────────────────────────────────
   doc.setDrawColor(0, 80, 120);
