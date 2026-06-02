@@ -300,11 +300,19 @@ const Dashboard = () => {
                     ec => getCertForCourse(ec.course.title)?.number === cert.number
                   );
                   if (certCourses.length === 0) return null;
-                  const totalInCert = cert.courseTitles.length;
+
                   const completedCount = certCourses.filter(ec => ec.enrollment.progress >= 100).length;
-                  const allQuizPassed = certCourses.every(ec => quizPassedCourses.includes(ec.course.id));
-                  const eligible = completedCount === totalInCert && allQuizPassed && certCourses.length === totalInCert;
-                  return { cert, certCourses, completedCount, totalInCert, eligible };
+                  const totalEnrolled = certCourses.length;
+                  const pct = Math.round((completedCount / totalEnrolled) * 100);
+
+                  // Eligible = the final exam quiz has been passed
+                  const eligible = certCourses.some(ec =>
+                    cert.finalExamTitles.some(t =>
+                      ec.course.title.toLowerCase().includes(t.toLowerCase())
+                    ) && quizPassedCourses.includes(ec.course.id)
+                  );
+
+                  return { cert, certCourses, completedCount, totalEnrolled, pct, eligible };
                 }).filter(Boolean);
 
                 if (certStatus.length === 0) return null;
@@ -314,10 +322,9 @@ const Dashboard = () => {
                     <div className="space-y-3">
                       {certStatus.map(s => {
                         if (!s) return null;
-                        const { cert, completedCount, totalInCert, eligible } = s;
-                        const pct = Math.round((completedCount / totalInCert) * 100);
+                        const { cert, completedCount, totalEnrolled, pct, eligible } = s;
                         return (
-                          <div key={cert.number} className={`rounded-2xl border p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 ${eligible ? 'bg-emerald-50 border-emerald-200' : 'bg-card border-border'}`}>
+                          <div key={cert.number} className={`rounded-2xl border p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 ${eligible ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' : 'bg-card border-border'}`}>
                             <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${cert.gradient} flex items-center justify-center shrink-0`}>
                               <Trophy size={20} className="text-white" />
                             </div>
@@ -327,13 +334,17 @@ const Dashboard = () => {
                                 <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
                                   <div className={`h-full rounded-full transition-all duration-700 bg-gradient-to-r ${cert.gradient} cert-progress-bar`} style={{ '--cert-progress': `${pct}%` } as React.CSSProperties} />
                                 </div>
-                                <span className="text-xs font-bold text-muted-foreground shrink-0">{completedCount}/{totalInCert}</span>
+                                <span className="text-xs font-bold text-muted-foreground shrink-0">{completedCount}/{totalEnrolled} modules</span>
                               </div>
-                              {!eligible && completedCount < totalInCert && (
-                                <p className="text-xs text-muted-foreground mt-1">Complete all {totalInCert} courses and pass all quizzes to unlock</p>
+                              {!eligible && (
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Complete all modules and pass the final exam to earn this certificate
+                                </p>
                               )}
-                              {!eligible && completedCount === totalInCert && !s.allQuizPassed && (
-                                <p className="text-xs text-amber-600 mt-1">All lessons done — pass the remaining quizzes to unlock</p>
+                              {eligible && (
+                                <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 font-semibold">
+                                  ✓ Final exam passed — certificate earned!
+                                </p>
                               )}
                             </div>
                             {eligible ? (
@@ -341,7 +352,7 @@ const Dashboard = () => {
                                 type="button"
                                 onClick={() => handleDownloadCertificate(cert.number)}
                                 disabled={downloading === String(cert.number)}
-                                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition-colors disabled:opacity-60 shrink-0"
+                                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition-colors disabled:opacity-60 shrink-0 shadow-sm"
                               >
                                 {downloading === String(cert.number)
                                   ? <><Loader2 size={14} className="animate-spin" /> Generating...</>

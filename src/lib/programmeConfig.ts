@@ -24,6 +24,7 @@ export const CERTIFICATES: CertificateConfig[] = [
     courseTitles: [
       'Foundations of Modern Technology',
       'Foundation of Modern Technology',
+      'Technology Foundations',
       'Workplace Foundations',
       'Working Smarter with AI',
       'Digital Productivity for Professionals',
