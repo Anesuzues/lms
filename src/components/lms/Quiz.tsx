@@ -95,10 +95,11 @@ const Quiz: React.FC<QuizProps> = ({ questions, courseId, moduleId, moduleName, 
                 <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${score}%` }} />
               </div>
               <button
+                type="button"
                 onClick={onPass}
-                className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-colors flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-gray-950 font-bold transition-colors flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20"
               >
-                Continue to Next Module <ArrowRight size={16} />
+                Continue <ArrowRight size={16} />
               </button>
             </>
           ) : (
@@ -117,8 +118,9 @@ const Quiz: React.FC<QuizProps> = ({ questions, courseId, moduleId, moduleName, 
                 <p className="text-amber-300 text-xs">Re-watch the video before retrying to improve your score.</p>
               </div>
               <button
+                type="button"
                 onClick={handleRetry}
-                className="w-full py-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold transition-colors flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-xl bg-gray-700 hover:bg-gray-600 text-white font-bold transition-colors flex items-center justify-center gap-2 border border-gray-600"
               >
                 <RotateCcw size={16} /> Try Again
               </button>

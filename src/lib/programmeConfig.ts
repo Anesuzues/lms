@@ -22,6 +22,8 @@ export const CERTIFICATES: CertificateConfig[] = [
     gradient: 'from-blue-600 to-cyan-500',
     badge: 'bg-blue-500/20 text-blue-200 border-blue-400/30',
     courseTitles: [
+      'Foundations of Modern Technology',
+      'Foundation of Modern Technology',
       'Workplace Foundations',
       'Working Smarter with AI',
       'Digital Productivity for Professionals',

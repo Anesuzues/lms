@@ -1,9 +1,25 @@
 import { Button } from "@/components/ui/button";
-import { Menu, X, LogOut } from "lucide-react";
+import { Menu, X, LogOut, Sun, Moon } from "lucide-react";
 import { useState } from "react";
+import { useTheme } from "next-themes";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import ProfileEditModal from "@/components/ProfileEditModal";
+
+const ThemeToggle = () => {
+  const { theme, setTheme } = useTheme();
+  const isDark = theme === 'dark';
+  return (
+    <button
+      type="button"
+      onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
+    >
+      {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+    </button>
+  );
+};
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -21,10 +37,8 @@ const Header = () => {
   const handleAnchorNav = (hash: string) => {
     setIsMenuOpen(false);
     if (location.pathname === '/') {
-      // Already on home, just scroll
       document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth' });
     } else {
-      // Navigate home then scroll after page loads
       navigate('/');
       setTimeout(() => {
         document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth' });
@@ -54,21 +68,23 @@ const Header = () => {
               <Link to="/dashboard" className={`text-sm ${isActive("/dashboard")}`}>Dashboard</Link>
             ) : (
               <>
-                <button onClick={() => handleAnchorNav('modules')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Modules</button>
-                <button onClick={() => handleAnchorNav('benefits')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Benefits</button>
-                <button onClick={() => handleAnchorNav('contact')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contact</button>
+                <button type="button" onClick={() => handleAnchorNav('modules')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Modules</button>
+                <button type="button" onClick={() => handleAnchorNav('benefits')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Benefits</button>
+                <button type="button" onClick={() => handleAnchorNav('contact')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contact</button>
               </>
             )}
           </nav>
 
-          {/* Desktop Auth */}
+          {/* Desktop Auth + Theme Toggle */}
           <div className="hidden md:flex items-center gap-3">
+            <ThemeToggle />
             {isAuthenticated ? (
               <div className="flex items-center gap-3">
                 <button
+                  type="button"
                   onClick={() => setShowProfile(true)}
                   className="flex items-center gap-2.5 pl-3 pr-4 py-1.5 rounded-full bg-secondary border border-border hover:border-primary/40 transition-colors"
-                  title="Edit profile"
+                  aria-label="Edit profile"
                 >
                   <img src={user?.avatar} alt={user?.name} className="w-7 h-7 rounded-full object-cover ring-2 ring-primary/20" />
                   <div className="leading-tight">
@@ -91,10 +107,18 @@ const Header = () => {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
-          <button className="md:hidden p-2 rounded-lg hover:bg-secondary transition-colors" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+          {/* Mobile: theme toggle + hamburger */}
+          <div className="md:hidden flex items-center gap-1">
+            <ThemeToggle />
+            <button
+              type="button"
+              aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+              className="p-2 rounded-lg hover:bg-secondary transition-colors"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu */}
@@ -115,9 +139,9 @@ const Header = () => {
                 <Link to="/dashboard" className="px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-secondary transition-colors" onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
               ) : (
                 <>
-                  <button onClick={() => handleAnchorNav('modules')} className="px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-secondary transition-colors text-left">Modules</button>
-                  <button onClick={() => handleAnchorNav('benefits')} className="px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-secondary transition-colors text-left">Benefits</button>
-                  <button onClick={() => handleAnchorNav('contact')} className="px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-secondary transition-colors text-left">Contact</button>
+                  <button type="button" onClick={() => handleAnchorNav('modules')} className="px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-secondary transition-colors text-left">Modules</button>
+                  <button type="button" onClick={() => handleAnchorNav('benefits')} className="px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-secondary transition-colors text-left">Benefits</button>
+                  <button type="button" onClick={() => handleAnchorNav('contact')} className="px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-secondary transition-colors text-left">Contact</button>
                 </>
               )}
               <div className="pt-3 mt-2 border-t border-border">

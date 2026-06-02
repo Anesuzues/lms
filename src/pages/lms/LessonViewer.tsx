@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
-import { ChevronLeft, Menu, CheckCircle, Loader2, ChevronRight, Lock, ClipboardList, BookOpen } from 'lucide-react';
+import { ChevronLeft, Menu, CheckCircle, Loader2, ChevronRight, Lock, ClipboardList, BookOpen, Download, Trophy, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import Quiz from '@/components/lms/Quiz';
@@ -14,6 +14,8 @@ import {
 import {
   fetchQuizQuestions, fetchAllPassedModules, QuizQuestion,
 } from '@/services/quizService';
+import { isFinalExam, getCertForCourse } from '@/lib/programmeConfig';
+import { generateCertificate } from '@/lib/generateCertificate';
 
 const FALLBACK_MODULE_NAMES = [
   'Workplace Foundations',
@@ -27,7 +29,7 @@ const getModuleName = (lesson: DBLesson) =>
   FALLBACK_MODULE_NAMES[(lesson.position ?? lesson.order_index) - 1] ??
   `Module ${lesson.position ?? lesson.order_index}`;
 
-type ViewMode = 'reading' | 'quiz';
+type ViewMode = 'reading' | 'quiz' | 'certificate';
 
 const LessonViewer = () => {
   const { id } = useParams<{ id: string }>();
@@ -49,6 +51,7 @@ const LessonViewer = () => {
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [loadingQuiz, setLoadingQuiz] = useState(false);
   const [marking, setMarking] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     if (!id || !user) return;
@@ -112,10 +115,26 @@ const LessonViewer = () => {
   };
 
   const handleQuizPass = () => {
-    if (!activeLesson) return;
+    if (!activeLesson || !course) return;
     setPassedModules(prev => [...new Set([...prev, activeLesson.module_id])]);
-    setViewMode('reading');
-    // Stay on the last lesson — completion state will show in the content area
+    // If this is a final exam → go straight to certificate screen
+    if (isFinalExam(course.title)) {
+      setViewMode('certificate');
+    } else {
+      setViewMode('reading');
+    }
+  };
+
+  const handleDownloadCertificate = async () => {
+    if (!user || !course) return;
+    const cert = getCertForCourse(course.title);
+    setDownloading(true);
+    await generateCertificate({
+      userName: user.name,
+      courseName: cert ? cert.shortName : course.title,
+      completedAt: new Date().toISOString(),
+    });
+    setDownloading(false);
   };
 
   const handleQuizRetry = () => setViewMode('reading');
@@ -185,7 +204,77 @@ const LessonViewer = () => {
         {/* Content Area */}
         <div className="flex-1 flex flex-col bg-gray-950 min-w-0">
 
-          {viewMode === 'quiz' && activeLesson ? (
+          {viewMode === 'certificate' && course ? (
+            /* ── Certificate completion screen ── */
+            <div className="flex-1 flex flex-col items-center justify-center bg-gray-950 p-6 overflow-y-auto">
+              <div className="w-full max-w-lg">
+                {/* Confetti-style header */}
+                <div className="text-center mb-8">
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-cyan-500/25">
+                    <Trophy size={36} className="text-white" />
+                  </div>
+                  <h1 className="text-2xl font-bold text-white mb-1">Congratulations!</h1>
+                  <p className="text-gray-400 text-sm">You've passed the final exam</p>
+                </div>
+
+                {/* Certificate card preview */}
+                <div className="relative rounded-2xl overflow-hidden border border-cyan-500/30 mb-6 shadow-xl shadow-cyan-500/10">
+                  {/* Dark background */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-950 to-gray-900" />
+                  {/* Cyan border glow */}
+                  <div className="absolute inset-0 rounded-2xl ring-1 ring-cyan-500/40" />
+
+                  <div className="relative p-6 sm:p-8 text-center">
+                    {/* Logo */}
+                    <img
+                      src="/nobztech  logo.jpeg"
+                      alt="NobzTech"
+                      className="w-16 h-16 rounded-full mx-auto mb-4 object-cover ring-2 ring-cyan-500/40"
+                    />
+
+                    <p className="text-cyan-400 text-xs font-bold uppercase tracking-widest mb-1">Certificate of Completion</p>
+
+                    <div className="w-24 h-px bg-cyan-500/40 mx-auto mb-4" />
+
+                    <p className="text-gray-400 text-xs mb-2">This certifies that</p>
+                    <p className="text-white text-2xl font-bold mb-1">{user?.name}</p>
+                    <div className="w-32 h-px bg-cyan-500/50 mx-auto mb-4" />
+                    <p className="text-gray-400 text-xs mb-2">has successfully completed</p>
+                    <p className="text-cyan-400 text-base font-bold leading-snug mb-4">
+                      {getCertForCourse(course.title)?.certName ?? course.title}
+                    </p>
+                    <p className="text-gray-500 text-xs">
+                      {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
+
+                    <div className="mt-4 pt-4 border-t border-gray-800">
+                      <p className="text-cyan-500 text-xs font-bold tracking-widest">NOBZTECH</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    type="button"
+                    onClick={handleDownloadCertificate}
+                    disabled={downloading}
+                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-gray-950 font-bold transition-colors disabled:opacity-60 shadow-lg shadow-cyan-500/20"
+                  >
+                    {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                    {downloading ? 'Generating PDF…' : 'Download Certificate'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/dashboard')}
+                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-semibold transition-colors border border-gray-700"
+                  >
+                    Go to Dashboard <ArrowRight size={16} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : viewMode === 'quiz' && activeLesson ? (
             <Quiz
               questions={quizQuestions}
               courseId={id!}
