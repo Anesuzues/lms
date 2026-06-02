@@ -4,6 +4,13 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .anim-delay-0   { animation-delay:   0ms; }
+  .anim-delay-80  { animation-delay:  80ms; }
+  .anim-delay-160 { animation-delay: 160ms; }
+  .anim-delay-220 { animation-delay: 220ms; }
+}
+
 @layer base {
   :root {
     /* Premium Light Mode */

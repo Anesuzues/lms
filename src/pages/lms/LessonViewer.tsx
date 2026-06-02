@@ -18,6 +18,45 @@ import {
 import { isFinalExam, getCertForCourse } from '@/lib/programmeConfig';
 import { generateCertificate } from '@/lib/generateCertificate';
 
+const DELAY_CLASS: Record<number, string> = { 0: '', 100: 'anim-delay-100' };
+
+const RevealOnScroll = ({
+  children,
+  tag: Tag = 'div',
+  className = '',
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  tag?: keyof React.JSX.IntrinsicElements;
+  className?: string;
+  delay?: number;
+}) => {
+  const ref = useRef<HTMLElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.disconnect(); } },
+      { threshold: 0.08, rootMargin: '0px 0px -32px 0px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const delayClass = DELAY_CLASS[delay] ?? '';
+  const visibilityClass = visible
+    ? 'opacity-100 translate-y-0'
+    : 'opacity-0 translate-y-[18px]';
+
+  return React.createElement(
+    Tag,
+    { ref, className: `transition-[opacity,transform] duration-500 ease-out ${delayClass} ${visibilityClass} ${className}`.trim() },
+    children
+  );
+};
+
 const FALLBACK_MODULE_NAMES = [
   'Workplace Foundations',
   'CV Writing & AI Tools',
@@ -53,15 +92,18 @@ const LessonViewer = () => {
   const [loadingQuiz, setLoadingQuiz] = useState(false);
   const [marking, setMarking] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const [scrollProgress, setScrollProgress] = useState(0);
   const readingPaneRef = useRef<HTMLDivElement>(null);
+  const scrollBarRef = useRef<HTMLDivElement>(null);
+  const navProgressRef = useRef<HTMLDivElement>(null);
+  const sidebarProgressRef = useRef<HTMLDivElement>(null);
 
   const handleReadingScroll = useCallback(() => {
     const el = readingPaneRef.current;
-    if (!el) return;
+    if (!el || !scrollBarRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = el;
     const max = scrollHeight - clientHeight;
-    setScrollProgress(max <= 0 ? 100 : Math.min(100, Math.round((scrollTop / max) * 100)));
+    const pct = max <= 0 ? 100 : Math.min(100, Math.round((scrollTop / max) * 100));
+    scrollBarRef.current.style.width = `${pct}%`;
   }, []);
 
   useEffect(() => {
@@ -94,9 +136,17 @@ const LessonViewer = () => {
   }, [id, user?.id]);
 
   useEffect(() => {
-    setScrollProgress(0);
     if (readingPaneRef.current) readingPaneRef.current.scrollTop = 0;
+    if (scrollBarRef.current) scrollBarRef.current.style.width = '0%';
   }, [activeLessonId]);
+
+  useEffect(() => {
+    const completedCount = progress.filter(p => p.completed).length;
+    const pct = lessons.length > 0 ? Math.round((completedCount / lessons.length) * 100) : 0;
+    const w = `${pct}%`;
+    if (navProgressRef.current) navProgressRef.current.style.width = w;
+    if (sidebarProgressRef.current) sidebarProgressRef.current.style.width = w;
+  }, [progress, lessons]);
 
   const activeLesson = lessons.find(l => l.id === activeLessonId);
   const isCompleted = (lessonId: string) => progress.some(p => p.lesson_id === lessonId && p.completed);
@@ -225,7 +275,7 @@ const LessonViewer = () => {
         </div>
         <div className="hidden md:flex items-center gap-3">
           <div className="w-32 h-1.5 bg-secondary rounded-full overflow-hidden">
-            <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${overallProgress}%` }} />
+            <div ref={navProgressRef} className="h-full bg-primary rounded-full transition-[width] duration-300" />
           </div>
           <span className="text-xs text-muted-foreground font-medium">{completedCount}/{lessons.length} lessons</span>
         </div>
@@ -324,10 +374,7 @@ const LessonViewer = () => {
               <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Scroll progress bar */}
                 <div className="h-0.5 bg-secondary shrink-0">
-                  <div
-                    className="h-full bg-primary transition-all duration-150 ease-out"
-                    style={{ width: `${scrollProgress}%` }}
-                  />
+                  <div ref={scrollBarRef} className="h-full bg-primary transition-[width] duration-150 ease-out w-0" />
                 </div>
 
                 <div ref={readingPaneRef} onScroll={handleReadingScroll} className="flex-1 overflow-y-auto">
@@ -344,16 +391,19 @@ const LessonViewer = () => {
                     className="max-w-3xl mx-auto px-5 sm:px-8 py-8 sm:py-12 animate-in fade-in slide-in-from-bottom-3 duration-300"
                   >
                     {/* Lesson header */}
-                    <div className="mb-8">
-                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary uppercase tracking-wide mb-3">
+                    <div className="mb-10">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary uppercase tracking-wide mb-3 animate-in fade-in slide-in-from-top-2 duration-500 [animation-fill-mode:both] anim-delay-0">
                         <BookOpen size={12} /> {getModuleName(activeLesson)}
                       </span>
-                      <h1 className="text-2xl sm:text-3xl font-bold text-foreground leading-tight mb-2">
+                      <h1 className="text-2xl sm:text-3xl font-bold text-foreground leading-tight mb-3 animate-in fade-in slide-in-from-bottom-4 duration-500 [animation-fill-mode:both] anim-delay-80">
                         {activeLesson.title}
                       </h1>
                       {activeLesson.description && (
-                        <p className="text-muted-foreground text-base leading-relaxed">{activeLesson.description}</p>
+                        <p className="text-muted-foreground text-base leading-relaxed animate-in fade-in duration-500 [animation-fill-mode:both] anim-delay-160">
+                          {activeLesson.description}
+                        </p>
                       )}
+                      <div className="mt-6 h-px bg-gradient-to-r from-primary/40 via-primary/10 to-transparent animate-in fade-in duration-700 [animation-fill-mode:both] anim-delay-220" />
                     </div>
 
                     {/* Lesson content */}
@@ -374,7 +424,20 @@ const LessonViewer = () => {
                         prose-td:text-foreground/80 prose-td:px-4 prose-td:py-2 prose-td:border prose-td:border-border
                         prose-tr:even:bg-secondary/30
                       ">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{(activeLesson as any).content}</ReactMarkdown>
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            h2: ({ children, ...props }) => (
+                              <RevealOnScroll tag="h2" {...props}>{children}</RevealOnScroll>
+                            ),
+                            h3: ({ children, ...props }) => (
+                              <RevealOnScroll tag="h3" {...props}>{children}</RevealOnScroll>
+                            ),
+                            blockquote: ({ children, ...props }) => (
+                              <RevealOnScroll tag="blockquote" {...props}>{children}</RevealOnScroll>
+                            ),
+                          }}
+                        >{(activeLesson as any).content}</ReactMarkdown>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -384,6 +447,7 @@ const LessonViewer = () => {
                     )}
 
                     {/* End of lesson action */}
+                    <RevealOnScroll delay={100}>
                     {(() => {
                       const allDone = lessons.length > 0 && lessons.every(l => isCompleted(l.id));
                       const quizPassed = isModulePassed(activeLesson.module_id);
@@ -453,6 +517,7 @@ const LessonViewer = () => {
                         </div>
                       );
                     })()}
+                    </RevealOnScroll>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full text-center p-8">
@@ -502,7 +567,7 @@ const LessonViewer = () => {
                 <h3 className="font-bold text-foreground text-sm truncate">{course.title}</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">{lessons.length} lessons • {overallProgress}% complete</p>
                 <div className="mt-2 h-1 bg-secondary rounded-full overflow-hidden">
-                  <div className="h-full bg-primary rounded-full transition-all cert-progress-bar" style={{ '--cert-progress': `${overallProgress}%` } as React.CSSProperties} />
+                  <div ref={sidebarProgressRef} className="h-full bg-primary rounded-full transition-[width] duration-300" />
                 </div>
               </div>
               <button
