@@ -1,6 +1,89 @@
 import { supabase } from '@/lib/supabase';
 import { DBCourse } from './courseService';
 
+// ─── Student Detail ───────────────────────────────────────────────────────────
+
+export interface EnrollmentDetail {
+  course_id: string;
+  course_title: string;
+  progress: number;
+  completed_at: string | null;
+  enrolled_at: string;
+}
+
+export interface QuizAttemptDetail {
+  course_id: string;
+  course_title: string;
+  score: number;
+  passed: boolean;
+  attempted_at: string;
+}
+
+export interface StudentDetail {
+  enrollments: EnrollmentDetail[];
+  quizAttempts: QuizAttemptDetail[];
+  totalTimeSeconds: number;
+}
+
+export async function fetchStudentDetail(userId: string): Promise<StudentDetail> {
+  const [enrollmentsRes, quizRes, timeRes, coursesRes] = await Promise.all([
+    supabase.from('enrollments').select('*').eq('user_id', userId).order('enrolled_at', { ascending: false }),
+    supabase.from('quiz_attempts').select('*').eq('user_id', userId).order('attempted_at', { ascending: false }).limit(20),
+    supabase.from('user_progress').select('time_spent_seconds').eq('user_id', userId).eq('completed', true),
+    supabase.from('courses').select('id, title'),
+  ]);
+
+  const courseMap = new Map((coursesRes.data ?? []).map((c: any) => [c.id, c.title]));
+  const totalTimeSeconds = (timeRes.data ?? []).reduce((s: number, r: any) => s + (r.time_spent_seconds ?? 0), 0);
+
+  return {
+    enrollments: (enrollmentsRes.data ?? []).map((e: any) => ({
+      course_id: e.course_id,
+      course_title: courseMap.get(e.course_id) ?? 'Unknown Course',
+      progress: e.progress ?? 0,
+      completed_at: e.completed_at,
+      enrolled_at: e.enrolled_at,
+    })),
+    quizAttempts: (quizRes.data ?? []).map((qa: any) => ({
+      course_id: qa.course_id,
+      course_title: courseMap.get(qa.course_id) ?? 'Unknown Course',
+      score: qa.score,
+      passed: qa.passed,
+      attempted_at: qa.attempted_at,
+    })),
+    totalTimeSeconds,
+  };
+}
+
+// ─── Role Management ──────────────────────────────────────────────────────────
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  full_name: string | null;
+  role: 'student' | 'instructor' | 'admin';
+  avatar_url: string | null;
+  created_at: string;
+}
+
+export async function fetchAllProfiles(): Promise<UserProfile[]> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) { console.error('fetchAllProfiles error:', error); return []; }
+  return data ?? [];
+}
+
+export async function updateUserRole(userId: string, role: 'student' | 'admin'): Promise<{ error?: string }> {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ role, updated_at: new Date().toISOString() })
+    .eq('id', userId);
+  if (error) return { error: error.message };
+  return {};
+}
+
 export interface StudentOverview {
   id: string;
   name: string;
