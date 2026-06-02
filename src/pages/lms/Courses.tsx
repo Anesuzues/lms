@@ -6,79 +6,7 @@ import CourseCard, { CourseCardCourse } from '@/components/lms/CourseCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { fetchCourses, fetchUserEnrollments, DBCourse, DBEnrollment } from '@/services/courseService';
-
-// ─── Certificate programme structure ─────────────────────────────────────────
-const CERTIFICATES = [
-  {
-    number: 1,
-    name: 'Certified AI Digital Professional',
-    description: 'Master workplace readiness, AI tools, and digital productivity to launch your professional career.',
-    level: 'Beginner' as const,
-    modules: 3,
-    gradient: 'from-blue-600 to-cyan-500',
-    badge: 'bg-blue-500/20 text-blue-200 border-blue-400/30',
-    courseTitles: [
-      'Workplace Foundations',
-      'Working Smarter with AI',
-      'Digital Productivity for Professionals',
-      'Certificate 1 Final Exam',
-      'Certified AI Digital Professional — Final Exam',
-    ],
-  },
-  {
-    number: 2,
-    name: 'Certified Junior Software Developer',
-    description: 'Go from zero to job-ready — learn programming, web development, and how to build real applications.',
-    level: 'Intermediate' as const,
-    modules: 6,
-    gradient: 'from-violet-600 to-purple-500',
-    badge: 'bg-violet-500/20 text-violet-200 border-violet-400/30',
-    courseTitles: [
-      'Introduction to Programming',
-      'Programming with AI Assistance',
-      'Web Development Fundamentals',
-      'Understanding Software Projects',
-      'Debugging and Problem Solving',
-      'Building Real Applications',
-      'Certificate 2 Final Exam',
-      'Certified Junior Software Developer — Final Exam',
-    ],
-  },
-  {
-    number: 3,
-    name: 'Certified AI-Enhanced Developer',
-    description: 'Level up with prompt engineering, professional testing, and technical documentation skills.',
-    level: 'Intermediate' as const,
-    modules: 3,
-    gradient: 'from-emerald-600 to-teal-500',
-    badge: 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30',
-    courseTitles: [
-      'Prompt Engineering for Developers',
-      'Testing and Quality Assurance',
-      'Technical Documentation and Communication',
-      'Certificate 3 Final Exam',
-      'Certified AI-Enhanced Developer — Final Exam',
-    ],
-  },
-  {
-    number: 4,
-    name: 'Certified AI Application Developer',
-    description: 'Build production-ready AI applications, autonomous agents, and RAG systems.',
-    level: 'Advanced' as const,
-    modules: 5,
-    gradient: 'from-orange-500 to-amber-400',
-    badge: 'bg-orange-500/20 text-orange-200 border-orange-400/30',
-    courseTitles: [
-      'Building Your First AI Application',
-      'Introduction to AI Agents',
-      'Introduction to RAG Systems',
-      'Professional Developer Skills',
-      'Industry Capstone Project',
-      'Certificate 4 Final Exam',
-      'Certified AI Application Developer — Final Exam',
-    ],
-  },
-];
+import { CERTIFICATES } from '@/lib/programmeConfig';
 
 const LEVEL_COLORS: Record<string, string> = {
   Beginner:     'bg-emerald-100 text-emerald-700',
@@ -99,13 +27,12 @@ const mapCourse = (c: DBCourse): CourseCardCourse => ({
   modules: [],
 });
 
-// Match a course to a certificate group
+// Match a course to a certificate index
 function getCertIndex(title: string): number {
   const lower = title.toLowerCase();
-  for (let i = 0; i < CERTIFICATES.length; i++) {
-    if (CERTIFICATES[i].courseTitles.some(t => lower.includes(t.toLowerCase()))) return i;
-  }
-  return -1;
+  return CERTIFICATES.findIndex(c =>
+    c.courseTitles.some(t => lower.includes(t.toLowerCase()))
+  );
 }
 
 // ─── Certificate section component ───────────────────────────────────────────
@@ -139,7 +66,7 @@ const CertSection: React.FC<CertSectionProps> = ({ cert, courses, enrollments, g
                 Certificate {cert.number}
               </p>
               <h2 className="font-bold text-lg sm:text-xl text-white leading-snug mb-1">
-                {cert.name}
+                {cert.shortName}
               </h2>
               <p className="text-white/75 text-sm leading-relaxed hidden sm:block">{cert.description}</p>
               <div className="flex flex-wrap items-center gap-2 mt-3">
@@ -147,7 +74,7 @@ const CertSection: React.FC<CertSectionProps> = ({ cert, courses, enrollments, g
                   {cert.level}
                 </span>
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/15 border border-white/20 text-white">
-                  {cert.modules} modules
+                  {cert.courseTitles.length - cert.finalExamTitles.length} modules
                 </span>
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/15 border border-white/20 text-white">
                   {courses.length} courses
@@ -181,7 +108,7 @@ const CertSection: React.FC<CertSectionProps> = ({ cert, courses, enrollments, g
             <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
               <div
                 className="h-full bg-white rounded-full transition-all duration-700 cert-progress-bar"
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                /* eslint-disable-next-line react/forbid-dom-props -- CSS custom property requires inline style */
                 style={{ '--cert-progress': `${certProgress}%` } as React.CSSProperties}
               />
             </div>

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { PlayCircle, Clock, BookOpen, CheckCircle, User, ArrowLeft, Loader2 } from 'lucide-react';
+import { PlayCircle, Clock, BookOpen, CheckCircle, User, ArrowLeft, Loader2, Lock, AlertCircle } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { fetchCourseById, fetchLessonsByCourse, fetchUserEnrollments, DBCourse, DBLesson } from '@/services/courseService';
+import { fetchCourseById, fetchLessonsByCourse, fetchUserEnrollments, fetchCourses, DBCourse, DBLesson } from '@/services/courseService';
+import { getCertForCourse, getPrerequisiteTitles, isFinalExam } from '@/lib/programmeConfig';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -19,20 +20,43 @@ const CourseDetail = () => {
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
 
+  // Final exam prerequisite state
+  const [prerequisitesMet, setPrerequisitesMet] = useState(true);
+  const [missingPrereqs, setMissingPrereqs] = useState<string[]>([]);
+
   useEffect(() => {
     if (!id) return;
     const load = async () => {
       setLoading(true);
-      const [c, l] = await Promise.all([
-        fetchCourseById(id),
-        fetchLessonsByCourse(id),
-      ]);
+      const [c, l] = await Promise.all([fetchCourseById(id), fetchLessonsByCourse(id)]);
       setCourse(c);
       setLessons(l);
 
-      if (user) {
+      if (user && c) {
         const enrollments = await fetchUserEnrollments(user.id);
         setIsEnrolled(enrollments.some(e => e.course_id === id));
+
+        // If this is a final exam, check all prerequisite courses are 100% complete
+        if (isFinalExam(c.title)) {
+          const cert = getCertForCourse(c.title);
+          if (cert) {
+            const prereqTitles = getPrerequisiteTitles(cert);
+            // Fetch all courses to find prerequisite course IDs by title
+            const allCourses = await fetchCourses();
+            const prereqCourses = allCourses.filter(ac =>
+              prereqTitles.some(t => ac.title.toLowerCase().includes(t.toLowerCase()))
+            );
+            const missing = prereqCourses
+              .filter(pc => {
+                const enrollment = enrollments.find(e => e.course_id === pc.id);
+                return !enrollment || (enrollment.progress ?? 0) < 100;
+              })
+              .map(pc => pc.title);
+
+            setMissingPrereqs(missing);
+            setPrerequisitesMet(missing.length === 0);
+          }
+        }
       }
       setLoading(false);
     };
@@ -41,15 +65,16 @@ const CourseDetail = () => {
 
   const handleEnroll = async () => {
     if (!user) {
-      toast({ title: "Sign in required", description: "Please sign in to enroll.", variant: "destructive" });
+      toast({ title: 'Sign in required', description: 'Please sign in to enroll.', variant: 'destructive' });
       navigate('/login');
       return;
     }
+    if (!prerequisitesMet) return;
     setEnrolling(true);
     await enrollInCourse(course!.id);
     setIsEnrolled(true);
     setEnrolling(false);
-    toast({ title: "Enrolled!", description: `You're now enrolled in ${course!.title}.` });
+    toast({ title: 'Enrolled!', description: `You're now enrolled in ${course!.title}.` });
     navigate(`/learn/${course!.id}`);
   };
 
@@ -77,7 +102,9 @@ const CourseDetail = () => {
         <div className="flex-1 flex items-center justify-center text-center">
           <div>
             <h2 className="text-2xl font-bold mb-4">Course Not Found</h2>
-            <button onClick={() => navigate('/courses')} className="text-primary hover:underline">Return to Catalog</button>
+            <button type="button" onClick={() => navigate('/courses')} className="text-primary hover:underline">
+              Return to Catalog
+            </button>
           </div>
         </div>
       </div>
@@ -86,27 +113,58 @@ const CourseDetail = () => {
 
   const thumbnail = course.thumbnail_url || 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=800';
   const price = course.price === 0 ? 'Free' : `$${course.price}`;
+  const courseIsFinalExam = isFinalExam(course.title);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
 
       <main className="flex-1 container mx-auto px-4 md:px-6 py-10 mt-16 max-w-6xl">
-        <button onClick={() => navigate('/courses')} className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8 transition-colors font-medium text-sm">
+        <button type="button" onClick={() => navigate('/courses')} className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8 transition-colors font-medium text-sm">
           <ArrowLeft size={16} /> Back to Courses
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-10">
 
-          {/* Left: Info — shown second on mobile, first on desktop */}
+          {/* Left: Info */}
           <div className="lg:col-span-2 space-y-6 sm:space-y-8 order-2 lg:order-1">
             <div>
-              <span className="inline-block px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold mb-3 capitalize">
-                {course.level}
-              </span>
+              <div className="flex flex-wrap gap-2 mb-3">
+                <span className="inline-block px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold capitalize">
+                  {course.level}
+                </span>
+                {courseIsFinalExam && (
+                  <span className="inline-block px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-bold">
+                    Final Examination
+                  </span>
+                )}
+              </div>
               <h1 className="font-bold text-2xl sm:text-3xl md:text-4xl mb-4 text-foreground leading-tight">{course.title}</h1>
               <p className="text-muted-foreground text-base leading-relaxed">{course.description}</p>
             </div>
+
+            {/* Prerequisite warning for final exams */}
+            {courseIsFinalExam && !isEnrolled && !prerequisitesMet && (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                <div className="flex items-start gap-3 mb-3">
+                  <Lock size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-amber-800 text-sm">Complete all modules first</p>
+                    <p className="text-amber-700 text-xs mt-0.5">
+                      You must complete all prerequisite courses at 100% before taking the final exam.
+                    </p>
+                  </div>
+                </div>
+                <ul className="space-y-1.5 ml-7">
+                  {missingPrereqs.map(title => (
+                    <li key={title} className="flex items-center gap-2 text-xs text-amber-700">
+                      <AlertCircle size={12} className="shrink-0 text-amber-500" />
+                      {title}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {/* Meta */}
             <div className="flex flex-wrap gap-4 sm:gap-6 py-5 sm:py-6 border-y border-border">
@@ -134,7 +192,7 @@ const CourseDetail = () => {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Instructor</p>
-                  <p className="font-bold text-foreground">NexaLearn Team</p>
+                  <p className="font-bold text-foreground">NobzTech Team</p>
                 </div>
               </div>
             </div>
@@ -165,7 +223,7 @@ const CourseDetail = () => {
             )}
           </div>
 
-          {/* Right: CTA — shown first on mobile, second on desktop */}
+          {/* Right: CTA */}
           <div className="lg:col-span-1 order-1 lg:order-2">
             <div className="lg:sticky lg:top-24">
               <div className="rounded-2xl bg-card border border-border shadow-card overflow-hidden">
@@ -173,7 +231,9 @@ const CourseDetail = () => {
                   <img src={thumbnail} alt={course.title} loading="lazy" className="w-full h-48 object-cover" />
                   <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                     <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
-                      <PlayCircle size={28} className="text-primary ml-0.5" />
+                      {courseIsFinalExam && !prerequisitesMet && !isEnrolled
+                        ? <Lock size={24} className="text-amber-500" />
+                        : <PlayCircle size={28} className="text-primary ml-0.5" />}
                     </div>
                   </div>
                 </div>
@@ -189,11 +249,28 @@ const CourseDetail = () => {
                   )}
 
                   {isEnrolled ? (
-                    <button onClick={() => navigate(`/learn/${course.id}`)} className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors shadow-glow">
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/learn/${course.id}`)}
+                      className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors shadow-glow"
+                    >
                       Continue Learning
                     </button>
+                  ) : courseIsFinalExam && !prerequisitesMet ? (
+                    <button
+                      type="button"
+                      disabled
+                      className="w-full py-3.5 rounded-xl bg-amber-100 text-amber-600 font-bold flex items-center justify-center gap-2 cursor-not-allowed border border-amber-200"
+                    >
+                      <Lock size={16} /> Complete Modules First
+                    </button>
                   ) : (
-                    <button onClick={handleEnroll} disabled={enrolling} className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors shadow-glow disabled:opacity-60 flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleEnroll}
+                      disabled={enrolling}
+                      className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors shadow-glow disabled:opacity-60 flex items-center justify-center gap-2"
+                    >
                       {enrolling ? <><Loader2 size={16} className="animate-spin" /> Enrolling...</> : 'Enroll Now'}
                     </button>
                   )}

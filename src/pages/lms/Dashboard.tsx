@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { fetchCoursesByIds, fetchUserEnrollments, fetchTotalTimeSpent, fetchCoursesWithPassedQuiz, DBCourse, DBEnrollment } from '@/services/courseService';
 import { fetchAllQuizAttempts, QuizAttempt } from '@/services/quizService';
 import { generateCertificate } from '@/lib/generateCertificate';
+import { CERTIFICATES, getCertForCourse } from '@/lib/programmeConfig';
 
 const TOTAL_PROGRAMME_COURSES = 21;
 
@@ -80,15 +81,26 @@ const Dashboard = () => {
 
   const completedCount = enrolledCourses.filter(e => e.enrollment.progress >= 100).length;
 
-  const handleDownloadCertificate = async (courseId: string) => {
-    const item = enrolledCourses.find(e => e.course.id === courseId);
-    if (!item || !user) return;
-    setDownloading(courseId);
+  const handleDownloadCertificate = async (certNumber: number) => {
+    if (!user) return;
+    const cert = CERTIFICATES.find(c => c.number === certNumber);
+    if (!cert) return;
+    // Find any completed enrollment for the completion date
+    const certEnrollments = enrolledCourses.filter(
+      ec => getCertForCourse(ec.course.title)?.number === certNumber
+    );
+    const latestCompletedAt = certEnrollments
+      .map(ec => ec.enrollment.completed_at)
+      .filter(Boolean)
+      .sort()
+      .pop() ?? null;
+
+    setDownloading(String(certNumber));
     try {
       await generateCertificate({
         userName: user.name,
-        courseName: item.course.title,
-        completedAt: item.enrollment.completed_at,
+        courseName: cert.shortName,
+        completedAt: latestCompletedAt,
       });
     } catch {
       toast({ title: 'Download failed', description: 'Could not generate certificate. Please try again.', variant: 'destructive' });
@@ -281,33 +293,82 @@ const Dashboard = () => {
               )}
               </div>
 
+              {/* ── Your Certificates ── */}
+              {(() => {
+                const certStatus = CERTIFICATES.map(cert => {
+                  const certCourses = enrolledCourses.filter(
+                    ec => getCertForCourse(ec.course.title)?.number === cert.number
+                  );
+                  if (certCourses.length === 0) return null;
+                  const totalInCert = cert.courseTitles.length;
+                  const completedCount = certCourses.filter(ec => ec.enrollment.progress >= 100).length;
+                  const allQuizPassed = certCourses.every(ec => quizPassedCourses.includes(ec.course.id));
+                  const eligible = completedCount === totalInCert && allQuizPassed && certCourses.length === totalInCert;
+                  return { cert, certCourses, completedCount, totalInCert, eligible };
+                }).filter(Boolean);
+
+                if (certStatus.length === 0) return null;
+                return (
+                  <div className="mb-10">
+                    <h2 className="font-bold text-xl text-foreground mb-5">Your Certificates</h2>
+                    <div className="space-y-3">
+                      {certStatus.map(s => {
+                        if (!s) return null;
+                        const { cert, completedCount, totalInCert, eligible } = s;
+                        const pct = Math.round((completedCount / totalInCert) * 100);
+                        return (
+                          <div key={cert.number} className={`rounded-2xl border p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 ${eligible ? 'bg-emerald-50 border-emerald-200' : 'bg-card border-border'}`}>
+                            <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${cert.gradient} flex items-center justify-center shrink-0`}>
+                              <Trophy size={20} className="text-white" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold text-foreground text-sm leading-snug">{cert.certName}</p>
+                              <div className="flex items-center gap-2 mt-1.5">
+                                <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
+                                  <div className={`h-full rounded-full transition-all duration-700 bg-gradient-to-r ${cert.gradient} cert-progress-bar`} style={{ '--cert-progress': `${pct}%` } as React.CSSProperties} />
+                                </div>
+                                <span className="text-xs font-bold text-muted-foreground shrink-0">{completedCount}/{totalInCert}</span>
+                              </div>
+                              {!eligible && completedCount < totalInCert && (
+                                <p className="text-xs text-muted-foreground mt-1">Complete all {totalInCert} courses and pass all quizzes to unlock</p>
+                              )}
+                              {!eligible && completedCount === totalInCert && !s.allQuizPassed && (
+                                <p className="text-xs text-amber-600 mt-1">All lessons done — pass the remaining quizzes to unlock</p>
+                              )}
+                            </div>
+                            {eligible ? (
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadCertificate(cert.number)}
+                                disabled={downloading === String(cert.number)}
+                                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition-colors disabled:opacity-60 shrink-0"
+                              >
+                                {downloading === String(cert.number)
+                                  ? <><Loader2 size={14} className="animate-spin" /> Generating...</>
+                                  : <><Download size={14} /> Download Certificate</>}
+                              </button>
+                            ) : (
+                              <span className="px-3 py-1.5 rounded-xl bg-secondary text-muted-foreground text-xs font-semibold shrink-0">
+                                {pct}% complete
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
               {enrolledCourses.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {enrolledCourses.map(({ course, enrollment }) => (
-                    <div key={course.id} className="flex flex-col gap-2">
+                    <div key={course.id}>
                       <CourseCard
                         course={mapCourse(course)}
                         enrolled
                         progress={enrollment.progress}
                       />
-                      {enrollment.progress >= 100 && quizPassedCourses.includes(course.id) && (
-                        <button
-                          onClick={() => handleDownloadCertificate(course.id)}
-                          disabled={downloading === course.id}
-                          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 transition-colors text-sm font-semibold disabled:opacity-60"
-                        >
-                          {downloading === course.id ? (
-                            <><Loader2 size={14} className="animate-spin" /> Generating...</>
-                          ) : (
-                            <><Download size={14} /> Download Certificate</>
-                          )}
-                        </button>
-                      )}
-                      {enrollment.progress >= 100 && !quizPassedCourses.includes(course.id) && (
-                        <p className="text-center text-xs text-amber-500/80 py-1.5">
-                          Pass the module quiz to unlock your certificate
-                        </p>
-                      )}
                     </div>
                   ))}
                 </div>
