@@ -96,6 +96,7 @@
   html {
     overflow-x: hidden;
     -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
     scroll-behavior: smooth;
   }
 
@@ -155,6 +156,11 @@
 
   .shadow-glass {
     box-shadow: var(--shadow-glass);
+  }
+
+  /* Certificate progress bar — width driven by CSS custom property */
+  .cert-progress-bar {
+    width: var(--cert-progress, 0%);
   }
 
   /* Horizontal scroll shadow — indicates scrollable table on mobile */
