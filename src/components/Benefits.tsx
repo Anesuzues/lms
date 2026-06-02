@@ -40,7 +40,7 @@ const Benefits = () => {
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-16">
           <span className="inline-block px-4 py-1.5 bg-card text-foreground rounded-full text-sm font-medium mb-4">
-            Why NexaLearn?
+            Why NobzLearn?
           </span>
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
             Everything You Need to <span className="text-gradient">Succeed</span>

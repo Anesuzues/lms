@@ -121,7 +121,7 @@ const Dashboard = () => {
     title: c.title,
     description: c.description || '',
     thumbnail: c.thumbnail_url || 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=800',
-    instructor: 'NexaLearn Team',
+    instructor: 'NobzLearn Team',
     level: (c.level.charAt(0).toUpperCase() + c.level.slice(1)) as 'Beginner' | 'Intermediate' | 'Advanced',
     duration: c.duration || '4 weeks',
     price: c.price === 0 ? 'Free' as const : c.price,
@@ -208,7 +208,7 @@ const Dashboard = () => {
                     className="w-full sm:w-32 h-40 sm:h-24 rounded-xl object-cover shrink-0"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground font-medium mb-1">NexaLearn Team</p>
+                    <p className="text-xs text-muted-foreground font-medium mb-1">NobzLearn Team</p>
                     <h3 className="font-bold text-foreground text-lg leading-tight mb-3 truncate">{lastEnrolled.course.title}</h3>
                     <div className="flex items-center gap-3">
                       <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">

@@ -27,7 +27,7 @@ const Hero = () => {
             </div>
 
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.1] tracking-tight opacity-0 animate-fade-in" style={{ animationDelay: '0.1s' }}>
-              Get <span className="text-gradient drop-shadow-sm">Workplace Ready</span> with NexaLearn
+              Get <span className="text-gradient drop-shadow-sm">Workplace Ready</span> with NobzLearn
             </h1>
 
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-xl opacity-0 animate-fade-in" style={{ animationDelay: '0.2s' }}>
