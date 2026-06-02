@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { ChevronLeft, Menu, CheckCircle, Loader2, ChevronRight, Lock, ClipboardList, BookOpen, Download, Trophy, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -6,6 +6,7 @@ import { useToast } from '@/components/ui/use-toast';
 import Quiz from '@/components/lms/Quiz';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import confetti from 'canvas-confetti';
 import {
   fetchCourseById, fetchLessonsByCourse, fetchLessonProgress,
   markLessonComplete, updateEnrollmentProgress, fetchUserEnrollments,
@@ -52,6 +53,16 @@ const LessonViewer = () => {
   const [loadingQuiz, setLoadingQuiz] = useState(false);
   const [marking, setMarking] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const readingPaneRef = useRef<HTMLDivElement>(null);
+
+  const handleReadingScroll = useCallback(() => {
+    const el = readingPaneRef.current;
+    if (!el) return;
+    const { scrollTop, scrollHeight, clientHeight } = el;
+    const max = scrollHeight - clientHeight;
+    setScrollProgress(max <= 0 ? 100 : Math.min(100, Math.round((scrollTop / max) * 100)));
+  }, []);
 
   useEffect(() => {
     if (!id || !user) return;
@@ -82,6 +93,11 @@ const LessonViewer = () => {
     load();
   }, [id, user?.id]);
 
+  useEffect(() => {
+    setScrollProgress(0);
+    if (readingPaneRef.current) readingPaneRef.current.scrollTop = 0;
+  }, [activeLessonId]);
+
   const activeLesson = lessons.find(l => l.id === activeLessonId);
   const isCompleted = (lessonId: string) => progress.some(p => p.lesson_id === lessonId && p.completed);
   const isModulePassed = (moduleId: string) => passedModules.includes(moduleId);
@@ -94,18 +110,43 @@ const LessonViewer = () => {
     return !isCompleted(prevLesson.id);
   };
 
+  const MILESTONE_MESSAGES: Record<number, { title: string; description: string }> = {
+    25: { title: '25% complete!', description: "You're a quarter of the way through — keep it up!" },
+    50: { title: 'Halfway there!', description: "You're halfway through the course. Great work!" },
+    75: { title: '75% complete!', description: "Almost done — the finish line is in sight!" },
+    100: { title: 'Course complete!', description: "You've finished every lesson. Time for the quiz!" },
+  };
+
   const handleMarkRead = async () => {
     if (!user || !id || !activeLessonId || !activeLesson || marking) return;
     setMarking(true);
     await markLessonComplete(user.id, id, activeLessonId, 0);
+    const prevCompleted = progress.filter(p => p.completed).length;
     const updated = [
       ...progress.filter(p => p.lesson_id !== activeLessonId),
       { lesson_id: activeLessonId, completed: true, completed_at: new Date().toISOString() },
     ];
     setProgress(updated);
-    const pct = Math.round((updated.filter(p => p.completed).length / lessons.length) * 100);
+    const newCompleted = updated.filter(p => p.completed).length;
+    const pct = Math.round((newCompleted / lessons.length) * 100);
     await updateEnrollmentProgress(user.id, id, pct);
     setMarking(false);
+
+    confetti({
+      particleCount: 90,
+      spread: 65,
+      origin: { y: 0.75 },
+      colors: ['#7c3aed', '#2563eb', '#10b981', '#f59e0b'],
+      scalar: 0.9,
+    });
+
+    const prevPct = Math.round((prevCompleted / lessons.length) * 100);
+    const milestone = ([25, 50, 75, 100] as const).find(m => prevPct < m && pct >= m);
+    if (milestone) {
+      const { title, description } = MILESTONE_MESSAGES[milestone];
+      toast({ title, description });
+    }
+
     const currentIdx = lessons.findIndex(l => l.id === activeLessonId);
     if (currentIdx < lessons.length - 1) setActiveLessonId(lessons[currentIdx + 1].id);
   };
@@ -280,7 +321,16 @@ const LessonViewer = () => {
           ) : (
             <>
               {/* Reading pane */}
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 flex flex-col overflow-hidden">
+                {/* Scroll progress bar */}
+                <div className="h-0.5 bg-secondary shrink-0">
+                  <div
+                    className="h-full bg-primary transition-all duration-150 ease-out"
+                    style={{ width: `${scrollProgress}%` }}
+                  />
+                </div>
+
+                <div ref={readingPaneRef} onScroll={handleReadingScroll} className="flex-1 overflow-y-auto">
                 {loadingQuiz ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="text-center">
@@ -289,7 +339,10 @@ const LessonViewer = () => {
                     </div>
                   </div>
                 ) : activeLesson ? (
-                  <div className="max-w-3xl mx-auto px-5 sm:px-8 py-8 sm:py-12">
+                  <div
+                    key={activeLessonId}
+                    className="max-w-3xl mx-auto px-5 sm:px-8 py-8 sm:py-12 animate-in fade-in slide-in-from-bottom-3 duration-300"
+                  >
                     {/* Lesson header */}
                     <div className="mb-8">
                       <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary uppercase tracking-wide mb-3">
@@ -408,6 +461,7 @@ const LessonViewer = () => {
                     <p className="text-muted-foreground text-sm">Choose a lesson from the sidebar to start reading</p>
                   </div>
                 )}
+              </div>
               </div>
 
               {/* Bottom bar */}
