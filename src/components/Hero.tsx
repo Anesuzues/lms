@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, Award, CheckCircle, BookOpen, ChevronRight } from "lucide-react";
+import { ArrowRight, Users, Award, CheckCircle, BookOpen, ChevronRight, Briefcase } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Hero = () => {
