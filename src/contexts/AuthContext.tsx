@@ -30,6 +30,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error?: string }>;
   updateProfile: (updates: { full_name?: string; avatar_url?: string }) => Promise<{ error?: string }>;
+  deleteAccount: () => Promise<{ error?: string }>;
   enrollInCourse: (courseId: string) => Promise<void>;
   refreshEnrollments: () => Promise<void>;
 }
@@ -238,6 +239,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return {};
   };
 
+  const deleteAccount = async () => {
+    if (!user) return { error: 'Not authenticated' };
+    try {
+      // Delete all user data — profile row cascades to related tables
+      const { error } = await supabase.from('profiles').delete().eq('id', user.id);
+      if (error) return { error: error.message };
+      await supabase.auth.signOut();
+      setUser(null);
+      return {};
+    } catch (e: any) {
+      return { error: e.message ?? 'Failed to delete account' };
+    }
+  };
+
   const enrollInCourse = async (courseId: string) => {
     if (!user) return;
     await supabase.from('enrollments').upsert({ user_id: user.id, course_id: courseId, progress: 0 }, { onConflict: 'user_id,course_id' });
@@ -254,7 +269,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, loading, showTimeoutWarning, timeoutCountdown, extendSession, signIn, signUp, signInWithGoogle, signOut, resetPassword, updateProfile, enrollInCourse, refreshEnrollments }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, loading, showTimeoutWarning, timeoutCountdown, extendSession, signIn, signUp, signInWithGoogle, signOut, resetPassword, updateProfile, deleteAccount, enrollInCourse, refreshEnrollments }}>
       {children}
     </AuthContext.Provider>
   );
