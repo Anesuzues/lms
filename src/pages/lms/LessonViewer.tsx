@@ -219,6 +219,7 @@ const LessonViewer = () => {
     const cert = getCertForCourse(course.title);
     setDownloading(true);
     await generateCertificate({
+      userId: user.id,
       userName: user.name,
       courseName: cert ? cert.shortName : course.title,
       completedAt: new Date().toISOString(),
@@ -466,16 +467,25 @@ const LessonViewer = () => {
                       if (!isCompleted(activeLesson.id)) {
                         return (
                           <div className="mt-12 pt-8 border-t border-border text-center">
-                            <p className="text-muted-foreground text-sm mb-4">Done reading? Mark this lesson complete to continue.</p>
-                            <button
-                              type="button"
-                              onClick={handleMarkRead}
-                              disabled={marking}
-                              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-glow"
-                            >
-                              {marking ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
-                              {marking ? 'Saving...' : 'Mark as Read'}
-                            </button>
+                            <p className="text-muted-foreground text-sm mb-4">
+                              Done reading? Mark this lesson complete to continue.
+                            </p>
+                            {!showFloatingBtn && (
+                              <button
+                                type="button"
+                                onClick={handleMarkRead}
+                                disabled={marking}
+                                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-glow"
+                              >
+                                {marking ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
+                                {marking ? 'Saving...' : 'Mark as Read'}
+                              </button>
+                            )}
+                            {showFloatingBtn && (
+                              <p className="text-xs text-primary font-semibold animate-pulse">
+                                ↑ Use the button above to mark complete
+                              </p>
+                            )}
                           </div>
                         );
                       }

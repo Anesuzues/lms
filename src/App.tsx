@@ -56,8 +56,9 @@ const App = () => (
               <Route path="/learn/:id" element={<LessonViewer />} />
               {/* Admin Routes */}
               <Route path="/admin" element={<AdminDashboard />} />
-              {/* Certificate verification */}
+              {/* Certificate verification — /verify for manual search, /verify/:id for direct URL */}
               <Route path="/verify" element={<VerifyCertificate />} />
+              <Route path="/verify/:id" element={<VerifyCertificate />} />
               {/* Legal */}
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />

@@ -115,6 +115,7 @@ const Dashboard = () => {
     setDownloading(String(certNumber));
     try {
       await generateCertificate({
+        userId: user.id,
         userName: user.name,
         courseName: cert.shortName,
         completedAt: latestCompletedAt,

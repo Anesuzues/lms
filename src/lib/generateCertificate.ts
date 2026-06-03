@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import { saveCertificate } from '@/services/certificateService';
 
 async function loadImageAsBase64(url: string): Promise<string | null> {
   try {
@@ -16,28 +17,26 @@ async function loadImageAsBase64(url: string): Promise<string | null> {
   }
 }
 
-function generateCertId(userName: string, courseName: string, completedAt: string | null): string {
-  const raw = `${userName}|${courseName}|${completedAt ?? 'unknown'}`;
-  // Simple deterministic hash from the data, formatted as readable groups
-  let hash = 0;
-  for (let i = 0; i < raw.length; i++) {
-    hash = ((hash << 5) - hash + raw.charCodeAt(i)) | 0;
-  }
-  const hex = Math.abs(hash).toString(16).toUpperCase().padStart(8, '0');
-  const extra = Math.abs(raw.length * 31 + hash).toString(16).toUpperCase().padStart(8, '0');
-  return `NBZ-${hex.slice(0, 4)}-${hex.slice(4)}-${extra.slice(0, 4)}`;
-}
-
 export async function generateCertificate({
+  userId,
   userName,
   courseName,
   completedAt,
 }: {
+  userId: string;
   userName: string;
   courseName: string;
   completedAt: string | null;
 }) {
-  const certId = generateCertId(userName, courseName, completedAt);
+  // Persist and get a real unique UUID for this certificate
+  const uuid = await saveCertificate(userId, userName, courseName, completedAt);
+  const verifyUrl = uuid
+    ? `${window.location.origin}/verify/${uuid}`
+    : `${window.location.origin}/verify`;
+
+  // Short display ID for the certificate face (first 8 chars of UUID)
+  const displayId = uuid ? uuid.replace(/-/g, '').slice(0, 12).toUpperCase() : 'UNVERIFIED';
+
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const W = 297;
   const H = 210;
@@ -46,11 +45,10 @@ export async function generateCertificate({
   doc.setFillColor(5, 5, 20);
   doc.rect(0, 0, W, H, 'F');
 
-  // Slightly lighter top half for depth
   doc.setFillColor(8, 12, 35);
   doc.rect(0, 0, W, H * 0.55, 'F');
 
-  // ── Outer border (cyan glow) ──────────────────────────────────────────────
+  // ── Outer border ──────────────────────────────────────────────────────────
   doc.setDrawColor(0, 212, 255);
   doc.setLineWidth(1.2);
   doc.rect(7, 7, W - 14, H - 14);
@@ -64,20 +62,11 @@ export async function generateCertificate({
   const m = 10;
   doc.setDrawColor(0, 212, 255);
   doc.setLineWidth(1.8);
-  // Top-left
-  doc.line(m, m + cs, m, m);
-  doc.line(m, m, m + cs, m);
-  // Top-right
-  doc.line(W - m - cs, m, W - m, m);
-  doc.line(W - m, m, W - m, m + cs);
-  // Bottom-left
-  doc.line(m, H - m - cs, m, H - m);
-  doc.line(m, H - m, m + cs, H - m);
-  // Bottom-right
-  doc.line(W - m - cs, H - m, W - m, H - m);
-  doc.line(W - m, H - m, W - m, H - m - cs);
+  doc.line(m, m + cs, m, m); doc.line(m, m, m + cs, m);
+  doc.line(W - m - cs, m, W - m, m); doc.line(W - m, m, W - m, m + cs);
+  doc.line(m, H - m - cs, m, H - m); doc.line(m, H - m, m + cs, H - m);
+  doc.line(W - m - cs, H - m, W - m, H - m); doc.line(W - m, H - m, W - m, H - m - cs);
 
-  // Small circuit dots in each corner
   doc.setFillColor(0, 212, 255);
   [[m, m], [W - m, m], [m, H - m], [W - m, H - m]].forEach(([x, y]) => {
     doc.circle(x, y, 0.8, 'F');
@@ -95,13 +84,11 @@ export async function generateCertificate({
   doc.setTextColor(0, 212, 255);
   doc.text('CERTIFICATE OF COMPLETION', W / 2, 62, { align: 'center' });
 
-  // Flanked separator lines
   doc.setDrawColor(0, 212, 255);
   doc.setLineWidth(0.4);
   doc.line(W / 2 - 70, 67.5, W / 2 - 10, 67.5);
   doc.line(W / 2 + 10, 67.5, W / 2 + 70, 67.5);
 
-  // Small diamond in the centre of separator
   const dx = W / 2, dy = 67.5;
   doc.setFillColor(0, 212, 255);
   doc.triangle(dx, dy - 2.2, dx + 2.2, dy, dx, dy + 2.2, 'F');
@@ -113,13 +100,11 @@ export async function generateCertificate({
   doc.setTextColor(160, 196, 216);
   doc.text('This is to certify that', W / 2, 80, { align: 'center' });
 
-  // Recipient name
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(30);
   doc.setTextColor(255, 255, 255);
   doc.text(userName, W / 2, 96, { align: 'center' });
 
-  // Name underline
   const nameW = doc.getTextWidth(userName);
   doc.setDrawColor(0, 212, 255);
   doc.setLineWidth(0.5);
@@ -130,46 +115,54 @@ export async function generateCertificate({
   doc.setTextColor(160, 196, 216);
   doc.text('has successfully completed', W / 2, 111, { align: 'center' });
 
-  // Course name
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
   doc.setTextColor(0, 212, 255);
   const splitCourse = doc.splitTextToSize(courseName, 220);
   doc.text(splitCourse, W / 2, 123, { align: 'center' });
 
-  // Completion date
   const dateStr = new Date(completedAt ?? new Date().toISOString()).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+    year: 'numeric', month: 'long', day: 'numeric',
   });
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(120, 165, 195);
   doc.text(`Completed on ${dateStr}`, W / 2, 143, { align: 'center' });
 
-  // ── Certificate ID ────────────────────────────────────────────────────────
-  doc.setFont('helvetica', 'normal');
+  // ── Verification section ───────────────────────────────────────────────────
+  doc.setDrawColor(0, 80, 120);
+  doc.setLineWidth(0.2);
+  doc.rect(W / 2 - 70, 149, 140, 18, 'S');
+
+  doc.setFont('helvetica', 'bold');
   doc.setFontSize(7);
-  doc.setTextColor(60, 100, 130);
-  const verifyUrl = `${window.location.origin}/verify`;
-  doc.text(`Certificate ID: ${certId}`, W / 2, 158, { align: 'center' });
-  doc.text(`Verify at: ${verifyUrl}`, W / 2, 163, { align: 'center' });
+  doc.setTextColor(0, 180, 220);
+  doc.text('CERTIFICATE ID', W / 2, 154, { align: 'center' });
+
+  doc.setFont('courier', 'bold');
+  doc.setFontSize(8.5);
+  doc.setTextColor(255, 255, 255);
+  doc.text(displayId, W / 2, 159, { align: 'center' });
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.5);
+  doc.setTextColor(80, 140, 170);
+  doc.text(`Verify at: ${verifyUrl}`, W / 2, 164, { align: 'center' });
 
   // ── Bottom branding ───────────────────────────────────────────────────────
   doc.setDrawColor(0, 80, 120);
   doc.setLineWidth(0.3);
-  doc.line(20, H - 25, W - 20, H - 25);
+  doc.line(20, H - 22, W - 20, H - 22);
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
   doc.setTextColor(0, 212, 255);
-  doc.text('NOBZTECH', W / 2, H - 16, { align: 'center' });
+  doc.text('NOBZTECH', W / 2, H - 14, { align: 'center' });
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(70, 120, 155);
-  doc.text('Empowering the next generation of professionals', W / 2, H - 11, { align: 'center' });
+  doc.text('Empowering the next generation of professionals', W / 2, H - 9, { align: 'center' });
 
   // ── Save ──────────────────────────────────────────────────────────────────
   const safe = (s: string) => s.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_');
