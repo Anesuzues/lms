@@ -33,7 +33,7 @@ export async function getCertificateById(uuid: string): Promise<CertificateRecor
     .from('certificates')
     .select('*')
     .eq('id', uuid)
-    .single();
+    .maybeSingle();
 
   if (error || !data) return null;
   return data as CertificateRecord;

@@ -48,7 +48,7 @@ export async function fetchUserStats(userId: string): Promise<UserStats> {
   return {
     streak: data?.streak ?? 0,
     xp: data?.xp ?? 0,
-    onboarded: data?.onboarded ?? false || isExistingUser,
+    onboarded: (data?.onboarded ?? false) || isExistingUser,
   };
 }
 
