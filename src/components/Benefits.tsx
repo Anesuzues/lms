@@ -1,35 +1,35 @@
-import { CheckCircle2, Zap, Clock, GraduationCap, Video, Mail } from "lucide-react";
+import { Trophy, Video, Clock, Lock, Bot, CheckCircle2 } from "lucide-react";
 
 const benefits = [
   {
-    icon: Zap,
-    title: "100% Free",
-    description: "No hidden costs. Everything you need to get workplace ready at zero cost.",
+    icon: Trophy,
+    title: "4 Certificates",
+    description: "Earn industry-recognised certificates from Beginner through to Advanced AI Developer.",
   },
   {
     icon: Video,
     title: "Video Lessons",
-    description: "Learn at your own pace with clear, practical video content.",
+    description: "Learn at your own pace with clear, practical video content across every module.",
   },
   {
     icon: Clock,
     title: "Self-Paced",
-    description: "Complete modules on your schedule. No deadlines, no pressure.",
+    description: "Complete each certificate on your schedule — no deadlines, no pressure.",
   },
   {
-    icon: Mail,
-    title: "Auto Progress",
-    description: "Receive the next module automatically when you complete each one.",
+    icon: Lock,
+    title: "Sequential Unlocking",
+    description: "Content unlocks in order so you build skills properly before moving to the next level.",
   },
   {
-    icon: GraduationCap,
-    title: "Live Workshops",
-    description: "Get invited to CV, Interview, and WIL workshops upon completion.",
+    icon: Bot,
+    title: "AI-Powered Learning",
+    description: "Every certificate integrates AI tools so you graduate work-ready in a modern tech environment.",
   },
   {
     icon: CheckCircle2,
-    title: "Certificate",
-    description: "Earn a completion certificate to show future employers.",
+    title: "Verified Certificates",
+    description: "Each certificate is verifiable and shareable — prove your skills to future employers.",
   },
 ];
 
@@ -46,7 +46,7 @@ const Benefits = () => {
             Everything You Need to <span className="text-gradient">Succeed</span>
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground">
-            We've designed this course specifically for students preparing for their first professional experiences.
+            One complete programme — from AI fundamentals to building production applications — designed to make you job-ready.
           </p>
         </div>
 
