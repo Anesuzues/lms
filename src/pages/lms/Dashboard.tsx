@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
-import { BookOpen, Trophy, Clock, ArrowRight, PlayCircle, Compass, Loader2, Download, CheckCircle2, XCircle, BarChart2 } from 'lucide-react';
+import { BookOpen, Trophy, Clock, ArrowRight, PlayCircle, Compass, Loader2, Download, CheckCircle2, XCircle, BarChart2, Flame, Star, Zap } from 'lucide-react';
 import Header from '@/components/Header';
+import OnboardingModal from '@/components/lms/OnboardingModal';
 import Footer from '@/components/Footer';
 import CourseCard, { CourseCardCourse } from '@/components/lms/CourseCard';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +11,7 @@ import { fetchCoursesByIds, fetchUserEnrollments, fetchTotalTimeSpent, fetchCour
 import { fetchAllQuizAttempts, QuizAttempt } from '@/services/quizService';
 import { generateCertificate } from '@/lib/generateCertificate';
 import { CERTIFICATES, getCertForCourse } from '@/lib/programmeConfig';
+import { fetchUserStats, getLevelFromXP, LEVELS, UserStats } from '@/services/profileService';
 
 const CertBar = ({ pct, gradient }: { pct: number; gradient: string }) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -34,18 +36,24 @@ const Dashboard = () => {
   const [quizAttempts, setQuizAttempts] = useState<QuizAttempt[]>([]);
   const [courseNameMap, setCourseNameMap] = useState<Record<string, string>>({});
   const { toast } = useToast();
+  const [userStats, setUserStats] = useState<UserStats>({ streak: 0, xp: 0, onboarded: true });
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const progBarRef = useRef<HTMLDivElement>(null);
   const enrollBarRef = useRef<HTMLDivElement>(null);
+  const xpBarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
       setLoading(true);
       try {
-        const [enrollments, seconds] = await Promise.all([
+        const [enrollments, seconds, stats] = await Promise.all([
           fetchUserEnrollments(user.id),
           fetchTotalTimeSpent(user.id),
+          fetchUserStats(user.id),
         ]);
+        setUserStats(stats);
+        if (!stats.onboarded) setShowOnboarding(true);
         setTotalSeconds(seconds);
         if (enrollments.length === 0) { setEnrolledCourses([]); setLoading(false); return; }
         const courseIds = enrollments.map(e => e.course_id);
@@ -88,6 +96,15 @@ const Dashboard = () => {
     if (enrollBarRef.current && last)
       enrollBarRef.current.style.width = `${last.enrollment.progress}%`;
   }, [enrolledCourses]);
+
+  useEffect(() => {
+    if (!xpBarRef.current) return;
+    const lvl = getLevelFromXP(userStats.xp);
+    const pct = lvl.level === 7
+      ? 100
+      : Math.round(((userStats.xp - lvl.min) / (lvl.next - lvl.min)) * 100);
+    xpBarRef.current.style.width = `${pct}%`;
+  }, [userStats.xp]);
 
   if (authLoading) return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -239,11 +256,11 @@ const Dashboard = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-5">
           {[
-            { icon: BookOpen, label: 'Enrolled', value: enrolledCourses.length, color: 'text-primary', bg: 'bg-primary/10' },
-            { icon: Trophy, label: 'Completed', value: completedCount, color: 'text-amber-500', bg: 'bg-amber-50' },
-            { icon: Clock, label: 'Time Spent', value: timeDisplay, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+            { icon: BookOpen, label: 'Enrolled',   value: enrolledCourses.length, color: 'text-primary',      bg: 'bg-primary/10'     },
+            { icon: Trophy,   label: 'Completed',  value: completedCount,          color: 'text-amber-500',    bg: 'bg-amber-500/10'   },
+            { icon: Clock,    label: 'Time Spent', value: timeDisplay,             color: 'text-emerald-500',  bg: 'bg-emerald-500/10' },
           ].map(({ icon: Icon, label, value, color, bg }) => (
             <div key={label} className="bg-card rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-border shadow-soft flex items-center gap-3 sm:gap-4">
               <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl ${bg} flex items-center justify-center shrink-0`}>
@@ -257,9 +274,93 @@ const Dashboard = () => {
           ))}
         </div>
 
+        {/* Streak + XP row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
+          {/* Streak card */}
+          <div className="bg-card rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-border shadow-soft flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+              <Flame size={20} className="text-orange-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-baseline gap-1.5">
+                <p className="text-2xl font-bold text-foreground">{userStats.streak}</p>
+                <p className="text-xs text-muted-foreground">day{userStats.streak !== 1 ? 's' : ''} streak</p>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {userStats.streak === 0
+                  ? 'Complete a lesson today to start your streak!'
+                  : userStats.streak < 7
+                  ? `${7 - userStats.streak} more day${7 - userStats.streak !== 1 ? 's' : ''} for a 7-day bonus`
+                  : '🔥 Keep the fire alive!'}
+              </p>
+            </div>
+          </div>
+
+          {/* XP + Level card */}
+          {(() => {
+            const lvl = getLevelFromXP(userStats.xp);
+            const nextLvl = LEVELS.find(l => l.level === lvl.level + 1);
+            const pct = lvl.level === 7
+              ? 100
+              : Math.round(((userStats.xp - lvl.min) / (lvl.next - lvl.min)) * 100);
+            return (
+              <div className="bg-card rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-border shadow-soft">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-11 h-11 rounded-xl bg-violet-500/10 flex items-center justify-center shrink-0">
+                      <Star size={20} className="text-violet-500" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Level {lvl.level}</p>
+                      <p className="font-bold text-foreground text-sm">{lvl.name}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 text-violet-500">
+                    <Zap size={14} />
+                    <span className="font-bold text-sm">{userStats.xp} XP</span>
+                  </div>
+                </div>
+                <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                  <div ref={xpBarRef} className="h-full bg-gradient-to-r from-violet-500 to-purple-400 rounded-full transition-[width] duration-700 w-0" />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1.5">
+                  {lvl.level === 7
+                    ? 'Maximum level reached!'
+                    : `${nextLvl ? lvl.next - userStats.xp : 0} XP to ${nextLvl?.name ?? 'next level'}`}
+                </p>
+              </div>
+            );
+          })()}
+        </div>
+
         {loading ? (
-          <div className="flex items-center justify-center py-24">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <div className="space-y-6">
+            {/* Skeleton: continue card */}
+            <div className="bg-card rounded-2xl border border-border p-5 flex gap-5 animate-pulse">
+              <div className="w-32 h-24 rounded-xl bg-secondary shrink-0" />
+              <div className="flex-1 space-y-3 py-1">
+                <div className="h-3 bg-secondary rounded w-1/4" />
+                <div className="h-4 bg-secondary rounded w-3/4" />
+                <div className="h-2 bg-secondary rounded w-full" />
+              </div>
+              <div className="w-20 h-10 bg-secondary rounded-xl shrink-0" />
+            </div>
+            {/* Skeleton: course grid */}
+            <div>
+              <div className="h-6 bg-secondary rounded w-48 mb-5 animate-pulse" />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1,2,3].map(i => (
+                  <div key={i} className="bg-card rounded-2xl border border-border overflow-hidden animate-pulse">
+                    <div className="h-40 bg-secondary" />
+                    <div className="p-4 space-y-3">
+                      <div className="h-4 bg-secondary rounded w-3/4" />
+                      <div className="h-3 bg-secondary rounded w-1/2" />
+                      <div className="h-2 bg-secondary rounded w-full" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         ) : (
           <>
@@ -435,6 +536,13 @@ const Dashboard = () => {
         )}
       </main>
       <Footer />
+      {showOnboarding && user && (
+        <OnboardingModal
+          userId={user.id}
+          userName={user.name}
+          onClose={() => { setShowOnboarding(false); setUserStats(s => ({ ...s, onboarded: true })); }}
+        />
+      )}
     </div>
   );
 };

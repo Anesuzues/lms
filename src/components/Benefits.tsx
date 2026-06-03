@@ -52,11 +52,12 @@ const Benefits = () => {
 
         {/* Benefits Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-          {benefits.map((benefit, index) => (
+          {benefits.map((benefit, index) => {
+            const delayClass = ['anim-delay-0','anim-delay-100','anim-delay-200','anim-delay-300','anim-delay-400','anim-delay-500'][index] ?? '';
+            return (
             <div
               key={benefit.title}
-              className="group p-5 sm:p-6 lg:p-8 glass-panel hover-glow transition-all duration-300 hover:-translate-y-1 opacity-0 animate-fade-in"
-              style={{ animationDelay: `${index * 0.1}s` }}
+              className={`group p-5 sm:p-6 lg:p-8 glass-panel hover-glow transition-all duration-300 hover:-translate-y-1 opacity-0 animate-fade-in ${delayClass}`}
             >
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-5 group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-glow transition-all duration-300">
                 <benefit.icon className="w-6 h-6 text-primary group-hover:text-white" />
@@ -64,7 +65,8 @@ const Benefits = () => {
               <h3 className="text-xl font-bold mb-2">{benefit.title}</h3>
               <p className="text-muted-foreground">{benefit.description}</p>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

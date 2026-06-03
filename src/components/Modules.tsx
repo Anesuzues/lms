@@ -55,11 +55,12 @@ const Modules = () => {
 
         {/* Module Cards */}
         <div className="grid sm:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
-          {modules.map((module, index) => (
+          {modules.map((module, index) => {
+            const delayClass = ['anim-delay-0','anim-delay-100','anim-delay-200','anim-delay-300'][index] ?? '';
+            return (
             <Card
               key={module.number}
-              className="group relative overflow-hidden glass-panel hover-glow hover:-translate-y-1 transition-all duration-500 opacity-0 animate-fade-in-up"
-              style={{ animationDelay: `${index * 0.1}s` }}
+              className={`group relative overflow-hidden glass-panel hover-glow hover:-translate-y-1 transition-all duration-500 opacity-0 animate-fade-in-up ${delayClass}`}
             >
               <CardContent className="p-5 sm:p-6 lg:p-8">
                 <div className="flex items-start gap-4 sm:gap-5">
@@ -95,7 +96,8 @@ const Modules = () => {
                 </div>
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
 
         {/* Flow indicator */}

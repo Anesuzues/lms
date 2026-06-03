@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import QRCode from 'qrcode';
 import { saveCertificate } from '@/services/certificateService';
 
 async function loadImageAsBase64(url: string): Promise<string | null> {
@@ -34,8 +35,14 @@ export async function generateCertificate({
     ? `${window.location.origin}/verify/${uuid}`
     : `${window.location.origin}/verify`;
 
-  // Short display ID for the certificate face (first 8 chars of UUID)
-  const displayId = uuid ? uuid.replace(/-/g, '').slice(0, 12).toUpperCase() : 'UNVERIFIED';
+  // Full UUID displayed on the certificate
+  const displayId = uuid ?? 'UNVERIFIED';
+
+  // Generate QR code as PNG data URL
+  let qrDataUrl: string | null = null;
+  try {
+    qrDataUrl = await QRCode.toDataURL(verifyUrl, { width: 120, margin: 1, color: { dark: '#00d4ff', light: '#050514' } });
+  } catch { /* non-fatal */ }
 
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const W = 297;
@@ -130,24 +137,42 @@ export async function generateCertificate({
   doc.text(`Completed on ${dateStr}`, W / 2, 143, { align: 'center' });
 
   // ── Verification section ───────────────────────────────────────────────────
+  // Box: left side = text, right side = QR code
+  const boxX = W / 2 - 90;
+  const boxY = 147;
+  const boxW = 180;
+  const boxH = 22;
+
   doc.setDrawColor(0, 80, 120);
   doc.setLineWidth(0.2);
-  doc.rect(W / 2 - 70, 149, 140, 18, 'S');
+  doc.rect(boxX, boxY, boxW, boxH, 'S');
+
+  // QR code (right side of box)
+  if (qrDataUrl) {
+    const qrSize = 18;
+    doc.addImage(qrDataUrl, 'PNG', boxX + boxW - qrSize - 2, boxY + 2, qrSize, qrSize);
+  }
+
+  // Text (left side of box)
+  const textX = boxX + 4;
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7);
+  doc.setFontSize(6.5);
   doc.setTextColor(0, 180, 220);
-  doc.text('CERTIFICATE ID', W / 2, 154, { align: 'center' });
+  doc.text('CERTIFICATE ID', textX, boxY + 5);
 
-  doc.setFont('courier', 'bold');
-  doc.setFontSize(8.5);
-  doc.setTextColor(255, 255, 255);
-  doc.text(displayId, W / 2, 159, { align: 'center' });
+  doc.setFont('courier', 'normal');
+  doc.setFontSize(6);
+  doc.setTextColor(200, 220, 230);
+  // Split UUID across two lines so it fits
+  const half = Math.ceil(displayId.length / 2);
+  doc.text(displayId.slice(0, half), textX, boxY + 10);
+  doc.text(displayId.slice(half), textX, boxY + 14.5);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6.5);
-  doc.setTextColor(80, 140, 170);
-  doc.text(`Verify at: ${verifyUrl}`, W / 2, 164, { align: 'center' });
+  doc.setFontSize(5.5);
+  doc.setTextColor(70, 120, 150);
+  doc.text(`Verify: ${verifyUrl}`, textX, boxY + 19.5);
 
   // ── Bottom branding ───────────────────────────────────────────────────────
   doc.setDrawColor(0, 80, 120);

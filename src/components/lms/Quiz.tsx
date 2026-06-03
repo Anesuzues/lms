@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { CheckCircle2, XCircle, RotateCcw, ArrowRight, Trophy, AlertCircle } from 'lucide-react';
 import { QuizQuestion, PASS_MARK, submitQuizAttempt } from '@/services/quizService';
 import { useToast } from '@/components/ui/use-toast';
+import { updateStreakAndXP } from '@/services/profileService';
 
 interface QuizProps {
   questions: QuizQuestion[];
@@ -30,6 +31,7 @@ const Quiz: React.FC<QuizProps> = ({ questions, courseId, moduleId, moduleName, 
   const [passed, setPassed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [selected, setSelected] = useState<number>(-1);
+  const [isRetry, setIsRetry] = useState(false);
 
   const question = questions[current];
   const isLast = current === questions.length - 1;
@@ -65,6 +67,15 @@ const Quiz: React.FC<QuizProps> = ({ questions, courseId, moduleId, moduleName, 
       setScore(attempt.score);
       setPassed(attempt.passed);
       setSubmitted(true);
+      if (attempt.passed) {
+        const xp = isRetry ? 25 : 50;
+        const result = await updateStreakAndXP(userId, xp);
+        if (result.leveledUp) {
+          toast({ title: `Level up! You're now a ${result.newLevelName}!`, description: `+${xp} XP for passing the quiz.` });
+        } else if (result.streakBonus) {
+          toast({ title: '🔥 7-day streak! +100 bonus XP', description: 'You\'ve been learning every day this week.' });
+        }
+      }
     } catch (err) {
       console.error('Quiz submit error:', err);
       toast({ title: 'Submission failed', description: 'Could not save your quiz attempt. Please try again.', variant: 'destructive' });
@@ -80,6 +91,7 @@ const Quiz: React.FC<QuizProps> = ({ questions, courseId, moduleId, moduleName, 
     setSubmitted(false);
     setScore(0);
     setPassed(false);
+    setIsRetry(true);
     onRetry();
   };
 

@@ -233,8 +233,24 @@ const Courses = () => {
 
         {/* Content */}
         {loading ? (
-          <div className="flex items-center justify-center py-24">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <div className="space-y-10">
+            {[1,2].map(cert => (
+              <div key={cert} className="mb-10">
+                <div className="rounded-2xl bg-secondary h-36 mb-5 animate-pulse" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {[1,2,3].map(i => (
+                    <div key={i} className="bg-card rounded-2xl border border-border overflow-hidden animate-pulse">
+                      <div className="h-36 bg-secondary" />
+                      <div className="p-4 space-y-3">
+                        <div className="h-4 bg-secondary rounded w-3/4" />
+                        <div className="h-3 bg-secondary rounded w-1/2" />
+                        <div className="h-2 bg-secondary rounded w-full" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         ) : totalVisible === 0 ? (
           <div className="py-20 text-center bg-card rounded-2xl border border-border">

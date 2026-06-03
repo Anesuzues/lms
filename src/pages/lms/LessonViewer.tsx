@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
-import { ChevronLeft, Menu, CheckCircle, Loader2, ChevronRight, Lock, ClipboardList, BookOpen, Download, Trophy, ArrowRight } from 'lucide-react';
+import { ChevronLeft, Menu, CheckCircle, Loader2, ChevronRight, Lock, ClipboardList, BookOpen, Download, Trophy, ArrowRight, Flame } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import Quiz from '@/components/lms/Quiz';
@@ -17,6 +17,7 @@ import {
 } from '@/services/quizService';
 import { isFinalExam, getCertForCourse } from '@/lib/programmeConfig';
 import { generateCertificate } from '@/lib/generateCertificate';
+import { updateStreakAndXP, fetchUserStats } from '@/services/profileService';
 
 const DELAY_CLASS: Record<number, string> = { 0: '', 100: 'anim-delay-100' };
 
@@ -93,6 +94,7 @@ const LessonViewer = () => {
   const [marking, setMarking] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [showFloatingBtn, setShowFloatingBtn] = useState(false);
+  const [streak, setStreak] = useState(0);
   const readingPaneRef = useRef<HTMLDivElement>(null);
   const scrollBarRef = useRef<HTMLDivElement>(null);
   const navProgressRef = useRef<HTMLDivElement>(null);
@@ -117,12 +119,14 @@ const LessonViewer = () => {
         const isEnrolled = enrollments.some(e => e.course_id === id);
         if (!isEnrolled) { setNotEnrolled(true); setLoading(false); return; }
 
-        const [c, l, p, passed] = await Promise.all([
+        const [c, l, p, passed, stats] = await Promise.all([
           fetchCourseById(id),
           fetchLessonsByCourse(id),
           fetchLessonProgress(user.id, id),
           fetchAllPassedModules(user.id, id),
+          fetchUserStats(user.id),
         ]);
+        setStreak(stats.streak);
         setCourse(c);
         setLessons(l);
         setProgress(p);
@@ -183,6 +187,15 @@ const LessonViewer = () => {
     const newCompleted = updated.filter(p => p.completed).length;
     const pct = Math.round((newCompleted / lessons.length) * 100);
     await updateEnrollmentProgress(user.id, id, pct);
+
+    const streakResult = await updateStreakAndXP(user.id, 10);
+    setStreak(streakResult.streak);
+    if (streakResult.leveledUp) {
+      toast({ title: `Level up! You're now a ${streakResult.newLevelName}!`, description: '+10 XP earned for completing this lesson.' });
+    } else if (streakResult.streakBonus) {
+      toast({ title: `🔥 7-day streak! +100 bonus XP`, description: 'You\'ve been learning every day this week.' });
+    }
+
     setMarking(false);
 
     confetti({
@@ -356,6 +369,24 @@ const LessonViewer = () => {
                     className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground font-semibold transition-colors border border-border"
                   >
                     Go to Dashboard <ArrowRight size={16} />
+                  </button>
+                </div>
+
+                {/* Recommended next course */}
+                <div className="mt-6 p-4 rounded-xl bg-primary/5 border border-primary/20 flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <BookOpen size={18} className="text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-muted-foreground mb-0.5">Up next in the programme</p>
+                    <p className="text-sm font-bold text-foreground truncate">Browse your next module in the Course Catalog</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/courses')}
+                    className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 transition-colors shrink-0"
+                  >
+                    View <ArrowRight size={12} className="inline ml-1" />
                   </button>
                 </div>
               </div>
@@ -599,9 +630,16 @@ const LessonViewer = () => {
         `}>
           <div className="h-full flex flex-col">
             <div className="p-4 border-b border-border flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <h3 className="font-bold text-foreground text-sm truncate">{course.title}</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">{lessons.length} lessons • {overallProgress}% complete</p>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2 mb-0.5">
+                  <h3 className="font-bold text-foreground text-sm truncate">{course.title}</h3>
+                  {streak > 0 && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-500 text-xs font-bold shrink-0">
+                      <Flame size={11} /> {streak}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">{lessons.length} lessons • {overallProgress}% complete</p>
                 <div className="mt-2 h-1 bg-secondary rounded-full overflow-hidden">
                   <div ref={sidebarProgressRef} className="h-full bg-primary rounded-full transition-[width] duration-300" />
                 </div>

@@ -13,6 +13,7 @@
   .anim-delay-200  { animation-delay:  200ms; }
   .anim-delay-300  { animation-delay:  300ms; }
   .anim-delay-400  { animation-delay:  400ms; }
+  .anim-delay-500  { animation-delay:  500ms; }
   .anim-delay-1s   { animation-delay:     1s; }
   .anim-delay-2s   { animation-delay:     2s; }
 }
