@@ -35,13 +35,20 @@ export function getLevelFromXP(xp: number): LevelInfo {
 export async function fetchUserStats(userId: string): Promise<UserStats> {
   const { data } = await supabase
     .from('profiles')
-    .select('streak, xp, onboarded')
+    .select('streak, xp, onboarded, created_at')
     .eq('id', userId)
     .single();
+
+  // Treat users created before the gamification feature (2026-06-05) as already onboarded
+  // so the welcome modal doesn't fire for existing accounts
+  const isExistingUser = data?.created_at
+    ? new Date(data.created_at) < new Date('2026-06-05T00:00:00Z')
+    : false;
+
   return {
     streak: data?.streak ?? 0,
     xp: data?.xp ?? 0,
-    onboarded: data?.onboarded ?? false,
+    onboarded: data?.onboarded ?? false || isExistingUser,
   };
 }
 

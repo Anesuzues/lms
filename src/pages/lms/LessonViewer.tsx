@@ -93,7 +93,6 @@ const LessonViewer = () => {
   const [loadingQuiz, setLoadingQuiz] = useState(false);
   const [marking, setMarking] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const [showFloatingBtn, setShowFloatingBtn] = useState(false);
   const [streak, setStreak] = useState(0);
   const readingPaneRef = useRef<HTMLDivElement>(null);
   const scrollBarRef = useRef<HTMLDivElement>(null);
@@ -107,7 +106,6 @@ const LessonViewer = () => {
     const max = scrollHeight - clientHeight;
     const pct = max <= 0 ? 100 : Math.min(100, Math.round((scrollTop / max) * 100));
     scrollBarRef.current.style.width = `${pct}%`;
-    setShowFloatingBtn(pct >= 80);
   }, []);
 
   useEffect(() => {
@@ -144,7 +142,6 @@ const LessonViewer = () => {
   useEffect(() => {
     if (readingPaneRef.current) readingPaneRef.current.scrollTop = 0;
     if (scrollBarRef.current) scrollBarRef.current.style.width = '0%';
-    setShowFloatingBtn(false);
   }, [activeLessonId]);
 
   useEffect(() => {
@@ -406,7 +403,7 @@ const LessonViewer = () => {
           ) : (
             <>
               {/* Reading pane */}
-              <div className="flex-1 flex flex-col overflow-hidden relative">
+              <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Scroll progress bar */}
                 <div className="h-0.5 bg-secondary shrink-0">
                   <div ref={scrollBarRef} className="h-full bg-primary transition-[width] duration-150 ease-out w-0" />
@@ -498,25 +495,9 @@ const LessonViewer = () => {
                       if (!isCompleted(activeLesson.id)) {
                         return (
                           <div className="mt-12 pt-8 border-t border-border text-center">
-                            <p className="text-muted-foreground text-sm mb-4">
-                              Done reading? Mark this lesson complete to continue.
+                            <p className="text-muted-foreground text-sm">
+                              Done reading? Tap <span className="font-semibold text-primary">Mark as Read</span> in the bar below to continue.
                             </p>
-                            {!showFloatingBtn && (
-                              <button
-                                type="button"
-                                onClick={handleMarkRead}
-                                disabled={marking}
-                                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-glow"
-                              >
-                                {marking ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
-                                {marking ? 'Saving...' : 'Mark as Read'}
-                              </button>
-                            )}
-                            {showFloatingBtn && (
-                              <p className="text-xs text-primary font-semibold animate-pulse">
-                                ↑ Use the button above to mark complete
-                              </p>
-                            )}
                           </div>
                         );
                       }
@@ -581,40 +562,43 @@ const LessonViewer = () => {
               </div>
               </div>
 
-              {/* Floating Mark as Read — appears at 80% scroll when lesson incomplete */}
-              {showFloatingBtn && activeLesson && !isCompleted(activeLesson.id) && viewMode === 'reading' && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 animate-in fade-in slide-in-from-bottom-3 duration-300">
-                  <button
-                    type="button"
-                    onClick={handleMarkRead}
-                    disabled={marking}
-                    className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-glow hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed border-2 border-primary-foreground/10"
-                  >
-                    {marking ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle size={15} />}
-                    {marking ? 'Saving…' : 'Mark as Read'}
-                  </button>
-                </div>
-              )}
-
               {/* Bottom bar */}
               <div className="bg-card border-t border-border flex items-center justify-between px-4 py-3 shrink-0 gap-3">
                 <div className="min-w-0">
                   <p className="text-xs text-muted-foreground mb-0.5">Now Reading</p>
-                  <p className="text-sm font-semibold text-foreground truncate max-w-[180px] sm:max-w-xs">{activeLesson?.title || 'No lesson selected'}</p>
+                  <p className="text-sm font-semibold text-foreground truncate max-w-[160px] sm:max-w-xs">
+                    {activeLesson?.title || 'No lesson selected'}
+                  </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleNextLesson}
-                  disabled={(() => {
-                    const idx = lessons.findIndex(l => l.id === activeLessonId);
-                    if (idx >= lessons.length - 1) return true;
-                    return isLessonLocked(lessons[idx + 1]);
-                  })()}
-                  aria-label="Go to next lesson"
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-                >
-                  Next <ChevronRight size={15} />
-                </button>
+
+                {activeLesson && !isCompleted(activeLesson.id) ? (
+                  /* Primary action: Mark as Read */
+                  <button
+                    type="button"
+                    onClick={handleMarkRead}
+                    disabled={marking}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold transition-colors disabled:opacity-60 disabled:cursor-not-allowed shrink-0 shadow-glow"
+                  >
+                    {marking
+                      ? <><Loader2 size={14} className="animate-spin" /> Saving…</>
+                      : <><CheckCircle size={14} /> Mark as Read</>}
+                  </button>
+                ) : (
+                  /* Secondary action: Next lesson */
+                  <button
+                    type="button"
+                    onClick={handleNextLesson}
+                    disabled={(() => {
+                      const idx = lessons.findIndex(l => l.id === activeLessonId);
+                      if (idx >= lessons.length - 1) return true;
+                      return isLessonLocked(lessons[idx + 1]);
+                    })()}
+                    aria-label="Go to next lesson"
+                    className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground text-sm font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0 border border-border"
+                  >
+                    Next <ChevronRight size={15} />
+                  </button>
+                )}
               </div>
             </>
           )}
