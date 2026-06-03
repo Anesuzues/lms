@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Loader2, Trophy, ChevronDown, ChevronUp, BookOpen } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, Trophy, ChevronDown, ChevronUp, BookOpen, ArrowRight, Loader2, CheckCircle } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CourseCard, { CourseCardCourse } from '@/components/lms/CourseCard';
 import { useAuth } from '@/contexts/AuthContext';
-import { Link } from 'react-router-dom';
-import { fetchCourses, fetchUserEnrollments, DBCourse, DBEnrollment } from '@/services/courseService';
-import { CERTIFICATES } from '@/lib/programmeConfig';
+import { Link, useNavigate } from 'react-router-dom';
+import { fetchCourses, fetchUserEnrollments, enrollUserInPathway, DBEnrollment } from '@/services/courseService';
+import { CERTIFICATES, isFinalExam } from '@/lib/programmeConfig';
 
 const LEVEL_COLORS: Record<string, string> = {
   Beginner:     'bg-emerald-100 text-emerald-700',
@@ -35,98 +35,153 @@ function getCertIndex(title: string): number {
   );
 }
 
+// ─── Inline-style-free progress bar ──────────────────────────────────────────
+const PathwayProgressBar = ({ pct }: { pct: number }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (ref.current) ref.current.style.width = `${pct}%`; }, [pct]);
+  return (
+    <div className="mt-4">
+      <div className="flex justify-between text-xs text-white/70 mb-1.5">
+        <span>Pathway progress</span>
+        <span className="font-bold text-white">{pct}%</span>
+      </div>
+      <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
+        <div ref={ref} className="h-full bg-white rounded-full transition-[width] duration-700 w-0" />
+      </div>
+    </div>
+  );
+};
+
 // ─── Certificate section component ───────────────────────────────────────────
 interface CertSectionProps {
   cert: typeof CERTIFICATES[0];
   courses: CourseCardCourse[];
   enrollments: DBEnrollment[];
   getProgress: (id: string) => number;
+  userId?: string;
+  onEnrollPathway: (courseIds: string[], firstCourseId: string) => Promise<void>;
 }
 
-const CertSection: React.FC<CertSectionProps> = ({ cert, courses, enrollments, getProgress }) => {
+const CertSection: React.FC<CertSectionProps> = ({
+  cert, courses, enrollments, getProgress, userId, onEnrollPathway,
+}) => {
   const [open, setOpen] = useState(true);
+  const [enrolling, setEnrolling] = useState(false);
   if (courses.length === 0) return null;
 
-  const completedInCert = courses.filter(c => getProgress(c.id) >= 100).length;
-  const enrolledInCert  = courses.filter(c => enrollments.some(e => e.course_id === c.id)).length;
-  const certProgress    = Math.round((completedInCert / courses.length) * 100);
+  // Non-exam courses first (in DB creation order), then the exam
+  const nonExam  = courses.filter(c => !isFinalExam(c.title));
+  const examCourses = courses.filter(c => isFinalExam(c.title));
+  const sorted   = [...nonExam, ...examCourses];
+
+  const pathwayStarted = courses.some(c => enrollments.some(e => e.course_id === c.id));
+  const completedCount = sorted.filter(c => getProgress(c.id) >= 100).length;
+  const certProgress   = sorted.length > 0 ? Math.round((completedCount / sorted.length) * 100) : 0;
+  const allDone        = completedCount === sorted.length && sorted.length > 0;
+
+  // A course at index i is locked when the course at i-1 isn't 100% complete
+  const isLocked = (idx: number) => {
+    if (!pathwayStarted) return idx > 0;          // only first unlocked until enrolled
+    if (idx === 0) return false;
+    return getProgress(sorted[idx - 1].id) < 100;
+  };
+
+  const handleEnroll = async () => {
+    if (!userId) return;
+    setEnrolling(true);
+    await onEnrollPathway(sorted.map(c => c.id), sorted[0].id);
+    setEnrolling(false);
+  };
 
   return (
-    <div className="mb-10">
-      {/* Certificate header */}
+    <div className="mb-12">
+      {/* Certificate header banner */}
       <div className={`bg-gradient-to-r ${cert.gradient} rounded-2xl p-5 sm:p-6 mb-5 text-white`}>
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-4 min-w-0">
-            {/* Badge */}
             <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-white/20 flex items-center justify-center shrink-0 backdrop-blur-sm border border-white/20">
-              <Trophy size={22} className="text-white" />
+              {allDone ? <CheckCircle size={22} className="text-white" /> : <Trophy size={22} className="text-white" />}
             </div>
             <div className="min-w-0">
               <p className="text-white/70 text-xs font-semibold uppercase tracking-widest mb-0.5">
                 Certificate {cert.number}
               </p>
-              <h2 className="font-bold text-lg sm:text-xl text-white leading-snug mb-1">
-                {cert.shortName}
-              </h2>
+              <h2 className="font-bold text-lg sm:text-xl text-white leading-snug mb-1">{cert.shortName}</h2>
               <p className="text-white/75 text-sm leading-relaxed hidden sm:block">{cert.description}</p>
               <div className="flex flex-wrap items-center gap-2 mt-3">
                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${cert.badge} backdrop-blur-sm`}>
                   {cert.level}
                 </span>
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/15 border border-white/20 text-white">
-                  {cert.courseTitles.length - cert.finalExamTitles.length} modules
+                  {nonExam.length} modules + exam
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/15 border border-white/20 text-white">
-                  {courses.length} courses
-                </span>
-                {enrolledInCert > 0 && (
+                {pathwayStarted && (
                   <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/20 border border-white/30 text-white">
-                    {completedInCert}/{courses.length} complete
+                    {completedCount}/{sorted.length} complete
                   </span>
                 )}
               </div>
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setOpen(o => !o)}
-            aria-label={open ? 'Collapse certificate' : 'Expand certificate'}
-            className="p-2 rounded-xl bg-white/15 hover:bg-white/25 transition-colors shrink-0 border border-white/20"
-          >
-            {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Enroll / progress CTA */}
+            {userId && !pathwayStarted && (
+              <button
+                type="button"
+                onClick={handleEnroll}
+                disabled={enrolling}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-gray-900 font-bold text-sm hover:bg-white/90 transition-colors disabled:opacity-60 shadow-sm"
+              >
+                {enrolling
+                  ? <><Loader2 size={14} className="animate-spin" /> Starting…</>
+                  : <>Start Pathway <ArrowRight size={14} /></>}
+              </button>
+            )}
+            {!userId && (
+              <Link
+                to="/login?mode=signup"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-gray-900 font-bold text-sm hover:bg-white/90 transition-colors shadow-sm"
+              >
+                Sign up to start <ArrowRight size={14} />
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={() => setOpen(o => !o)}
+              aria-label={open ? 'Collapse' : 'Expand'}
+              className="p-2 rounded-xl bg-white/15 hover:bg-white/25 transition-colors border border-white/20"
+            >
+              {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            </button>
+          </div>
         </div>
 
-        {/* Progress bar (only if enrolled in at least one) */}
-        {enrolledInCert > 0 && (
-          <div className="mt-4">
-            <div className="flex justify-between text-xs text-white/70 mb-1.5">
-              <span>Your progress</span>
-              <span className="font-bold text-white">{certProgress}%</span>
-            </div>
-            <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-white rounded-full transition-all duration-700 cert-progress-bar"
-                /* eslint-disable-next-line react/forbid-dom-props -- CSS custom property requires inline style */
-                style={{ '--cert-progress': `${certProgress}%` } as React.CSSProperties}
-              />
-            </div>
-          </div>
+        {/* Progress bar — only when started */}
+        {pathwayStarted && (
+          <PathwayProgressBar pct={certProgress} />
         )}
       </div>
 
-      {/* Courses grid */}
+      {/* Course grid — sequential order with lock indicators */}
       {open && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {courses.map(course => {
-            const isEnrolled = enrollments.some(e => e.course_id === course.id);
+          {sorted.map((course, idx) => {
+            const locked   = isLocked(idx);
+            const enrolled = !locked && enrollments.some(e => e.course_id === course.id);
+            // First unlocked card: enroll in the whole pathway, not just this course
+            const pathwayEnroll = (!locked && !enrolled && !pathwayStarted && userId)
+              ? () => handleEnroll()
+              : undefined;
             return (
               <CourseCard
                 key={course.id}
                 course={course}
-                enrolled={isEnrolled}
+                enrolled={enrolled}
                 progress={getProgress(course.id)}
+                locked={locked}
+                lockedReason={idx > 0 ? `Complete "${sorted[idx - 1].title}" first` : undefined}
+                onEnroll={pathwayEnroll}
               />
             );
           })}
@@ -139,6 +194,7 @@ const CertSection: React.FC<CertSectionProps> = ({ cert, courses, enrollments, g
 // ─── Main page ────────────────────────────────────────────────────────────────
 const Courses = () => {
   const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery]   = useState('');
   const [courses, setCourses]           = useState<CourseCardCourse[]>([]);
   const [enrollments, setEnrollments]   = useState<DBEnrollment[]>([]);
@@ -162,6 +218,15 @@ const Courses = () => {
   const getProgress = (courseId: string) => {
     const e = enrollments.find(e => e.course_id === courseId);
     return e?.progress ?? 0;
+  };
+
+  const handleEnrollPathway = async (courseIds: string[], firstCourseId: string) => {
+    if (!user) { navigate('/login?mode=signup'); return; }
+    await enrollUserInPathway(user.id, courseIds);
+    // Refresh enrollments so cards update immediately
+    const fresh = await import('@/services/courseService').then(m => m.fetchUserEnrollments(user.id));
+    setEnrollments(fresh);
+    navigate(`/learn/${firstCourseId}`);
   };
 
   // Group courses by certificate, with search filter applied
@@ -269,6 +334,8 @@ const Courses = () => {
                 courses={certCourses}
                 enrollments={enrollments}
                 getProgress={getProgress}
+                userId={user?.id}
+                onEnrollPathway={handleEnrollPathway}
               />
             ))}
 

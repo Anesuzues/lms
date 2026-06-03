@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { PlayCircle, Clock, BookOpen, CheckCircle, User, ArrowLeft, Loader2, Lock, AlertCircle } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { fetchCourseById, fetchLessonsByCourse, fetchUserEnrollments, fetchCourses, DBCourse, DBLesson } from '@/services/courseService';
+import { fetchCourseById, fetchLessonsByCourse, fetchUserEnrollments, fetchCourses, enrollUserInPathway, DBCourse, DBLesson } from '@/services/courseService';
 import { getCertForCourse, getPrerequisiteTitles, isFinalExam } from '@/lib/programmeConfig';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
@@ -19,8 +19,9 @@ const CourseDetail = () => {
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
+  const [pathwayCourseIds, setPathwayCourseIds] = useState<string[]>([]);
 
-  // Final exam prerequisite state
+  // Prerequisite state
   const [prerequisitesMet, setPrerequisitesMet] = useState(true);
   const [missingPrereqs, setMissingPrereqs] = useState<string[]>([]);
 
@@ -33,16 +34,28 @@ const CourseDetail = () => {
       setLessons(l);
 
       if (user && c) {
-        const enrollments = await fetchUserEnrollments(user.id);
+        const [enrollments, allCourses] = await Promise.all([
+          fetchUserEnrollments(user.id),
+          fetchCourses(),
+        ]);
         setIsEnrolled(enrollments.some(e => e.course_id === id));
 
-        // If this is a final exam, check all prerequisite courses are 100% complete
-        if (isFinalExam(c.title)) {
-          const cert = getCertForCourse(c.title);
-          if (cert) {
+        const cert = getCertForCourse(c.title);
+        if (cert) {
+          // Collect all courses in this cert pathway (non-exam first, then exam)
+          const nonExam = allCourses.filter(ac => {
+            const ac_cert = getCertForCourse(ac.title);
+            return ac_cert?.number === cert.number && !isFinalExam(ac.title);
+          });
+          const exams = allCourses.filter(ac => {
+            const ac_cert = getCertForCourse(ac.title);
+            return ac_cert?.number === cert.number && isFinalExam(ac.title);
+          });
+          setPathwayCourseIds([...nonExam, ...exams].map(ac => ac.id));
+
+          if (isFinalExam(c.title)) {
+            // Final exam: ALL non-exam courses in cert must be 100%
             const prereqTitles = getPrerequisiteTitles(cert);
-            // Fetch all courses to find prerequisite course IDs by title
-            const allCourses = await fetchCourses();
             const prereqCourses = allCourses.filter(ac =>
               prereqTitles.some(t => ac.title.toLowerCase().includes(t.toLowerCase()))
             );
@@ -52,9 +65,23 @@ const CourseDetail = () => {
                 return !enrollment || (enrollment.progress ?? 0) < 100;
               })
               .map(pc => pc.title);
-
             setMissingPrereqs(missing);
             setPrerequisitesMet(missing.length === 0);
+          } else {
+            // Regular course: the previous course in the pathway must be 100%
+            const certCourses = allCourses.filter(ac => {
+              const ac_cert = getCertForCourse(ac.title);
+              return ac_cert?.number === cert.number && !isFinalExam(ac.title);
+            });
+            const idx = certCourses.findIndex(ac => ac.id === id);
+            if (idx > 0) {
+              const prev = certCourses[idx - 1];
+              const prevEnrollment = enrollments.find(e => e.course_id === prev.id);
+              if (!prevEnrollment || (prevEnrollment.progress ?? 0) < 100) {
+                setMissingPrereqs([prev.title]);
+                setPrerequisitesMet(false);
+              }
+            }
           }
         }
       }
@@ -71,7 +98,12 @@ const CourseDetail = () => {
     }
     if (!prerequisitesMet) return;
     setEnrolling(true);
-    await enrollInCourse(course!.id);
+    // Enroll in the entire pathway so sequential unlocking works from the start
+    if (pathwayCourseIds.length > 0) {
+      await enrollUserInPathway(user.id, pathwayCourseIds);
+    } else {
+      await enrollInCourse(course!.id);
+    }
     setIsEnrolled(true);
     setEnrolling(false);
     toast({ title: 'Enrolled!', description: `You're now enrolled in ${course!.title}.` });
@@ -143,15 +175,19 @@ const CourseDetail = () => {
               <p className="text-muted-foreground text-base leading-relaxed">{course.description}</p>
             </div>
 
-            {/* Prerequisite warning for final exams */}
-            {courseIsFinalExam && !isEnrolled && !prerequisitesMet && (
+            {/* Prerequisite warning — shown for any locked course, including the final exam */}
+            {!isEnrolled && !prerequisitesMet && (
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
                 <div className="flex items-start gap-3 mb-3">
                   <Lock size={18} className="text-amber-600 shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-bold text-amber-800 text-sm">Complete all modules first</p>
+                    <p className="font-bold text-amber-800 text-sm">
+                      {courseIsFinalExam ? 'Complete all modules first' : 'Complete the previous course first'}
+                    </p>
                     <p className="text-amber-700 text-xs mt-0.5">
-                      You must complete all prerequisite courses at 100% before taking the final exam.
+                      {courseIsFinalExam
+                        ? 'You must complete all prerequisite courses at 100% before taking the final exam.'
+                        : 'Courses unlock sequentially — finish the course below before continuing.'}
                     </p>
                   </div>
                 </div>
@@ -231,7 +267,7 @@ const CourseDetail = () => {
                   <img src={thumbnail} alt={course.title} loading="lazy" className="w-full h-48 object-cover" />
                   <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                     <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
-                      {courseIsFinalExam && !prerequisitesMet && !isEnrolled
+                      {!prerequisitesMet && !isEnrolled
                         ? <Lock size={24} className="text-amber-500" />
                         : <PlayCircle size={28} className="text-primary ml-0.5" />}
                     </div>
@@ -256,13 +292,13 @@ const CourseDetail = () => {
                     >
                       Continue Learning
                     </button>
-                  ) : courseIsFinalExam && !prerequisitesMet ? (
+                  ) : !prerequisitesMet ? (
                     <button
                       type="button"
                       disabled
                       className="w-full py-3.5 rounded-xl bg-amber-100 text-amber-600 font-bold flex items-center justify-center gap-2 cursor-not-allowed border border-amber-200"
                     >
-                      <Lock size={16} /> Complete Modules First
+                      <Lock size={16} /> {courseIsFinalExam ? 'Complete Modules First' : 'Complete Previous Course First'}
                     </button>
                   ) : (
                     <button

@@ -114,6 +114,16 @@ export async function enrollUserInCourse(userId: string, courseId: string): Prom
   return {};
 }
 
+export async function enrollUserInPathway(userId: string, courseIds: string[]): Promise<{ error?: string }> {
+  if (courseIds.length === 0) return {};
+  const rows = courseIds.map(courseId => ({ user_id: userId, course_id: courseId, progress: 0 }));
+  const { error } = await supabase
+    .from('enrollments')
+    .upsert(rows, { onConflict: 'user_id,course_id' });
+  if (error) { console.error('enrollUserInPathway error:', error); return { error: error.message }; }
+  return {};
+}
+
 export async function updateEnrollmentProgress(userId: string, courseId: string, progress: number): Promise<void> {
   const { error } = await supabase
     .from('enrollments')
