@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2, Eye, EyeOff, ArrowLeft } from 'lucide-react';
@@ -22,6 +22,11 @@ const Login = () => {
   const { signIn, signUp, signInWithGoogle, resetPassword, user, loading } = useAuth();
   const [googleLoading, setGoogleLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get('mode') === 'signup') setMode('signup');
+  }, []);
   const { toast } = useToast();
 
   useEffect(() => {

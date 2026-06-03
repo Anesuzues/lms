@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, Award, Briefcase } from "lucide-react";
+import { ArrowRight, Users, Award, CheckCircle, BookOpen, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Hero = () => {
@@ -14,7 +14,7 @@ const Hero = () => {
 
       {/* Floating decorative blobs — contained within overflow-hidden */}
       <div className="absolute top-20 left-4 sm:left-10 w-16 h-16 sm:w-20 sm:h-20 bg-primary/10 rounded-full blur-2xl animate-float pointer-events-none" />
-      <div className="absolute bottom-32 right-4 sm:right-20 w-24 h-24 sm:w-32 sm:h-32 bg-accent/20 rounded-full blur-3xl animate-float pointer-events-none" style={{ animationDelay: '2s' }} />
+      <div className="absolute bottom-32 right-4 sm:right-20 w-24 h-24 sm:w-32 sm:h-32 bg-accent/20 rounded-full blur-3xl animate-float pointer-events-none anim-delay-2s" />
 
       <div className="container relative z-10 py-24 sm:py-28 lg:py-32">
         <div className="grid lg:grid-cols-2 gap-10 lg:gap-20 items-center">
@@ -26,15 +26,15 @@ const Hero = () => {
               Free Course for All Students
             </div>
 
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.1] tracking-tight opacity-0 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.1] tracking-tight opacity-0 animate-fade-in anim-delay-100">
               Get <span className="text-gradient drop-shadow-sm">Workplace Ready</span> with NobzLearn
             </h1>
 
-            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-xl opacity-0 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-xl opacity-0 animate-fade-in anim-delay-200">
               A free 4-module course delivered via email. Watch videos, complete assessments, and get ready for Work Integrated Learning (WIL).
             </p>
 
-            <div className="flex opacity-0 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <div className="flex opacity-0 animate-fade-in anim-delay-300">
               <Button
                 size="lg"
                 className="group bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow rounded-full px-6 sm:px-8 py-5 sm:py-6 text-base sm:text-lg transition-all hover:scale-105"
@@ -46,7 +46,7 @@ const Hero = () => {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-3 sm:gap-6 pt-6 sm:pt-8 border-t border-border opacity-0 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+            <div className="grid grid-cols-3 gap-3 sm:gap-6 pt-6 sm:pt-8 border-t border-border opacity-0 animate-fade-in anim-delay-400">
               {[
                 { icon: Users, value: '500+', label: 'Students' },
                 { icon: Award, value: '4', label: 'Modules' },
@@ -63,45 +63,98 @@ const Hero = () => {
             </div>
           </div>
 
-          {/* Visual — hidden on mobile, shown from md up */}
-          <div className="relative hidden md:block opacity-0 animate-scale-in" style={{ animationDelay: '0.3s' }}>
-            <div className="relative w-full aspect-square max-w-sm lg:max-w-lg mx-auto">
-              {/* Main Card */}
-              <div className="absolute inset-8 glass-panel rounded-3xl p-6 lg:p-8 flex flex-col justify-between hover-glow group transition-all duration-500">
-                <div>
-                  <div className="w-12 h-12 lg:w-16 lg:h-16 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center mb-4 lg:mb-6 shadow-glow transition-transform group-hover:scale-110 duration-500">
-                    <Briefcase className="w-6 h-6 lg:w-8 lg:h-8 text-white" />
+          {/* Visual — lesson viewer mockup */}
+          <div className="relative hidden md:block opacity-0 animate-scale-in anim-delay-300">
+            <div className="relative w-full max-w-sm lg:max-w-md mx-auto">
+
+              {/* App window chrome */}
+              <div className="glass-panel rounded-2xl overflow-hidden shadow-2xl border border-border/60 hover-glow transition-all duration-500">
+                {/* Top bar */}
+                <div className="flex items-center justify-between px-4 py-2.5 bg-card border-b border-border">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
                   </div>
-                  <h3 className="text-lg lg:text-2xl font-bold mb-2 tracking-tight">Your Journey Starts Here</h3>
-                  <p className="text-sm lg:text-base text-muted-foreground">CV Building • Interview Skills • Workplace Conduct</p>
+                  <div className="flex-1 mx-4 h-5 bg-secondary rounded-full text-[10px] text-muted-foreground flex items-center justify-center">
+                    nobzlearn.co.za/learn
+                  </div>
+                  <div className="w-14" />
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex -space-x-2">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-secondary border-2 border-card" />
+
+                <div className="flex h-56 lg:h-64">
+                  {/* Sidebar */}
+                  <div className="w-36 shrink-0 bg-card border-r border-border p-2.5 space-y-1">
+                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wide px-1 mb-2">Lessons</p>
+                    {[
+                      { title: 'AI Basics', done: true },
+                      { title: 'Research Tools', done: true },
+                      { title: 'CV with AI', done: false, active: true },
+                      { title: 'Cover Letter', done: false },
+                    ].map(({ title, done, active }) => (
+                      <div key={title} className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[10px] font-medium ${active ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}>
+                        <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 ${done ? 'bg-emerald-500' : active ? 'bg-primary' : 'bg-secondary'}`}>
+                          {done && <CheckCircle className="w-2.5 h-2.5 text-white" />}
+                        </div>
+                        <span className="truncate">{title}</span>
+                      </div>
                     ))}
                   </div>
-                  <span className="text-xs lg:text-sm text-muted-foreground">Join 500+ students</span>
+
+                  {/* Reading pane */}
+                  <div className="flex-1 p-4 overflow-hidden bg-background">
+                    {/* Scroll progress bar */}
+                    <div className="h-0.5 bg-secondary rounded-full mb-3 -mx-4 mt-[-16px]">
+                      <div className="h-full w-3/5 bg-primary rounded-full" />
+                    </div>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <BookOpen className="w-3 h-3 text-primary" />
+                      <span className="text-[9px] font-bold text-primary uppercase tracking-wide">Module 1</span>
+                    </div>
+                    <h4 className="text-sm font-bold text-foreground mb-2 leading-tight">Writing a CV with AI Tools</h4>
+                    <div className="space-y-1.5">
+                      <div className="h-1.5 bg-secondary rounded-full w-full" />
+                      <div className="h-1.5 bg-secondary rounded-full w-5/6" />
+                      <div className="h-1.5 bg-secondary rounded-full w-full" />
+                      <div className="h-1.5 bg-secondary rounded-full w-4/6" />
+                    </div>
+                    <div className="mt-4 flex items-center gap-1.5">
+                      <div className="w-2 h-2 bg-primary/30 rounded-full" />
+                      <div className="h-1.5 bg-secondary rounded-full w-24" />
+                    </div>
+                    <button type="button" className="mt-4 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-[10px] font-bold">
+                      <CheckCircle className="w-3 h-3" /> Mark as Read
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              {/* Floating Badge */}
-              <div className="absolute top-4 right-4 bg-primary text-primary-foreground px-3 py-1.5 lg:px-4 lg:py-2 rounded-full font-bold text-xs lg:text-sm shadow-glow animate-float border-2 border-primary-foreground/20">
+              {/* Floating Badge — 100% Free */}
+              <div className="absolute -top-3 -right-3 bg-primary text-primary-foreground px-3 py-1.5 rounded-full font-bold text-xs shadow-glow animate-float border-2 border-primary-foreground/20">
                 100% Free
               </div>
 
-              {/* Progress Badge */}
-              <div className="absolute bottom-4 left-4 glass-panel rounded-2xl p-3 lg:p-4 animate-float hover-glow" style={{ animationDelay: '1s' }}>
-                <div className="flex items-center gap-2 lg:gap-3">
-                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20 shrink-0">
-                    <Award className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
+              {/* Floating cert badge */}
+              <div className="absolute -bottom-4 -left-4 glass-panel rounded-2xl p-3 animate-float anim-delay-1s shadow-lg border border-border">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-amber-500/10 rounded-xl flex items-center justify-center border border-amber-500/20 shrink-0">
+                    <Award className="w-4 h-4 text-amber-500" />
                   </div>
                   <div>
-                    <p className="font-semibold text-xs lg:text-sm">Certificate Ready</p>
-                    <p className="text-xs text-muted-foreground">Upon completion</p>
+                    <p className="font-bold text-xs text-foreground">Certificate Earned!</p>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      {['TM','NZ','KP'].map(i => (
+                        <div key={i} className="w-4 h-4 rounded-full bg-gradient-to-br from-primary to-accent border border-card flex items-center justify-center">
+                          <span className="text-[6px] font-bold text-white">{i}</span>
+                        </div>
+                      ))}
+                      <span className="text-[10px] text-muted-foreground ml-1">+497 more</span>
+                    </div>
                   </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-muted-foreground ml-1" />
                 </div>
               </div>
+
             </div>
           </div>
 

@@ -5,10 +5,16 @@
 @tailwind utilities;
 
 @layer utilities {
-  .anim-delay-0   { animation-delay:   0ms; }
-  .anim-delay-80  { animation-delay:  80ms; }
-  .anim-delay-160 { animation-delay: 160ms; }
-  .anim-delay-220 { animation-delay: 220ms; }
+  .anim-delay-0    { animation-delay:    0ms; }
+  .anim-delay-80   { animation-delay:   80ms; }
+  .anim-delay-160  { animation-delay:  160ms; }
+  .anim-delay-220  { animation-delay:  220ms; }
+  .anim-delay-100  { animation-delay:  100ms; }
+  .anim-delay-200  { animation-delay:  200ms; }
+  .anim-delay-300  { animation-delay:  300ms; }
+  .anim-delay-400  { animation-delay:  400ms; }
+  .anim-delay-1s   { animation-delay:     1s; }
+  .anim-delay-2s   { animation-delay:     2s; }
 }
 
 @layer base {

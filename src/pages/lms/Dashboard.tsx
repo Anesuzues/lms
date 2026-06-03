@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { BookOpen, Trophy, Clock, ArrowRight, PlayCircle, Compass, Loader2, Download, CheckCircle2, XCircle, BarChart2 } from 'lucide-react';
 import Header from '@/components/Header';
@@ -10,6 +10,12 @@ import { fetchCoursesByIds, fetchUserEnrollments, fetchTotalTimeSpent, fetchCour
 import { fetchAllQuizAttempts, QuizAttempt } from '@/services/quizService';
 import { generateCertificate } from '@/lib/generateCertificate';
 import { CERTIFICATES, getCertForCourse } from '@/lib/programmeConfig';
+
+const CertBar = ({ pct, gradient }: { pct: number; gradient: string }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (ref.current) ref.current.style.width = `${pct}%`; }, [pct]);
+  return <div ref={ref} className={`h-full rounded-full transition-[width] duration-700 bg-gradient-to-r ${gradient}`} />;
+};
 
 const TOTAL_PROGRAMME_COURSES = 21;
 
@@ -28,6 +34,8 @@ const Dashboard = () => {
   const [quizAttempts, setQuizAttempts] = useState<QuizAttempt[]>([]);
   const [courseNameMap, setCourseNameMap] = useState<Record<string, string>>({});
   const { toast } = useToast();
+  const progBarRef = useRef<HTMLDivElement>(null);
+  const enrollBarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -71,6 +79,15 @@ const Dashboard = () => {
     };
     load();
   }, [user?.id]);
+
+  useEffect(() => {
+    const completed = enrolledCourses.filter(e => e.enrollment.progress >= 100).length;
+    if (progBarRef.current)
+      progBarRef.current.style.width = `${Math.round((completed / TOTAL_PROGRAMME_COURSES) * 100)}%`;
+    const last = enrolledCourses[enrolledCourses.length - 1];
+    if (enrollBarRef.current && last)
+      enrollBarRef.current.style.width = `${last.enrollment.progress}%`;
+  }, [enrolledCourses]);
 
   if (authLoading) return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -152,6 +169,54 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* Continue / Next Step — shown before stats */}
+        {!loading && (
+          lastEnrolled ? (
+            <div className="mb-6 sm:mb-8">
+              <h2 className="font-bold text-xl text-foreground mb-4">Continue Where You Left Off</h2>
+              <div className="bg-card rounded-2xl border border-border shadow-soft p-5 flex flex-col sm:flex-row items-start sm:items-center gap-5 hover:-translate-y-0.5 transition-transform">
+                <img
+                  src={lastEnrolled.course.thumbnail_url || 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=800'}
+                  alt={lastEnrolled.course.title}
+                  className="w-full sm:w-32 h-36 sm:h-24 rounded-xl object-cover shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground font-medium mb-1">NobzLearn Team</p>
+                  <h3 className="font-bold text-foreground text-lg leading-tight mb-3 truncate">{lastEnrolled.course.title}</h3>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
+                      <div ref={enrollBarRef} className="h-full bg-primary rounded-full transition-[width] duration-700 w-0" />
+                    </div>
+                    <span className="text-xs font-bold text-primary shrink-0">{lastEnrolled.enrollment.progress}%</span>
+                  </div>
+                </div>
+                <Link
+                  to={`/learn/${lastEnrolled.course.id}`}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 transition-colors shadow-glow shrink-0"
+                >
+                  <PlayCircle size={16} /> Resume
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="mb-6 sm:mb-8 rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 p-6 flex flex-col sm:flex-row items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <BookOpen size={22} className="text-primary" />
+              </div>
+              <div className="flex-1 text-center sm:text-left">
+                <p className="font-bold text-foreground text-base mb-0.5">Your next step: start Module 1</p>
+                <p className="text-muted-foreground text-sm">Enroll in your first course and begin building your workplace skills today.</p>
+              </div>
+              <Link
+                to="/courses"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 transition-colors shadow-glow shrink-0 whitespace-nowrap"
+              >
+                Browse Courses <ArrowRight size={15} />
+              </Link>
+            </div>
+          )
+        )}
+
         {/* Programme Progress Banner */}
         <div className="bg-card border border-border rounded-2xl p-5 mb-6 sm:mb-8">
           <div className="flex items-center justify-between mb-3">
@@ -163,8 +228,8 @@ const Dashboard = () => {
           </div>
           <div className="w-full h-2.5 bg-secondary rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-700"
-              style={{ width: `${Math.round((completedCount / TOTAL_PROGRAMME_COURSES) * 100)}%` }}
+              ref={progBarRef}
+              className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-[width] duration-700 w-0"
             />
           </div>
           <p className="text-xs text-muted-foreground mt-2">
@@ -197,36 +262,6 @@ const Dashboard = () => {
           </div>
         ) : (
           <>
-            {/* Continue Learning */}
-            {lastEnrolled && (
-              <div className="mb-8">
-                <h2 className="font-bold text-xl text-foreground mb-4">Continue Where You Left Off</h2>
-                <div className="bg-card rounded-2xl border border-border shadow-soft p-5 flex flex-col sm:flex-row items-start sm:items-center gap-5 hover:-translate-y-0.5 transition-transform">
-                  <img
-                    src={lastEnrolled.course.thumbnail_url || 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=800'}
-                    alt={lastEnrolled.course.title}
-                    className="w-full sm:w-32 h-40 sm:h-24 rounded-xl object-cover shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground font-medium mb-1">NobzLearn Team</p>
-                    <h3 className="font-bold text-foreground text-lg leading-tight mb-3 truncate">{lastEnrolled.course.title}</h3>
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
-                        <div className="h-full bg-primary rounded-full transition-all duration-700" style={{ width: `${lastEnrolled.enrollment.progress}%` }} />
-                      </div>
-                      <span className="text-xs font-bold text-primary shrink-0">{lastEnrolled.enrollment.progress}%</span>
-                    </div>
-                  </div>
-                  <Link
-                    to={`/learn/${lastEnrolled.course.id}`}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 transition-colors shadow-glow shrink-0"
-                  >
-                    <PlayCircle size={16} /> Resume
-                  </Link>
-                </div>
-              </div>
-            )}
-
             {/* My Courses */}
             <div>
               <div className="flex items-center justify-between mb-5">
@@ -245,8 +280,6 @@ const Dashboard = () => {
                   <p className="text-xs text-muted-foreground/70 mt-1">Complete a lesson and take the quiz to see your results here.</p>
                 </div>
               ) : (
-                <div className="mt-10">
-                  <h2 className="font-bold text-xl text-foreground mb-5">Quiz History</h2>
                   <div className="bg-card border border-border rounded-2xl overflow-hidden">
                     <div className="overflow-x-auto">
                       <table className="w-full min-w-[480px]">
@@ -289,7 +322,6 @@ const Dashboard = () => {
                       </table>
                     </div>
                   </div>
-                </div>
               )}
               </div>
 
@@ -332,7 +364,7 @@ const Dashboard = () => {
                               <p className="font-bold text-foreground text-sm leading-snug">{cert.certName}</p>
                               <div className="flex items-center gap-2 mt-1.5">
                                 <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
-                                  <div className={`h-full rounded-full transition-all duration-700 bg-gradient-to-r ${cert.gradient} cert-progress-bar`} style={{ '--cert-progress': `${pct}%` } as React.CSSProperties} />
+                                  <CertBar pct={pct} gradient={cert.gradient} />
                                 </div>
                                 <span className="text-xs font-bold text-muted-foreground shrink-0">{completedCount}/{totalEnrolled} modules</span>
                               </div>

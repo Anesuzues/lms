@@ -100,7 +100,7 @@ const Header = () => {
             ) : (
               <div className="flex items-center gap-2">
                 <Button variant="ghost" className="text-sm font-medium" onClick={() => navigate("/login")}>Sign In</Button>
-                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-5 shadow-glow" onClick={() => navigate("/login")}>
+                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-5 shadow-glow" onClick={() => navigate("/login?mode=signup")}>
                   Get Started
                 </Button>
               </div>
@@ -150,7 +150,7 @@ const Header = () => {
                     <LogOut className="w-4 h-4" /> Sign Out
                   </Button>
                 ) : (
-                  <Button className="w-full bg-primary text-primary-foreground rounded-full" onClick={() => { navigate("/login"); setIsMenuOpen(false); }}>
+                  <Button className="w-full bg-primary text-primary-foreground rounded-full" onClick={() => { navigate("/login?mode=signup"); setIsMenuOpen(false); }}>
                     Get Started
                   </Button>
                 )}

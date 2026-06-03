@@ -92,6 +92,7 @@ const LessonViewer = () => {
   const [loadingQuiz, setLoadingQuiz] = useState(false);
   const [marking, setMarking] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [showFloatingBtn, setShowFloatingBtn] = useState(false);
   const readingPaneRef = useRef<HTMLDivElement>(null);
   const scrollBarRef = useRef<HTMLDivElement>(null);
   const navProgressRef = useRef<HTMLDivElement>(null);
@@ -104,6 +105,7 @@ const LessonViewer = () => {
     const max = scrollHeight - clientHeight;
     const pct = max <= 0 ? 100 : Math.min(100, Math.round((scrollTop / max) * 100));
     scrollBarRef.current.style.width = `${pct}%`;
+    setShowFloatingBtn(pct >= 80);
   }, []);
 
   useEffect(() => {
@@ -138,6 +140,7 @@ const LessonViewer = () => {
   useEffect(() => {
     if (readingPaneRef.current) readingPaneRef.current.scrollTop = 0;
     if (scrollBarRef.current) scrollBarRef.current.style.width = '0%';
+    setShowFloatingBtn(false);
   }, [activeLessonId]);
 
   useEffect(() => {
@@ -371,7 +374,7 @@ const LessonViewer = () => {
           ) : (
             <>
               {/* Reading pane */}
-              <div className="flex-1 flex flex-col overflow-hidden">
+              <div className="flex-1 flex flex-col overflow-hidden relative">
                 {/* Scroll progress bar */}
                 <div className="h-0.5 bg-secondary shrink-0">
                   <div ref={scrollBarRef} className="h-full bg-primary transition-[width] duration-150 ease-out w-0" />
@@ -392,9 +395,17 @@ const LessonViewer = () => {
                   >
                     {/* Lesson header */}
                     <div className="mb-10">
-                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary uppercase tracking-wide mb-3 animate-in fade-in slide-in-from-top-2 duration-500 [animation-fill-mode:both] anim-delay-0">
-                        <BookOpen size={12} /> {getModuleName(activeLesson)}
-                      </span>
+                      <div className="flex items-center gap-3 mb-3 animate-in fade-in slide-in-from-top-2 duration-500 [animation-fill-mode:both] anim-delay-0">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary uppercase tracking-wide">
+                          <BookOpen size={12} /> {getModuleName(activeLesson)}
+                        </span>
+                        {activeLesson.duration_minutes > 0 && (
+                          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            {activeLesson.duration_minutes} min read
+                          </span>
+                        )}
+                      </div>
                       <h1 className="text-2xl sm:text-3xl font-bold text-foreground leading-tight mb-3 animate-in fade-in slide-in-from-bottom-4 duration-500 [animation-fill-mode:both] anim-delay-80">
                         {activeLesson.title}
                       </h1>
@@ -528,6 +539,21 @@ const LessonViewer = () => {
                 )}
               </div>
               </div>
+
+              {/* Floating Mark as Read — appears at 80% scroll when lesson incomplete */}
+              {showFloatingBtn && activeLesson && !isCompleted(activeLesson.id) && viewMode === 'reading' && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 animate-in fade-in slide-in-from-bottom-3 duration-300">
+                  <button
+                    type="button"
+                    onClick={handleMarkRead}
+                    disabled={marking}
+                    className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-glow hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed border-2 border-primary-foreground/10"
+                  >
+                    {marking ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle size={15} />}
+                    {marking ? 'Saving…' : 'Mark as Read'}
+                  </button>
+                </div>
+              )}
 
               {/* Bottom bar */}
               <div className="bg-card border-t border-border flex items-center justify-between px-4 py-3 shrink-0 gap-3">
