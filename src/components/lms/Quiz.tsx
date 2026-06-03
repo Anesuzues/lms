@@ -12,6 +12,7 @@ interface QuizProps {
   userId: string;
   onPass: () => void;
   onRetry: () => void;
+  skipResultsOnPass?: boolean;
 }
 
 const WidthBar = ({ pct, className }: { pct: number; className: string }) => {
@@ -22,7 +23,7 @@ const WidthBar = ({ pct, className }: { pct: number; className: string }) => {
   return <div ref={ref} className={className} />;
 };
 
-const Quiz: React.FC<QuizProps> = ({ questions, courseId, moduleId, moduleName, userId, onPass, onRetry }) => {
+const Quiz: React.FC<QuizProps> = ({ questions, courseId, moduleId, moduleName, userId, onPass, onRetry, skipResultsOnPass = false }) => {
   const { toast } = useToast();
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<number[]>(Array(questions.length).fill(-1));
@@ -74,6 +75,10 @@ const Quiz: React.FC<QuizProps> = ({ questions, courseId, moduleId, moduleName, 
           toast({ title: `Level up! You're now a ${result.newLevelName}!`, description: `+${xp} XP for passing the quiz.` });
         } else if (result.streakBonus) {
           toast({ title: '🔥 7-day streak! +100 bonus XP', description: 'You\'ve been learning every day this week.' });
+        }
+        if (skipResultsOnPass) {
+          onPass();
+          return;
         }
       }
     } catch (err) {

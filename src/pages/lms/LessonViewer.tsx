@@ -398,6 +398,7 @@ const LessonViewer = () => {
               userId={user!.id}
               onPass={handleQuizPass}
               onRetry={handleQuizRetry}
+              skipResultsOnPass={isFinalExam(course.title)}
             />
 
           ) : (
