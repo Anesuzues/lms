@@ -2,26 +2,29 @@ const testimonials = [
   {
     initials: 'TM',
     name: 'Tebogo Mokoena',
-    institution: 'University of Limpopo',
+    institution: 'Software Developer',
+    cert: 'Certified AI Digital Professional',
     quote:
-      'I had no idea how to write a professional CV. After Module 1, I built mine in an afternoon using AI tools. I got called for my first WIL interview within two weeks.',
-    color: 'from-blue-500 to-cyan-500',
+      'Certificate 1 gave me the AI fundamentals I was missing. I went from knowing nothing about AI tools to using them confidently at work — all before my first job.',
+    color: 'from-blue-600 to-cyan-500',
   },
   {
     initials: 'NZ',
     name: 'Nomsa Zulu',
-    institution: 'Capricorn TVET College',
+    institution: 'Junior Developer',
+    cert: 'Certified Junior Software Developer',
     quote:
-      'The interview module changed everything for me. I used to freeze up in interviews. The mock practice exercises gave me real confidence. I passed my WIL placement panel on the first try.',
-    color: 'from-violet-500 to-purple-500',
+      'The sequential structure is what made the difference. Each course built on the last and by the time I finished Certificate 2 I had built real applications I could show in interviews.',
+    color: 'from-violet-600 to-purple-500',
   },
   {
     initials: 'KP',
     name: 'Katlego Phiri',
-    institution: 'Lephalale TVET College',
+    institution: 'AI Application Developer',
+    cert: 'Certified AI Application Developer',
     quote:
-      'I completed all 4 modules in one week while preparing for placement. The certificate gave me something concrete to show employers. 100% free — I kept waiting for the catch. There wasn\'t one.',
-    color: 'from-emerald-500 to-teal-500',
+      'I completed all 4 certificates and landed a role building AI applications. The final exam for each certificate really tests you — passing them felt like a genuine achievement.',
+    color: 'from-emerald-600 to-teal-500',
   },
 ];
 
@@ -36,7 +39,7 @@ const Testimonials = () => (
           Real Students. <span className="text-gradient">Real Results.</span>
         </h2>
         <p className="text-base sm:text-lg text-muted-foreground">
-          Hear from students who used NobzLearn to prepare for their WIL placements.
+          Hear from people who completed the NobzLearn certificate programme and levelled up their careers.
         </p>
       </div>
 
@@ -66,6 +69,7 @@ const Testimonials = () => (
               <div className="min-w-0">
                 <p className="text-sm font-bold text-foreground truncate">{t.name}</p>
                 <p className="text-xs text-muted-foreground truncate">{t.institution}</p>
+                <p className="text-xs text-primary font-medium truncate mt-0.5">{t.cert}</p>
               </div>
             </div>
           </div>
