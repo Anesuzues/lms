@@ -97,35 +97,38 @@ const CertSection: React.FC<CertSectionProps> = ({
     <div className="mb-12">
       {/* Certificate header banner */}
       <div className={`bg-gradient-to-r ${cert.gradient} rounded-2xl p-5 sm:p-6 mb-5 text-white`}>
-        <div className="flex flex-wrap items-start justify-between gap-3 sm:gap-4">
-          <div className="flex items-start gap-4 min-w-0 flex-1">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-white/20 flex items-center justify-center shrink-0 backdrop-blur-sm border border-white/20">
-              {allDone ? <CheckCircle size={22} className="text-white" /> : <Trophy size={22} className="text-white" />}
-            </div>
-            <div className="min-w-0">
-              <p className="text-white/70 text-xs font-semibold uppercase tracking-widest mb-0.5">
-                Certificate {cert.number}
-              </p>
-              <h2 className="font-bold text-lg sm:text-xl text-white leading-snug mb-1">{cert.shortName}</h2>
-              <p className="text-white/75 text-sm leading-relaxed hidden sm:block">{cert.description}</p>
-              <div className="flex flex-wrap items-center gap-2 mt-3">
-                <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${cert.badge} backdrop-blur-sm`}>
-                  {cert.level}
+        {/* Mobile: 2-col [icon | text], buttons on own row below
+             sm+:    3-col [icon | text | buttons] in one row        */}
+        <div className="grid grid-cols-[auto_1fr] sm:grid-cols-[auto_1fr_auto] items-start gap-x-4 gap-y-3">
+          {/* Icon */}
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm border border-white/20 mt-0.5">
+            {allDone ? <CheckCircle size={22} className="text-white" /> : <Trophy size={22} className="text-white" />}
+          </div>
+
+          {/* Text — middle column, full-width on mobile */}
+          <div className="min-w-0">
+            <p className="text-white/70 text-xs font-semibold uppercase tracking-widest mb-0.5">
+              Certificate {cert.number}
+            </p>
+            <h2 className="font-bold text-base sm:text-xl text-white leading-snug mb-1">{cert.shortName}</h2>
+            <p className="text-white/75 text-sm leading-relaxed hidden sm:block">{cert.description}</p>
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${cert.badge} backdrop-blur-sm`}>
+                {cert.level}
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/15 border border-white/20 text-white">
+                {nonExam.length} modules + exam
+              </span>
+              {pathwayStarted && (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/20 border border-white/30 text-white">
+                  {completedCount}/{sorted.length} complete
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/15 border border-white/20 text-white">
-                  {nonExam.length} modules + exam
-                </span>
-                {pathwayStarted && (
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/20 border border-white/30 text-white">
-                    {completedCount}/{sorted.length} complete
-                  </span>
-                )}
-              </div>
+              )}
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Enroll / progress CTA */}
+          {/* Buttons — spans both cols on mobile (own row), col 3 on sm+ */}
+          <div className="col-span-2 sm:col-span-1 flex items-center gap-2 justify-end sm:justify-start">
             {userId && !pathwayStarted && (
               <button
                 type="button"

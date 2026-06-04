@@ -46,6 +46,9 @@ export interface LessonProgress {
   completed_at: string | null;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const isUUID = (id: string) => UUID_RE.test(id);
+
 // ─── Courses ────────────────────────────────────────────────────────────────
 
 export async function fetchCourses(): Promise<DBCourse[]> {
@@ -59,6 +62,7 @@ export async function fetchCourses(): Promise<DBCourse[]> {
 }
 
 export async function fetchCourseById(id: string): Promise<DBCourse | null> {
+  if (!isUUID(id)) return null;
   const { data, error } = await supabase
     .from('courses')
     .select('*')
@@ -83,6 +87,7 @@ export async function fetchCoursesByIds(ids: string[]): Promise<DBCourse[]> {
 // ─── Lessons ────────────────────────────────────────────────────────────────
 
 export async function fetchLessonsByCourse(courseId: string): Promise<DBLesson[]> {
+  if (!isUUID(courseId)) return [];
   const { data, error } = await supabase
     .from('lessons')
     .select('*,modules(title)')
