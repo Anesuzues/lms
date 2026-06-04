@@ -113,17 +113,18 @@ const LessonViewer = () => {
     const load = async () => {
       setLoading(true);
       try {
-        const enrollments = await fetchUserEnrollments(user.id);
-        const isEnrolled = enrollments.some(e => e.course_id === id);
-        if (!isEnrolled) { setNotEnrolled(true); setLoading(false); return; }
-
-        const [c, l, p, passed, stats] = await Promise.all([
+        // Fetch everything in parallel — one round trip instead of two
+        const [enrollments, c, l, p, passed, stats] = await Promise.all([
+          fetchUserEnrollments(user.id),
           fetchCourseById(id),
           fetchLessonsByCourse(id),
           fetchLessonProgress(user.id, id),
           fetchAllPassedModules(user.id, id),
           fetchUserStats(user.id),
         ]);
+        const isEnrolled = enrollments.some(e => e.course_id === id);
+        if (!isEnrolled) { setNotEnrolled(true); setLoading(false); return; }
+
         setStreak(stats.streak);
         setCourse(c);
         setLessons(l);
@@ -266,6 +267,16 @@ const LessonViewer = () => {
     </div>
   );
   if (!course) return <div className="h-dvh flex items-center justify-center bg-background text-foreground"><p>Course not found.</p></div>;
+  if (lessons.length === 0) return (
+    <div className="h-dvh flex flex-col items-center justify-center bg-background text-center p-8">
+      <BookOpen className="w-16 h-16 text-muted-foreground/20 mb-4" />
+      <h2 className="text-xl font-bold text-foreground mb-2">No lessons available yet</h2>
+      <p className="text-muted-foreground text-sm mb-6">This course doesn't have any lessons yet. Please check back soon.</p>
+      <button type="button" onClick={() => navigate('/courses')} className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors">
+        Browse Courses
+      </button>
+    </div>
+  );
 
   const completedCount = progress.filter(p => p.completed).length;
   const overallProgress = lessons.length > 0 ? Math.round((completedCount / lessons.length) * 100) : 0;
@@ -518,7 +529,14 @@ const LessonViewer = () => {
                                 setLoadingQuiz(true);
                                 const q = await fetchQuizQuestions(id!, activeLesson.module_id);
                                 setLoadingQuiz(false);
-                                if (q.length > 0) { setQuizQuestions(q); setViewMode('quiz'); }
+                                if (q.length > 0) {
+                                  setQuizQuestions(q);
+                                  setViewMode('quiz');
+                                } else {
+                                  // No quiz questions in DB — auto-pass so user can progress
+                                  handleQuizPass();
+                                  toast({ title: 'Course complete!', description: 'All lessons done — moving to next step.' });
+                                }
                               }}
                               disabled={loadingQuiz}
                               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-white font-bold transition-colors disabled:opacity-60 shadow-sm"

@@ -92,9 +92,14 @@ const Dashboard = () => {
     const completed = enrolledCourses.filter(e => e.enrollment.progress >= 100).length;
     if (progBarRef.current)
       progBarRef.current.style.width = `${Math.round((completed / TOTAL_PROGRAMME_COURSES) * 100)}%`;
-    const last = enrolledCourses[enrolledCourses.length - 1];
-    if (enrollBarRef.current && last)
-      enrollBarRef.current.style.width = `${last.enrollment.progress}%`;
+    const active =
+      enrolledCourses
+        .filter(ec => ec.enrollment.progress > 0 && ec.enrollment.progress < 100)
+        .sort((a, b) => b.enrollment.progress - a.enrollment.progress)[0]
+      ?? enrolledCourses.find(ec => ec.enrollment.progress === 0)
+      ?? enrolledCourses[0];
+    if (enrollBarRef.current && active)
+      enrollBarRef.current.style.width = `${active.enrollment.progress}%`;
   }, [enrolledCourses]);
 
   useEffect(() => {
@@ -149,7 +154,16 @@ const Dashboard = () => {
   const timeDisplay = totalSeconds < 60 ? `${totalSeconds}s`
     : totalMinutes < 60 ? `${totalMinutes}m`
     : `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m`;
-  const lastEnrolled = enrolledCourses[enrolledCourses.length - 1];
+
+  // Show the course the user is actively working on:
+  // 1st preference: highest-progress course that isn't yet done
+  // 2nd preference: any enrolled course not started yet
+  const activeCourse =
+    enrolledCourses
+      .filter(ec => ec.enrollment.progress > 0 && ec.enrollment.progress < 100)
+      .sort((a, b) => b.enrollment.progress - a.enrollment.progress)[0]
+    ?? enrolledCourses.find(ec => ec.enrollment.progress === 0)
+    ?? enrolledCourses[0];
 
   const mapCourse = (c: DBCourse): CourseCardCourse => ({
     id: c.id,
@@ -189,27 +203,27 @@ const Dashboard = () => {
 
         {/* Continue / Next Step — shown before stats */}
         {!loading && (
-          lastEnrolled ? (
+          activeCourse ? (
             <div className="mb-6 sm:mb-8">
               <h2 className="font-bold text-xl text-foreground mb-4">Continue Where You Left Off</h2>
               <div className="bg-card rounded-2xl border border-border shadow-soft p-5 flex flex-col sm:flex-row items-start sm:items-center gap-5 hover:-translate-y-0.5 transition-transform">
                 <img
-                  src={lastEnrolled.course.thumbnail_url || 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=800'}
-                  alt={lastEnrolled.course.title}
+                  src={activeCourse.course.thumbnail_url || 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=800'}
+                  alt={activeCourse.course.title}
                   className="w-full sm:w-32 h-36 sm:h-24 rounded-xl object-cover shrink-0"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-muted-foreground font-medium mb-1">NobzLearn Team</p>
-                  <h3 className="font-bold text-foreground text-lg leading-tight mb-3 truncate">{lastEnrolled.course.title}</h3>
+                  <h3 className="font-bold text-foreground text-lg leading-tight mb-3 truncate">{activeCourse.course.title}</h3>
                   <div className="flex items-center gap-3">
                     <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
                       <div ref={enrollBarRef} className="h-full bg-primary rounded-full transition-[width] duration-700 w-0" />
                     </div>
-                    <span className="text-xs font-bold text-primary shrink-0">{lastEnrolled.enrollment.progress}%</span>
+                    <span className="text-xs font-bold text-primary shrink-0">{activeCourse.enrollment.progress}%</span>
                   </div>
                 </div>
                 <Link
-                  to={`/learn/${lastEnrolled.course.id}`}
+                  to={`/learn/${activeCourse.course.id}`}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 transition-colors shadow-glow shrink-0"
                 >
                   <PlayCircle size={16} /> Resume

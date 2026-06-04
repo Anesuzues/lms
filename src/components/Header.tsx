@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Menu, X, LogOut, Sun, Moon } from "lucide-react";
+import { Menu, X, LogOut, Sun, Moon, MessageSquare } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import ProfileEditModal from "@/components/ProfileEditModal";
+import FeedbackModal from "@/components/FeedbackModal";
 
 const ThemeToggle = () => {
   const { theme, setTheme } = useTheme();
@@ -24,6 +25,7 @@ const ThemeToggle = () => {
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   const { user, isAuthenticated, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -77,6 +79,15 @@ const Header = () => {
 
           {/* Desktop Auth + Theme Toggle */}
           <div className="hidden md:flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setShowFeedback(true)}
+              aria-label="Help & Feedback"
+              className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
+              title="Help & Feedback"
+            >
+              <MessageSquare className="w-4 h-4" />
+            </button>
             <ThemeToggle />
             {isAuthenticated ? (
               <div className="flex items-center gap-3">
@@ -144,6 +155,13 @@ const Header = () => {
                   <button type="button" onClick={() => handleAnchorNav('contact')} className="px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-secondary transition-colors text-left">Contact</button>
                 </>
               )}
+              <button
+                type="button"
+                onClick={() => { setShowFeedback(true); setIsMenuOpen(false); }}
+                className="px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-secondary transition-colors text-left flex items-center gap-2"
+              >
+                <MessageSquare className="w-4 h-4" /> Help & Feedback
+              </button>
               <div className="pt-3 mt-2 border-t border-border">
                 {isAuthenticated ? (
                   <Button variant="outline" className="w-full gap-2 text-destructive border-destructive/30 hover:bg-destructive hover:text-white" onClick={handleSignOut}>
@@ -162,6 +180,7 @@ const Header = () => {
     </header>
 
     {showProfile && <ProfileEditModal onClose={() => setShowProfile(false)} />}
+    {showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} />}
     </>
   );
 };

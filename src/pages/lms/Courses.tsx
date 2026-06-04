@@ -97,8 +97,8 @@ const CertSection: React.FC<CertSectionProps> = ({
     <div className="mb-12">
       {/* Certificate header banner */}
       <div className={`bg-gradient-to-r ${cert.gradient} rounded-2xl p-5 sm:p-6 mb-5 text-white`}>
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-4 min-w-0">
+        <div className="flex flex-wrap items-start justify-between gap-3 sm:gap-4">
+          <div className="flex items-start gap-4 min-w-0 flex-1">
             <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-white/20 flex items-center justify-center shrink-0 backdrop-blur-sm border border-white/20">
               {allDone ? <CheckCircle size={22} className="text-white" /> : <Trophy size={22} className="text-white" />}
             </div>

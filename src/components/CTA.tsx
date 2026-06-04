@@ -19,11 +19,11 @@ const CTA = () => {
           </div>
 
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
-            Ready to Become Workplace Ready?
+            Ready to Build Real AI Skills?
           </h2>
 
           <p className="text-base sm:text-lg md:text-xl opacity-90 mb-8 sm:mb-10 max-w-xl mx-auto">
-            Sign up and get instant access to all 4 modules. Complete them to qualify for our workplace readiness workshops.
+            Start Certificate 1 today and follow the sequential pathway all the way to Certified AI Application Developer.
           </p>
 
           <div className="flex justify-center">
@@ -32,13 +32,13 @@ const CTA = () => {
               className="bg-white text-primary hover:bg-white/90 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
               onClick={() => navigate("/login")}
             >
-              Start Your Free Course
+              Start Your Learning Journey
               <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
             </Button>
           </div>
 
           <p className="mt-8 text-sm opacity-75">
-            No credit card required • Instant access • Self-paced learning
+            No credit card required • Sequential unlocking • 4 verified certificates
           </p>
         </div>
       </div>
