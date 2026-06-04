@@ -52,23 +52,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // ── Session timeout ──────────────────────────────────────────────────────
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
   const [timeoutCountdown, setTimeoutCountdown] = useState(WARNING_S);
-  const idleTimer   = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const idleTimer      = useRef<ReturnType<typeof setTimeout> | null>(null);
   const countdownTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-  const lastActivity = useRef(Date.now());
+  const lastActivity   = useRef(Date.now());
 
   const clearTimers = useCallback(() => {
     if (idleTimer.current)    clearTimeout(idleTimer.current);
     if (countdownTimer.current) clearInterval(countdownTimer.current);
   }, []);
 
-  const startWarningCountdown = useCallback((signOutFn: () => Promise<void>) => {
+  // ── When countdown hits 0 while the warning is visible → force logout ────
+  useEffect(() => {
+    if (timeoutCountdown === 0 && showTimeoutWarning) {
+      clearTimers();
+      setShowTimeoutWarning(false);
+      supabase.auth.signOut().then(() => setUser(null));
+    }
+  }, [timeoutCountdown, showTimeoutWarning]);
+
+  const startWarningCountdown = useCallback(() => {
     setShowTimeoutWarning(true);
     setTimeoutCountdown(WARNING_S);
     countdownTimer.current = setInterval(() => {
+      // Pure state update only — side effects handled in useEffect above
       setTimeoutCountdown(prev => {
         if (prev <= 1) {
           clearInterval(countdownTimer.current!);
-          signOutFn();
           return 0;
         }
         return prev - 1;
@@ -76,33 +85,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, 1000);
   }, []);
 
-  const resetIdleTimer = useCallback((signOutFn: () => Promise<void>) => {
+  const resetIdleTimer = useCallback(() => {
     clearTimers();
     setShowTimeoutWarning(false);
     setTimeoutCountdown(WARNING_S);
-    idleTimer.current = setTimeout(() => startWarningCountdown(signOutFn), IDLE_MS);
+    idleTimer.current = setTimeout(() => startWarningCountdown(), IDLE_MS);
   }, [clearTimers, startWarningCountdown]);
 
   // ── Activity listeners ───────────────────────────────────────────────────
   useEffect(() => {
     if (!user) { clearTimers(); return; }
 
-    // Lazy signOut ref so resetIdleTimer doesn't depend on signOut directly
-    const doSignOut = async () => {
-      await supabase.auth.signOut();
-      setUser(null);
-    };
-
     const onActivity = () => {
       const now = Date.now();
       if (now - lastActivity.current < ACTIVITY_THROTTLE_MS) return;
       lastActivity.current = now;
-      if (!showTimeoutWarning) resetIdleTimer(doSignOut);
+      if (!showTimeoutWarning) resetIdleTimer();
     };
 
     const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'] as const;
     events.forEach(e => window.addEventListener(e, onActivity, { passive: true }));
-    resetIdleTimer(doSignOut);
+    resetIdleTimer();
 
     return () => {
       events.forEach(e => window.removeEventListener(e, onActivity));
@@ -112,9 +115,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user?.id]);
 
   const extendSession = useCallback(() => {
-    const doSignOut = async () => { await supabase.auth.signOut(); setUser(null); };
     lastActivity.current = Date.now();
-    resetIdleTimer(doSignOut);
+    resetIdleTimer();
   }, [resetIdleTimer]);
 
   useEffect(() => {
