@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, Award, CheckCircle, BookOpen, ChevronRight, Briefcase } from "lucide-react";
+import { ArrowRight, Award, CheckCircle, BookOpen, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import LiveStats from "@/components/LiveStats";
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -23,15 +24,15 @@ const Hero = () => {
           <div className="space-y-6 sm:space-y-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 glass-panel rounded-full text-foreground text-xs sm:text-sm font-medium opacity-0 animate-fade-in border border-primary/20">
               <span className="w-2 h-2 bg-primary rounded-full animate-pulse-soft shadow-glow shrink-0" />
-              Free Course for All Students
+              4 Certificates · Free to Start
             </div>
 
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.1] tracking-tight opacity-0 animate-fade-in anim-delay-100">
-              Get <span className="text-gradient drop-shadow-sm">Workplace Ready</span> with NobzLearn
+              Go From Beginner to <span className="text-gradient drop-shadow-sm">AI Developer</span>
             </h1>
 
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-xl opacity-0 animate-fade-in anim-delay-200">
-              A free 4-module course delivered via email. Watch videos, complete assessments, and get ready for Work Integrated Learning (WIL).
+              A structured 4-certificate programme that takes you from AI fundamentals to building production-ready applications — step by step.
             </p>
 
             <div className="flex opacity-0 animate-fade-in anim-delay-300">
@@ -40,26 +41,14 @@ const Hero = () => {
                 className="group bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow rounded-full px-6 sm:px-8 py-5 sm:py-6 text-base sm:text-lg transition-all hover:scale-105"
                 onClick={() => navigate("/login")}
               >
-                Start Your Free Course
+                Start Your Journey
                 <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2 transition-transform group-hover:translate-x-1" />
               </Button>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-3 sm:gap-6 pt-6 sm:pt-8 border-t border-border opacity-0 animate-fade-in anim-delay-400">
-              {[
-                { icon: Users, value: '500+', label: 'Students' },
-                { icon: Award, value: '4', label: 'Modules' },
-                { icon: Briefcase, value: '3', label: 'Workshops' },
-              ].map(({ icon: Icon, value, label }) => (
-                <div key={label} className="space-y-1">
-                  <div className="flex items-center gap-1.5 sm:gap-2 text-primary">
-                    <Icon className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
-                    <span className="text-xl sm:text-2xl font-bold">{value}</span>
-                  </div>
-                  <p className="text-xs sm:text-sm text-muted-foreground">{label}</p>
-                </div>
-              ))}
+            {/* Live stats */}
+            <div className="pt-6 sm:pt-8 border-t border-border opacity-0 animate-fade-in anim-delay-400">
+              <LiveStats />
             </div>
           </div>
 
