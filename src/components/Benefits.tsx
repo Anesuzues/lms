@@ -1,4 +1,4 @@
-import { Trophy, Video, Clock, Lock, Bot, CheckCircle2 } from "lucide-react";
+import { Trophy, BookOpen, Clock, Lock, Bot, CheckCircle2 } from "lucide-react";
 
 const benefits = [
   {
@@ -7,9 +7,9 @@ const benefits = [
     description: "Earn industry-recognised certificates from Beginner through to Advanced AI Developer.",
   },
   {
-    icon: Video,
-    title: "Video Lessons",
-    description: "Learn at your own pace with clear, practical video content across every module.",
+    icon: BookOpen,
+    title: "Structured Lessons",
+    description: "Learn through rich, well-structured reading content with quizzes to test your understanding.",
   },
   {
     icon: Clock,
