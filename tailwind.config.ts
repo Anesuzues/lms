@@ -18,7 +18,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+        sans:    ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+        orbitron: ['"Orbitron"', 'sans-serif'],
+        exo:      ['"Exo 2"', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",

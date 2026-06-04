@@ -40,16 +40,16 @@ const LiveStats = () => {
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {items.map(s => (
         <div
           key={s.label}
-          className="bg-card/30 backdrop-blur-sm border border-primary/20 rounded-xl p-4 sm:p-5"
+          className="bg-card/30 backdrop-blur-sm border border-primary/20 rounded-xl p-5"
         >
-          <div className="font-black text-2xl sm:text-3xl text-primary mb-1 tabular-nums">
+          <div className="font-orbitron font-black text-3xl text-primary mb-1 tabular-nums">
             {s.value > 0 ? s.value.toLocaleString() : '—'}
           </div>
-          <div className="text-xs text-muted-foreground uppercase tracking-wide">
+          <div className="font-exo text-xs text-muted-foreground uppercase tracking-wide">
             {s.label}
           </div>
         </div>
