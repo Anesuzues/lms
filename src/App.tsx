@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./contexts/AuthContext";
 import SessionTimeoutModal from "./components/SessionTimeoutModal";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const Login         = lazy(() => import("./pages/lms/Login"));
 const Courses       = lazy(() => import("./pages/lms/Courses"));
@@ -37,6 +38,7 @@ const queryClient = new QueryClient({
 });
 
 const App = () => (
+  <ErrorBoundary>
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -70,6 +72,7 @@ const App = () => (
     </AuthProvider>
   </QueryClientProvider>
   </ThemeProvider>
+  </ErrorBoundary>
 );
 
 export default App;
