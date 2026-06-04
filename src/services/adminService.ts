@@ -134,20 +134,34 @@ export async function fetchAllStudents(): Promise<StudentOverview[]> {
     } | null;
   };
 
-  return (data ?? []).map((row: EnrollmentRow) => {
-    const profile = row.profiles;
+  // Deduplicate by user_id — one row per student showing overall progress
+  const byUser = new Map<string, EnrollmentRow[]>();
+  for (const row of (data ?? []) as EnrollmentRow[]) {
+    const uid = row.user_id;
+    if (!byUser.has(uid)) byUser.set(uid, []);
+    byUser.get(uid)!.push(row);
+  }
+
+  return Array.from(byUser.values()).map(rows => {
+    const profile = rows[0].profiles;
     const name = profile?.full_name || profile?.email?.split('@')[0] || 'Unknown';
+    const allProgress = rows.map(r => r.progress ?? 0);
+    const avgProgress = Math.round(allProgress.reduce((s, p) => s + p, 0) / allProgress.length);
+    const anyCompleted = rows.find(r => r.completed_at) ?? null;
+    const earliestEnroll = rows.reduce((earliest, r) =>
+      r.enrolled_at < earliest.enrolled_at ? r : earliest
+    );
     return {
-      id: profile?.id ?? row.user_id,
+      id: profile?.id ?? rows[0].user_id,
       name,
       email: profile?.email ?? '',
       avatar: profile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3B82F6&color=fff&bold=true`,
-      enrolled_at: row.enrolled_at,
-      progress: row.progress ?? 0,
-      completed_at: row.completed_at,
-      status: row.completed_at ? 'completed' : (row.progress ?? 0) > 0 ? 'in_progress' : 'not_started',
+      enrolled_at: earliestEnroll.enrolled_at,
+      progress: avgProgress,
+      completed_at: anyCompleted?.completed_at ?? null,
+      status: anyCompleted ? 'completed' : avgProgress > 0 ? 'in_progress' : 'not_started',
     } as StudentOverview;
-  });
+  }).sort((a, b) => b.enrolled_at.localeCompare(a.enrolled_at));
 }
 
 // ─── Course Management ────────────────────────────────────────────────────────
@@ -238,23 +252,25 @@ export async function fetchCourseAnalytics(): Promise<CourseAnalytics[]> {
 }
 
 export async function fetchAdminStats(): Promise<AdminStats> {
-  const { count: totalStudents } = await supabase
-    .from('profiles')
-    .select('*', { count: 'exact', head: true })
-    .eq('role', 'student');
+  const [profilesRes, enrollmentsRes] = await Promise.all([
+    supabase.from('profiles').select('id', { count: 'exact' }),
+    supabase.from('enrollments').select('user_id, progress, completed_at'),
+  ]);
 
-  const { data: enrollments } = await supabase
-    .from('enrollments')
-    .select('progress, completed_at');
+  const totalStudents = profilesRes.count ?? 0;
+  const enrollments = enrollmentsRes.data ?? [];
 
-  const enrolled = enrollments?.length ?? 0;
-  const completed = enrollments?.filter(e => e.completed_at).length ?? 0;
-  const inProgress = enrollments?.filter(e => !e.completed_at && e.progress > 0).length ?? 0;
+  // Count by distinct user, not by enrollment rows
+  const enrolledUsers  = new Set(enrollments.map(e => e.user_id)).size;
+  const completedUsers = new Set(enrollments.filter(e => e.completed_at).map(e => e.user_id)).size;
+  const inProgressUsers = new Set(
+    enrollments.filter(e => !e.completed_at && (e.progress ?? 0) > 0).map(e => e.user_id)
+  ).size;
 
   return {
-    totalStudents: totalStudents ?? 0,
-    enrolled,
-    completed,
-    inProgress,
+    totalStudents,
+    enrolled: enrolledUsers,
+    completed: completedUsers,
+    inProgress: inProgressUsers,
   };
 }
