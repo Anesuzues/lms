@@ -22,7 +22,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ onClose }) => {
     if (!message.trim()) return;
     setSubmitting(true);
 
-    const payload = { category, message: message.trim(), status: 'open' };
+    const payload = { category, message: message.trim() };
 
     // Try with user_id first; if that fails (FK / RLS) retry anonymously
     let { error } = await supabase.from('feedback').insert({ ...payload, user_id: user?.id ?? null });
