@@ -4,6 +4,7 @@ import {
   Users, Trophy, BookOpen, Search, Loader2, LogOut, TrendingUp,
   ChevronLeft, ChevronRight, Plus, Pencil, Trash2, X, Menu,
   BarChart2, Download, Eye, ShieldCheck, ShieldOff, UserCog,
+  MessageSquare, CheckCircle2, Circle, Bug, Lightbulb,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
@@ -11,7 +12,8 @@ import {
   fetchAllStudents, fetchAdminStats, adminFetchCourses,
   adminCreateCourse, adminUpdateCourse, adminDeleteCourse,
   fetchCourseAnalytics, fetchAllProfiles, updateUserRole,
-  StudentOverview, AdminStats, CourseFormData, CourseAnalytics, UserProfile,
+  fetchAllFeedback, updateFeedbackStatus,
+  StudentOverview, AdminStats, CourseFormData, CourseAnalytics, UserProfile, FeedbackItem,
 } from '@/services/adminService';
 import { DBCourse } from '@/services/courseService';
 import { exportStudentsCSV } from '@/lib/generateReport';
@@ -109,7 +111,7 @@ const CourseModal: React.FC<CourseModalProps> = ({ initial, onSave, onClose, sav
 };
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
-type Tab = 'students' | 'courses' | 'analytics' | 'users';
+type Tab = 'students' | 'courses' | 'analytics' | 'users' | 'feedback';
 
 const AdminDashboard = () => {
   const { user, isAuthenticated, signOut, loading: authLoading } = useAuth();
@@ -142,6 +144,12 @@ const AdminDashboard = () => {
   const [loadingProfiles, setLoadingProfiles] = useState(false);
   const [userSearch, setUserSearch] = useState('');
   const [updatingRole, setUpdatingRole] = useState<string | null>(null);
+
+  // Feedback
+  const [feedbackItems, setFeedbackItems] = useState<FeedbackItem[]>([]);
+  const [loadingFeedback, setLoadingFeedback] = useState(false);
+  const [feedbackFilter, setFeedbackFilter] = useState<'all' | 'open' | 'resolved'>('open');
+  const [updatingFeedback, setUpdatingFeedback] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user || user.role !== 'admin') return;
@@ -189,6 +197,16 @@ const AdminDashboard = () => {
       setLoadingProfiles(true);
       setProfiles(await fetchAllProfiles());
       setLoadingProfiles(false);
+    };
+    load();
+  }, [tab]);
+
+  useEffect(() => {
+    if (tab !== 'feedback' || !user || user.role !== 'admin') return;
+    const load = async () => {
+      setLoadingFeedback(true);
+      setFeedbackItems(await fetchAllFeedback());
+      setLoadingFeedback(false);
     };
     load();
   }, [tab]);
@@ -246,20 +264,34 @@ const AdminDashboard = () => {
     (p.email ?? '').toLowerCase().includes(userSearch.toLowerCase())
   );
 
+  const handleFeedbackStatus = async (item: FeedbackItem) => {
+    const next = item.status === 'open' ? 'resolved' : 'open';
+    setUpdatingFeedback(item.id);
+    const res = await updateFeedbackStatus(item.id, next);
+    if (res.error) toast({ title: 'Update failed', description: res.error, variant: 'destructive' });
+    else setFeedbackItems(prev => prev.map(f => f.id === item.id ? { ...f, status: next } : f));
+    setUpdatingFeedback(null);
+  };
+
+  const filteredFeedback = feedbackItems.filter(f =>
+    feedbackFilter === 'all' || f.status === feedbackFilter
+  );
+
   if (authLoading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (!isAuthenticated || !user) return <Navigate to="/login" />;
   if (user.role !== 'admin') return <Navigate to="/dashboard" />;
 
   const navItems: { key: Tab; label: string; icon: React.ComponentType<{ size?: number }> }[] = [
-    { key: 'students', label: 'Students',        icon: Users       },
-    { key: 'courses',  label: 'Courses',          icon: BookOpen    },
-    { key: 'analytics',label: 'Analytics',        icon: BarChart2   },
-    { key: 'users',    label: 'User Management',  icon: UserCog     },
+    { key: 'students', label: 'Students',        icon: Users         },
+    { key: 'courses',  label: 'Courses',          icon: BookOpen      },
+    { key: 'analytics',label: 'Analytics',        icon: BarChart2     },
+    { key: 'users',    label: 'User Management',  icon: UserCog       },
+    { key: 'feedback', label: 'Feedback',          icon: MessageSquare },
   ];
 
   const tabLabel: Record<Tab, string> = {
     students: 'Student Overview', courses: 'Course Management',
-    analytics: 'Analytics', users: 'User Management',
+    analytics: 'Analytics', users: 'User Management', feedback: 'Feedback',
   };
 
   return (
@@ -678,6 +710,102 @@ const AdminDashboard = () => {
                       </tbody>
                     </table>
                   </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ── Feedback Tab ── */}
+          {tab === 'feedback' && (
+            <>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8">
+                <div>
+                  <h1 className="text-xl md:text-2xl font-bold text-gray-900">Feedback</h1>
+                  <p className="text-gray-500 text-sm mt-1">Messages submitted by users via the Help & Feedback form</p>
+                </div>
+                <div className="flex gap-2">
+                  {(['all', 'open', 'resolved'] as const).map(f => (
+                    <button key={f} type="button" onClick={() => setFeedbackFilter(f)}
+                      className={`px-4 py-2 rounded-xl text-sm font-semibold capitalize transition-colors ${feedbackFilter === f ? 'bg-primary text-primary-foreground' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                      {f}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Summary chips */}
+              <div className="flex gap-3 mb-6">
+                {[
+                  { label: 'Open', count: feedbackItems.filter(f => f.status === 'open').length, color: 'bg-amber-50 text-amber-700 border-amber-200' },
+                  { label: 'Resolved', count: feedbackItems.filter(f => f.status === 'resolved').length, color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+                  { label: 'Total', count: feedbackItems.length, color: 'bg-gray-50 text-gray-700 border-gray-200' },
+                ].map(s => (
+                  <div key={s.label} className={`px-4 py-2 rounded-xl border text-sm font-semibold ${s.color}`}>
+                    {s.count} {s.label}
+                  </div>
+                ))}
+              </div>
+
+              {loadingFeedback ? (
+                <div className="flex items-center justify-center py-24"><Loader2 className="w-7 h-7 animate-spin text-primary" /></div>
+              ) : filteredFeedback.length === 0 ? (
+                <div className="py-24 text-center rounded-2xl border-2 border-dashed border-gray-200 bg-white">
+                  <MessageSquare size={40} className="mx-auto mb-3 text-gray-300" />
+                  <p className="font-semibold text-gray-500">No {feedbackFilter !== 'all' ? feedbackFilter : ''} feedback yet</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {filteredFeedback.map(item => {
+                    const name = item.profiles?.full_name || item.profiles?.email || 'Anonymous';
+                    const categoryIcon = item.category === 'Bug Report' ? Bug : item.category === 'Feature Request' ? Lightbulb : MessageSquare;
+                    const CategoryIcon = categoryIcon;
+                    const categoryColor = item.category === 'Bug Report'
+                      ? 'bg-red-100 text-red-700'
+                      : item.category === 'Feature Request'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'bg-gray-100 text-gray-700';
+
+                    return (
+                      <div key={item.id} className={`bg-white rounded-2xl border p-5 transition-opacity ${item.status === 'resolved' ? 'opacity-60 border-gray-100' : 'border-gray-200 shadow-sm'}`}>
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${categoryColor}`}>
+                                <CategoryIcon size={11} /> {item.category}
+                              </span>
+                              {item.status === 'resolved' && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
+                                  <CheckCircle2 size={11} /> Resolved
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-800 leading-relaxed mb-3">{item.message}</p>
+                            <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400">
+                              <span className="font-medium text-gray-600">{name}</span>
+                              <span>{new Date(item.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleFeedbackStatus(item)}
+                            disabled={updatingFeedback === item.id}
+                            title={item.status === 'open' ? 'Mark as resolved' : 'Reopen'}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors shrink-0 disabled:opacity-50 ${
+                              item.status === 'open'
+                                ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                                : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'
+                            }`}
+                          >
+                            {updatingFeedback === item.id
+                              ? <Loader2 size={12} className="animate-spin" />
+                              : item.status === 'open'
+                              ? <><CheckCircle2 size={12} /> Resolve</>
+                              : <><Circle size={12} /> Reopen</>}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </>

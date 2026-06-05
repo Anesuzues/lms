@@ -251,6 +251,35 @@ export async function fetchCourseAnalytics(): Promise<CourseAnalytics[]> {
     .sort((a, b) => b.total_enrollments - a.total_enrollments);
 }
 
+// ─── Feedback ─────────────────────────────────────────────────────────────────
+
+export interface FeedbackItem {
+  id: string;
+  user_id: string | null;
+  category: string;
+  message: string;
+  status: 'open' | 'resolved';
+  created_at: string;
+  profiles?: { full_name: string | null; email: string | null } | null;
+}
+
+export async function fetchAllFeedback(): Promise<FeedbackItem[]> {
+  const { data, error } = await supabase
+    .from('feedback')
+    .select('*, profiles(full_name, email)')
+    .order('created_at', { ascending: false });
+  if (error) { console.error('fetchAllFeedback error:', error); return []; }
+  return (data ?? []) as FeedbackItem[];
+}
+
+export async function updateFeedbackStatus(id: string, status: 'open' | 'resolved'): Promise<{ error?: string }> {
+  const { error } = await supabase.from('feedback').update({ status }).eq('id', id);
+  if (error) return { error: error.message };
+  return {};
+}
+
+// ─── Stats ────────────────────────────────────────────────────────────────────
+
 export async function fetchAdminStats(): Promise<AdminStats> {
   const [profilesRes, enrollmentsRes] = await Promise.all([
     supabase.from('profiles').select('id', { count: 'exact' }),

@@ -21,19 +21,19 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ onClose }) => {
     e.preventDefault();
     if (!message.trim()) return;
     setSubmitting(true);
-    try {
-      await supabase.from('feedback').insert({
-        user_id: user?.id ?? null,
-        category,
-        message: message.trim(),
-      });
-    } catch {
-      // Silently continue — table may not exist yet; we still thank the user
-    } finally {
-      setSubmitting(false);
-      toast({ title: 'Feedback received!', description: "Thank you — we'll review your message shortly." });
-      onClose();
+    const { error } = await supabase.from('feedback').insert({
+      user_id: user?.id ?? null,
+      category,
+      message: message.trim(),
+      status: 'open',
+    });
+    setSubmitting(false);
+    if (error) {
+      toast({ title: 'Could not send feedback', description: 'Please try again or email us directly.', variant: 'destructive' });
+      return;
     }
+    toast({ title: 'Feedback received!', description: "Thank you — we'll review your message shortly." });
+    onClose();
   };
 
   return (
