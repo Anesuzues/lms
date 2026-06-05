@@ -224,9 +224,10 @@ const AdminDashboard = () => {
     load();
   }, [tab]);
 
-  // Student filtering
+  // Student filtering — sheet-only rows are counted in stats but not shown in the table
   const placementFilters = ['placed', 'to_be_placed', 'exited', 'candidate_response'] as const;
   const filtered = students.filter(s => {
+    if (s.source === 'sheet') return false;
     const matchSearch = s.name.toLowerCase().includes(search.toLowerCase())
       || s.email.toLowerCase().includes(search.toLowerCase())
       || (s.company ?? '').toLowerCase().includes(search.toLowerCase());
