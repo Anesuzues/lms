@@ -236,8 +236,8 @@ const Dashboard = () => {
                 <BookOpen size={22} className="text-primary" />
               </div>
               <div className="flex-1 text-center sm:text-left">
-                <p className="font-bold text-foreground text-base mb-0.5">Your next step: start Module 1</p>
-                <p className="text-muted-foreground text-sm">Enroll in your first course and begin building your workplace skills today.</p>
+                <p className="font-bold text-foreground text-base mb-0.5">Your next step: start Certificate 1</p>
+                <p className="text-muted-foreground text-sm">Enroll in your first pathway and begin your journey to becoming a Certified AI Developer.</p>
               </div>
               <Link
                 to="/courses"
@@ -378,147 +378,14 @@ const Dashboard = () => {
           </div>
         ) : (
           <>
-            {/* My Courses */}
-            <div>
+            {/* ── 1. My Learning Path ── */}
+            <div className="mb-8">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="font-bold text-xl text-foreground">My Learning Path</h2>
                 <Link to="/courses" className="text-sm font-semibold text-primary hover:text-primary/80 flex items-center gap-1">
                   Browse all <ArrowRight size={14} />
                 </Link>
               </div>
-
-              <div className="mt-10">
-                <h2 className="font-bold text-xl text-foreground mb-5">Quiz History</h2>
-              {quizAttempts.length === 0 ? (
-                <div className="bg-card border border-border rounded-2xl py-14 text-center">
-                  <BarChart2 size={36} className="mx-auto mb-3 text-muted-foreground/30" />
-                  <p className="font-semibold text-muted-foreground text-sm">No quiz attempts yet</p>
-                  <p className="text-xs text-muted-foreground/70 mt-1">Complete a lesson and take the quiz to see your results here.</p>
-                </div>
-              ) : (
-                  <div className="bg-card border border-border rounded-2xl overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <table className="w-full min-w-[480px]">
-                        <thead>
-                          <tr className="border-b border-border bg-secondary/40">
-                            <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Course</th>
-                            <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Score</th>
-                            <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Result</th>
-                            <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Date</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border">
-                          {quizAttempts.map(attempt => (
-                            <tr key={attempt.id} className="hover:bg-secondary/30 transition-colors">
-                              <td className="px-5 py-3 text-sm text-foreground font-medium truncate max-w-[200px]">
-                                {courseNameMap[attempt.course_id] ?? 'Unknown Course'}
-                              </td>
-                              <td className="px-5 py-3">
-                                <span className={`text-sm font-bold ${attempt.passed ? 'text-emerald-500' : 'text-red-400'}`}>
-                                  {attempt.score}%
-                                </span>
-                              </td>
-                              <td className="px-5 py-3">
-                                {attempt.passed ? (
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-xs font-semibold">
-                                    <CheckCircle2 size={11} /> Passed
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-500/10 text-red-400 text-xs font-semibold">
-                                    <XCircle size={11} /> Failed
-                                  </span>
-                                )}
-                              </td>
-                              <td className="px-5 py-3 text-xs text-muted-foreground">
-                                {new Date(attempt.attempted_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-              )}
-              </div>
-
-              {/* ── Your Certificates ── */}
-              {(() => {
-                const certStatus = CERTIFICATES.map(cert => {
-                  const certCourses = enrolledCourses.filter(
-                    ec => getCertForCourse(ec.course.title)?.number === cert.number
-                  );
-                  if (certCourses.length === 0) return null;
-
-                  const completedCount = certCourses.filter(ec => ec.enrollment.progress >= 100).length;
-                  const totalEnrolled = certCourses.length;
-                  const pct = Math.round((completedCount / totalEnrolled) * 100);
-
-                  // Eligible = the final exam quiz has been passed
-                  const eligible = certCourses.some(ec =>
-                    cert.finalExamTitles.some(t =>
-                      ec.course.title.toLowerCase().includes(t.toLowerCase())
-                    ) && quizPassedCourses.includes(ec.course.id)
-                  );
-
-                  return { cert, certCourses, completedCount, totalEnrolled, pct, eligible };
-                }).filter(Boolean);
-
-                if (certStatus.length === 0) return null;
-                return (
-                  <div className="mb-10">
-                    <h2 className="font-bold text-xl text-foreground mb-5">Your Certificates</h2>
-                    <div className="space-y-3">
-                      {certStatus.map(s => {
-                        if (!s) return null;
-                        const { cert, completedCount, totalEnrolled, pct, eligible } = s;
-                        return (
-                          <div key={cert.number} className={`rounded-2xl border p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 ${eligible ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' : 'bg-card border-border'}`}>
-                            <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${cert.gradient} flex items-center justify-center shrink-0`}>
-                              <Trophy size={20} className="text-white" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-bold text-foreground text-sm leading-snug">{cert.certName}</p>
-                              <div className="flex items-center gap-2 mt-1.5">
-                                <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
-                                  <CertBar pct={pct} gradient={cert.gradient} />
-                                </div>
-                                <span className="text-xs font-bold text-muted-foreground shrink-0">{completedCount}/{totalEnrolled} modules</span>
-                              </div>
-                              {!eligible && (
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  Complete all modules and pass the final exam to earn this certificate
-                                </p>
-                              )}
-                              {eligible && (
-                                <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 font-semibold">
-                                  ✓ Final exam passed — certificate earned!
-                                </p>
-                              )}
-                            </div>
-                            {eligible ? (
-                              <button
-                                type="button"
-                                onClick={() => handleDownloadCertificate(cert.number)}
-                                disabled={downloading === String(cert.number)}
-                                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition-colors disabled:opacity-60 shrink-0 shadow-sm"
-                              >
-                                {downloading === String(cert.number)
-                                  ? <><Loader2 size={14} className="animate-spin" /> Generating...</>
-                                  : <><Download size={14} /> Download Certificate</>}
-                              </button>
-                            ) : (
-                              <span className="px-3 py-1.5 rounded-xl bg-secondary text-muted-foreground text-xs font-semibold shrink-0">
-                                {pct}% complete
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })()}
-
               {enrolledCourses.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {enrolledCourses.map(({ course, enrollment }) => (
@@ -538,11 +405,120 @@ const Dashboard = () => {
                   </div>
                   <h3 className="text-xl font-bold text-foreground mb-2">No courses yet</h3>
                   <p className="text-muted-foreground mb-8 max-w-sm mx-auto text-sm">
-                    Enroll in a course to start building your workplace skills.
+                    Enroll in a certificate pathway to start your learning journey.
                   </p>
                   <Link to="/courses" className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors shadow-glow">
                     Explore Catalog <ArrowRight size={16} />
                   </Link>
+                </div>
+              )}
+            </div>
+
+            {/* ── 2. Your Certificates ── */}
+            {(() => {
+              const certStatus = CERTIFICATES.map(cert => {
+                const certCourses = enrolledCourses.filter(
+                  ec => getCertForCourse(ec.course.title)?.number === cert.number
+                );
+                if (certCourses.length === 0) return null;
+                const completedCount = certCourses.filter(ec => ec.enrollment.progress >= 100).length;
+                const totalEnrolled = certCourses.length;
+                const pct = Math.round((completedCount / totalEnrolled) * 100);
+                const eligible = certCourses.some(ec =>
+                  cert.finalExamTitles.some(t =>
+                    ec.course.title.toLowerCase().includes(t.toLowerCase())
+                  ) && quizPassedCourses.includes(ec.course.id)
+                );
+                return { cert, completedCount, totalEnrolled, pct, eligible };
+              }).filter(Boolean);
+
+              if (certStatus.length === 0) return null;
+              return (
+                <div className="mb-8">
+                  <h2 className="font-bold text-xl text-foreground mb-5">Your Certificates</h2>
+                  <div className="space-y-3">
+                    {certStatus.map(s => {
+                      if (!s) return null;
+                      const { cert, completedCount, totalEnrolled, pct, eligible } = s;
+                      return (
+                        <div key={cert.number} className={`rounded-2xl border p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 ${eligible ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' : 'bg-card border-border'}`}>
+                          <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${cert.gradient} flex items-center justify-center shrink-0`}>
+                            <Trophy size={20} className="text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-foreground text-sm leading-snug">{cert.certName}</p>
+                            <div className="flex items-center gap-2 mt-1.5">
+                              <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
+                                <CertBar pct={pct} gradient={cert.gradient} />
+                              </div>
+                              <span className="text-xs font-bold text-muted-foreground shrink-0">{completedCount}/{totalEnrolled} modules</span>
+                            </div>
+                            {eligible
+                              ? <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 font-semibold">✓ Final exam passed — certificate earned!</p>
+                              : <p className="text-xs text-muted-foreground mt-1">Complete all modules and pass the final exam to earn this certificate</p>
+                            }
+                          </div>
+                          {eligible ? (
+                            <button type="button" onClick={() => handleDownloadCertificate(cert.number)} disabled={downloading === String(cert.number)}
+                              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition-colors disabled:opacity-60 shrink-0 shadow-sm">
+                              {downloading === String(cert.number)
+                                ? <><Loader2 size={14} className="animate-spin" /> Generating...</>
+                                : <><Download size={14} /> Download Certificate</>}
+                            </button>
+                          ) : (
+                            <span className="px-3 py-1.5 rounded-xl bg-secondary text-muted-foreground text-xs font-semibold shrink-0">{pct}% complete</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ── 3. Quiz History ── */}
+            <div className="mb-8">
+              <h2 className="font-bold text-xl text-foreground mb-5">Quiz History</h2>
+              {quizAttempts.length === 0 ? (
+                <div className="bg-card border border-border rounded-2xl py-14 text-center">
+                  <BarChart2 size={36} className="mx-auto mb-3 text-muted-foreground/30" />
+                  <p className="font-semibold text-muted-foreground text-sm">No quiz attempts yet</p>
+                  <p className="text-xs text-muted-foreground/70 mt-1">Complete a lesson and take the quiz to see your results here.</p>
+                </div>
+              ) : (
+                <div className="bg-card border border-border rounded-2xl overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[480px]">
+                      <thead>
+                        <tr className="border-b border-border bg-secondary/40">
+                          <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Course</th>
+                          <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Score</th>
+                          <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Result</th>
+                          <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {quizAttempts.map(attempt => (
+                          <tr key={attempt.id} className="hover:bg-secondary/30 transition-colors">
+                            <td className="px-5 py-3 text-sm text-foreground font-medium truncate max-w-[200px]">
+                              {courseNameMap[attempt.course_id] ?? 'Unknown Course'}
+                            </td>
+                            <td className="px-5 py-3">
+                              <span className={`text-sm font-bold ${attempt.passed ? 'text-emerald-500' : 'text-red-400'}`}>{attempt.score}%</span>
+                            </td>
+                            <td className="px-5 py-3">
+                              {attempt.passed
+                                ? <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-xs font-semibold"><CheckCircle2 size={11} /> Passed</span>
+                                : <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-500/10 text-red-400 text-xs font-semibold"><XCircle size={11} /> Failed</span>}
+                            </td>
+                            <td className="px-5 py-3 text-xs text-muted-foreground">
+                              {new Date(attempt.attempted_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </div>

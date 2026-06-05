@@ -76,10 +76,10 @@ const Hero = () => {
                   <div className="w-36 shrink-0 bg-card border-r border-border p-2.5 space-y-1">
                     <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wide px-1 mb-2">Lessons</p>
                     {[
-                      { title: 'AI Basics', done: true },
-                      { title: 'Research Tools', done: true },
-                      { title: 'CV with AI', done: false, active: true },
-                      { title: 'Cover Letter', done: false },
+                      { title: 'AI Foundations', done: true },
+                      { title: 'Prompt Engineering', done: true },
+                      { title: 'Building AI Apps', done: false, active: true },
+                      { title: 'RAG Systems', done: false },
                     ].map(({ title, done, active }) => (
                       <div key={title} className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[10px] font-medium ${active ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}>
                         <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 ${done ? 'bg-emerald-500' : active ? 'bg-primary' : 'bg-secondary'}`}>
