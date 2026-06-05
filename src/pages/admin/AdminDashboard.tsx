@@ -156,7 +156,7 @@ const AdminDashboard = () => {
   // Feedback
   const [feedbackItems, setFeedbackItems] = useState<FeedbackItem[]>([]);
   const [loadingFeedback, setLoadingFeedback] = useState(false);
-  const [feedbackFilter, setFeedbackFilter] = useState<'all' | 'open' | 'resolved'>('open');
+  const [feedbackFilter, setFeedbackFilter] = useState<'all' | 'open' | 'resolved'>('all');
   const [updatingFeedback, setUpdatingFeedback] = useState<string | null>(null);
 
   useEffect(() => {
@@ -293,7 +293,7 @@ const AdminDashboard = () => {
   };
 
   const filteredFeedback = feedbackItems.filter(f =>
-    feedbackFilter === 'all' || f.status === feedbackFilter
+    feedbackFilter === 'all' || (f.status ?? 'open') === feedbackFilter
   );
 
   if (authLoading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
