@@ -49,14 +49,14 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ userId, userName, onC
   const Icon = current.icon;
   const isLast = step === STEPS.length - 1;
 
-  const handleClose = async () => {
-    await markOnboarded(userId);
+  const handleClose = () => {
+    markOnboarded(userId).catch(() => {});
     onClose();
   };
 
-  const handleCta = async () => {
+  const handleCta = () => {
     if (isLast) {
-      await markOnboarded(userId);
+      markOnboarded(userId).catch(() => {});
       onClose();
       navigate('/courses');
     } else {
