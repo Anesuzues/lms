@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { PlayCircle, Clock, BookOpen, CheckCircle, User, ArrowLeft, Loader2, Lock, AlertCircle } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -115,6 +115,8 @@ const CourseDetail = () => {
     name,
     lessons: lessons.filter(l => (l.position ?? l.order_index) === i + 1),
   })).filter(m => m.lessons.length > 0);
+
+  if (user?.role === 'admin') return <Navigate to="/admin" replace />;
 
   if (loading) {
     return (

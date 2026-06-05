@@ -4,7 +4,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CourseCard, { CourseCardCourse } from '@/components/lms/CourseCard';
 import { useAuth } from '@/contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { fetchCourses, fetchUserEnrollments, enrollUserInPathway, DBEnrollment } from '@/services/courseService';
 import { CERTIFICATES, isFinalExam } from '@/lib/programmeConfig';
 
@@ -254,6 +254,8 @@ const Courses = () => {
   });
 
   const totalVisible = grouped.reduce((s, g) => s + g.courses.length, 0) + ungrouped.length;
+
+  if (user?.role === 'admin') return <Navigate to="/admin" replace />;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

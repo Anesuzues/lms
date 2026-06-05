@@ -271,6 +271,7 @@ const LessonViewer = () => {
 
   if (authLoading) return <div className="h-dvh flex items-center justify-center bg-background"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (!isAuthenticated) return <Navigate to="/login" />;
+  if (user?.role === 'admin') return <Navigate to="/admin" replace />;
   if (loading) return <div className="h-dvh flex items-center justify-center bg-background"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (notEnrolled) return (
     <div className="h-dvh flex flex-col items-center justify-center bg-background text-center p-8">
