@@ -84,15 +84,21 @@ export async function updateUserRole(userId: string, role: 'student' | 'admin'):
   return {};
 }
 
+export type PlacementStatus = 'placed' | 'to_be_placed' | 'exited' | 'candidate_response' | null;
+
 export interface StudentOverview {
   id: string;
   name: string;
   email: string;
+  phone?: string;
+  company?: string;
+  placementStatus: PlacementStatus;
   avatar: string;
   enrolled_at: string;
   progress: number;
   completed_at: string | null;
   status: 'completed' | 'in_progress' | 'not_started';
+  source: 'db' | 'sheet' | 'both';
 }
 
 export interface AdminStats {
@@ -160,8 +166,115 @@ export async function fetchAllStudents(): Promise<StudentOverview[]> {
       progress: avgProgress,
       completed_at: anyCompleted?.completed_at ?? null,
       status: anyCompleted ? 'completed' : avgProgress > 0 ? 'in_progress' : 'not_started',
+      source: 'db' as const,
+      placementStatus: null,
     } as StudentOverview;
   }).sort((a, b) => b.enrolled_at.localeCompare(a.enrolled_at));
+}
+
+// ─── Google Sheet helpers ─────────────────────────────────────────────────────
+
+// Update these to match your exact Google Sheet tab names
+export const SHEET_TABS: Record<PlacementStatus & string, string> = {
+  placed:             'PlacedStudent',
+  to_be_placed:       'To be placed',
+  exited:             'exited program',
+  candidate_response: 'About candidate Responses',
+};
+
+interface SheetRow {
+  name: string;
+  email: string;
+  phone: string;
+  company: string;
+  placementStatus: PlacementStatus;
+}
+
+function parseCSV(text: string, placementStatus: PlacementStatus): SheetRow[] {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
+  const idx = (keys: string[]) => keys.map(k => headers.findIndex(h => h.includes(k))).find(i => i >= 0) ?? -1;
+  const nameIdx    = idx(['name', 'full']);
+  const emailIdx   = idx(['email']);
+  const phoneIdx   = idx(['phone', 'mobile', 'cell', 'number']);
+  const companyIdx = idx(['company', 'employer', 'organisation', 'organization', 'placed at', 'workplace']);
+
+  return lines.slice(1).flatMap(line => {
+    const cols = line.match(/(".*?"|[^,]+|(?<=,)(?=,)|(?<=,)$|^(?=,))/g)
+      ?.map(c => c.replace(/^"|"$/g, '').trim())
+      ?? line.split(',').map(c => c.trim());
+    const email = emailIdx >= 0 ? (cols[emailIdx] ?? '').toLowerCase() : '';
+    if (!email) return [];
+    return [{
+      name:            nameIdx    >= 0 ? (cols[nameIdx]    ?? '') : '',
+      email,
+      phone:           phoneIdx   >= 0 ? (cols[phoneIdx]   ?? '') : '',
+      company:         companyIdx >= 0 ? (cols[companyIdx] ?? '') : '',
+      placementStatus,
+    }];
+  });
+}
+
+async function fetchTabStudents(sheetId: string, tabName: string, placementStatus: PlacementStatus): Promise<SheetRow[]> {
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tabName)}`;
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    return parseCSV(await res.text(), placementStatus);
+  } catch {
+    return [];
+  }
+}
+
+async function fetchAllSheetStudents(): Promise<SheetRow[]> {
+  const sheetId = import.meta.env.VITE_STUDENTS_SHEET_ID as string;
+  if (!sheetId) return [];
+  const results = await Promise.all(
+    (Object.entries(SHEET_TABS) as [PlacementStatus & string, string][]).map(
+      ([status, tabName]) => fetchTabStudents(sheetId, tabName, status)
+    )
+  );
+  return results.flat();
+}
+
+export async function fetchCombinedStudents(): Promise<StudentOverview[]> {
+  const [dbStudents, sheetRows] = await Promise.all([fetchAllStudents(), fetchAllSheetStudents()]);
+
+  const byEmail = new Map<string, StudentOverview>();
+  for (const s of dbStudents) byEmail.set(s.email.toLowerCase(), s);
+
+  for (const row of sheetRows) {
+    const key = row.email.toLowerCase();
+    const existing = byEmail.get(key);
+    if (existing) {
+      byEmail.set(key, {
+        ...existing,
+        phone:           row.phone   || existing.phone,
+        company:         row.company || existing.company,
+        placementStatus: row.placementStatus ?? existing.placementStatus,
+        source: 'both',
+      });
+    } else {
+      const name = row.name || row.email.split('@')[0];
+      byEmail.set(key, {
+        id:              `sheet-${key}`,
+        name,
+        email:           row.email,
+        phone:           row.phone,
+        company:         row.company,
+        placementStatus: row.placementStatus,
+        avatar:          `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6B7280&color=fff&bold=true`,
+        enrolled_at:     new Date().toISOString(),
+        progress:        0,
+        completed_at:    null,
+        status:          'not_started',
+        source:          'sheet',
+      });
+    }
+  }
+
+  return Array.from(byEmail.values()).sort((a, b) => b.enrolled_at.localeCompare(a.enrolled_at));
 }
 
 // ─── Course Management ────────────────────────────────────────────────────────

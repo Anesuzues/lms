@@ -9,15 +9,23 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import {
-  fetchAllStudents, fetchAdminStats, adminFetchCourses,
+  fetchCombinedStudents, fetchAdminStats, adminFetchCourses,
   adminCreateCourse, adminUpdateCourse, adminDeleteCourse,
   fetchCourseAnalytics, fetchAllProfiles, updateUserRole,
   fetchAllFeedback, updateFeedbackStatus,
   StudentOverview, AdminStats, CourseFormData, CourseAnalytics, UserProfile, FeedbackItem,
+  PlacementStatus,
 } from '@/services/adminService';
 import { DBCourse } from '@/services/courseService';
 import { exportStudentsCSV } from '@/lib/generateReport';
 import StudentDetailModal from '@/components/admin/StudentDetailModal';
+
+const placementConfig: Record<NonNullable<PlacementStatus>, { label: string; color: string }> = {
+  placed:             { label: 'Placed',              color: 'bg-emerald-100 text-emerald-700' },
+  to_be_placed:       { label: 'To Be Placed',        color: 'bg-blue-100 text-blue-700'       },
+  exited:             { label: 'Exited Program',      color: 'bg-gray-100 text-gray-600'       },
+  candidate_response: { label: 'Candidate Response',  color: 'bg-purple-100 text-purple-700'   },
+};
 
 const statusConfig = {
   completed:   { label: 'Completed',   color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
@@ -124,7 +132,7 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loadingStudents, setLoadingStudents] = useState(true);
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<'all' | 'completed' | 'in_progress' | 'not_started'>('all');
+  const [filter, setFilter] = useState<'all' | 'completed' | 'in_progress' | 'not_started' | 'placed' | 'to_be_placed' | 'exited' | 'candidate_response'>('all');
   const [page, setPage] = useState(1);
   const [selectedStudent, setSelectedStudent] = useState<StudentOverview | null>(null);
 
@@ -156,9 +164,14 @@ const AdminDashboard = () => {
     const load = async () => {
       setLoadingStudents(true);
       try {
-        const [s, st] = await Promise.all([fetchAllStudents(), fetchAdminStats()]);
+        const s = await fetchCombinedStudents();
         setStudents(s);
-        setStats(st);
+        setStats({
+          totalStudents: s.length,
+          enrolled:      s.filter(x => x.source === 'db' || x.source === 'both').length,
+          completed:     s.filter(x => x.completed_at !== null).length,
+          inProgress:    s.filter(x => x.progress > 0 && !x.completed_at).length,
+        });
       } catch {
         toast({ title: 'Failed to load data', description: 'Please refresh.', variant: 'destructive' });
       } finally {
@@ -212,9 +225,14 @@ const AdminDashboard = () => {
   }, [tab]);
 
   // Student filtering
+  const placementFilters = ['placed', 'to_be_placed', 'exited', 'candidate_response'] as const;
   const filtered = students.filter(s => {
-    const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) || s.email.toLowerCase().includes(search.toLowerCase());
-    const matchFilter = filter === 'all' || s.status === filter;
+    const matchSearch = s.name.toLowerCase().includes(search.toLowerCase())
+      || s.email.toLowerCase().includes(search.toLowerCase())
+      || (s.company ?? '').toLowerCase().includes(search.toLowerCase());
+    const isPlacementFilter = (placementFilters as readonly string[]).includes(filter);
+    const matchFilter = filter === 'all'
+      || (isPlacementFilter ? s.placementStatus === filter : s.status === filter);
     return matchSearch && matchFilter;
   });
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -402,10 +420,27 @@ const AdminDashboard = () => {
                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-primary" />
                   </div>
                   <div className="flex gap-2 flex-wrap">
-                    {(['all', 'completed', 'in_progress', 'not_started'] as const).map(f => (
-                      <button key={f} type="button" onClick={() => { setFilter(f); setPage(1); }}
-                        className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${filter === f ? 'bg-primary text-primary-foreground' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-                        {f === 'all' ? 'All' : f === 'in_progress' ? 'In Progress' : f === 'not_started' ? 'Not Started' : 'Completed'}
+                    {([
+                      { key: 'all',                label: 'All' },
+                      { key: 'completed',          label: 'Completed' },
+                      { key: 'in_progress',        label: 'In Progress' },
+                      { key: 'not_started',        label: 'Not Started' },
+                    ] as const).map(f => (
+                      <button key={f.key} type="button" onClick={() => { setFilter(f.key); setPage(1); }}
+                        className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${filter === f.key ? 'bg-primary text-primary-foreground' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                        {f.label}
+                      </button>
+                    ))}
+                    <div className="w-px bg-gray-200 self-stretch mx-1" />
+                    {([
+                      { key: 'placed',             label: 'Placed' },
+                      { key: 'to_be_placed',       label: 'To Be Placed' },
+                      { key: 'exited',             label: 'Exited Program' },
+                      { key: 'candidate_response', label: 'Candidate Response' },
+                    ] as const).map(f => (
+                      <button key={f.key} type="button" onClick={() => { setFilter(f.key); setPage(1); }}
+                        className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${filter === f.key ? 'bg-primary text-primary-foreground' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                        {f.label}
                       </button>
                     ))}
                   </div>
@@ -423,6 +458,9 @@ const AdminDashboard = () => {
                       <thead>
                         <tr className="border-b border-gray-100 bg-gray-50">
                           <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Student</th>
+                          <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Phone</th>
+                          <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Company</th>
+                          <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Placement</th>
                           <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Enrolled</th>
                           <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Progress</th>
                           <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
@@ -438,10 +476,31 @@ const AdminDashboard = () => {
                                 <div className="flex items-center gap-3">
                                   <img src={student.avatar} alt={student.name} className="w-9 h-9 rounded-full object-cover shrink-0" />
                                   <div>
-                                    <p className="font-semibold text-sm text-gray-900">{student.name}</p>
+                                    <div className="flex items-center gap-1.5">
+                                      <p className="font-semibold text-sm text-gray-900">{student.name}</p>
+                                      {student.source === 'sheet' && (
+                                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700">Sheet</span>
+                                      )}
+                                      {student.source === 'both' && (
+                                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">Linked</span>
+                                      )}
+                                    </div>
                                     <p className="text-xs text-gray-400">{student.email}</p>
                                   </div>
                                 </div>
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-500">
+                                {student.phone || <span className="text-gray-300">—</span>}
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-500">
+                                {student.company || <span className="text-gray-300">—</span>}
+                              </td>
+                              <td className="px-6 py-4">
+                                {student.placementStatus
+                                  ? <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${placementConfig[student.placementStatus].color}`}>
+                                      {placementConfig[student.placementStatus].label}
+                                    </span>
+                                  : <span className="text-gray-300">—</span>}
                               </td>
                               <td className="px-6 py-4 text-sm text-gray-500">
                                 {new Date(student.enrolled_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}

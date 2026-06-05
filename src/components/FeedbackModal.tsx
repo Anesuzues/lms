@@ -21,15 +21,19 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ onClose }) => {
     e.preventDefault();
     if (!message.trim()) return;
     setSubmitting(true);
-    const { error } = await supabase.from('feedback').insert({
-      user_id: user?.id ?? null,
-      category,
-      message: message.trim(),
-      status: 'open',
-    });
+
+    const payload = { category, message: message.trim(), status: 'open' };
+
+    // Try with user_id first; if that fails (FK / RLS) retry anonymously
+    let { error } = await supabase.from('feedback').insert({ ...payload, user_id: user?.id ?? null });
+    if (error && user?.id) {
+      const retry = await supabase.from('feedback').insert({ ...payload, user_id: null });
+      error = retry.error;
+    }
+
     setSubmitting(false);
     if (error) {
-      toast({ title: 'Could not send feedback', description: 'Please try again or email us directly.', variant: 'destructive' });
+      toast({ title: 'Could not send feedback', description: 'Please try again or email us at learning@nobztech.co.za', variant: 'destructive' });
       return;
     }
     toast({ title: 'Feedback received!', description: "Thank you — we'll review your message shortly." });
@@ -49,7 +53,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ onClose }) => {
             </div>
             <h2 className="font-bold text-foreground">Help & Feedback</h2>
           </div>
-          <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors">
+          <button type="button" onClick={onClose} aria-label="Close" className="p-1.5 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors">
             <X size={16} />
           </button>
         </div>
