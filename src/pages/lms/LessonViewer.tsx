@@ -555,10 +555,6 @@ const LessonViewer = () => {
                         prose-strong:text-foreground prose-strong:font-semibold
                         prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground
                         prose-code:text-primary prose-code:bg-secondary prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
-                        prose-table:w-full prose-table:border-collapse
-                        prose-th:bg-secondary prose-th:text-foreground prose-th:font-semibold prose-th:px-4 prose-th:py-2 prose-th:border prose-th:border-border prose-th:text-left
-                        prose-td:text-foreground/80 prose-td:px-4 prose-td:py-2 prose-td:border prose-td:border-border
-                        prose-tr:even:bg-secondary/30
                       ">
                         <ReactMarkdown
                           remarkPlugins={[remarkGfm]}
@@ -571,6 +567,23 @@ const LessonViewer = () => {
                             ),
                             blockquote: ({ children, ...props }) => (
                               <RevealOnScroll tag="blockquote" {...props}>{children}</RevealOnScroll>
+                            ),
+                            table: ({ children }) => (
+                              <div className="overflow-x-auto my-6 rounded-xl border border-border">
+                                <table className="w-full min-w-[480px] border-collapse text-sm">{children}</table>
+                              </div>
+                            ),
+                            thead: ({ children }) => (
+                              <thead className="bg-secondary">{children}</thead>
+                            ),
+                            th: ({ children }) => (
+                              <th className="text-left px-5 py-3 font-semibold text-foreground border-b border-border whitespace-nowrap">{children}</th>
+                            ),
+                            td: ({ children }) => (
+                              <td className="px-5 py-3 text-foreground/80 border-b border-border/50 align-top">{children}</td>
+                            ),
+                            tr: ({ children }) => (
+                              <tr className="even:bg-secondary/30 hover:bg-secondary/50 transition-colors">{children}</tr>
                             ),
                           }}
                         >{(activeLesson as any).content}</ReactMarkdown>
