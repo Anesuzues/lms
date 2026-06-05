@@ -18,6 +18,7 @@ import {
 import { isFinalExam, getCertForCourse } from '@/lib/programmeConfig';
 import { generateCertificate } from '@/lib/generateCertificate';
 import { updateStreakAndXP, fetchUserStats } from '@/services/profileService';
+import { supabase } from '@/lib/supabase';
 
 const DELAY_CLASS: Record<number, string> = { 0: '', 100: 'anim-delay-100' };
 
@@ -94,6 +95,11 @@ const LessonViewer = () => {
   const [marking, setMarking] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [streak, setStreak] = useState(0);
+  const [certRating, setCertRating] = useState(0);
+  const [certRatingHover, setCertRatingHover] = useState(0);
+  const [certComment, setCertComment] = useState('');
+  const [certFeedbackSent, setCertFeedbackSent] = useState(false);
+  const [certFeedbackSending, setCertFeedbackSending] = useState(false);
   const readingPaneRef = useRef<HTMLDivElement>(null);
   const scrollBarRef = useRef<HTMLDivElement>(null);
   const navProgressRef = useRef<HTMLDivElement>(null);
@@ -223,6 +229,15 @@ const LessonViewer = () => {
     } else {
       setViewMode('reading');
     }
+  };
+
+  const handleCertFeedback = async () => {
+    if (!certRating || !course) return;
+    setCertFeedbackSending(true);
+    const message = `[${course.title}] ${certRating}★${certComment.trim() ? ' — ' + certComment.trim() : ''}`;
+    await supabase.from('feedback').insert({ category: 'Course Feedback', message, user_id: user?.id ?? null });
+    setCertFeedbackSending(false);
+    setCertFeedbackSent(true);
   };
 
   const handleDownloadCertificate = async () => {
@@ -404,6 +419,49 @@ const LessonViewer = () => {
                     </div>
                   );
                 })()}
+
+                {/* Course feedback */}
+                <div className="mt-4 p-4 rounded-xl border border-border bg-secondary/30">
+                  {certFeedbackSent ? (
+                    <p className="text-center text-sm font-semibold text-emerald-500">Thanks for your feedback! 🙏</p>
+                  ) : (
+                    <>
+                      <p className="text-xs font-semibold text-muted-foreground text-center mb-3">How was this programme?</p>
+                      <div className="flex justify-center gap-1 mb-3">
+                        {[1,2,3,4,5].map(star => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setCertRating(star)}
+                            onMouseEnter={() => setCertRatingHover(star)}
+                            onMouseLeave={() => setCertRatingHover(0)}
+                            className="text-2xl transition-transform hover:scale-110"
+                            aria-label={`${star} star`}
+                          >
+                            <span className={(certRatingHover || certRating) >= star ? 'text-amber-400' : 'text-muted-foreground/30'}>★</span>
+                          </button>
+                        ))}
+                      </div>
+                      {certRating > 0 && (
+                        <textarea
+                          value={certComment}
+                          onChange={e => setCertComment(e.target.value)}
+                          placeholder="Any comments? (optional)"
+                          rows={2}
+                          className="w-full px-3 py-2 text-sm bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary resize-none mb-3"
+                        />
+                      )}
+                      <button
+                        type="button"
+                        disabled={!certRating || certFeedbackSending}
+                        onClick={handleCertFeedback}
+                        className="w-full py-2 rounded-xl text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40"
+                      >
+                        {certFeedbackSending ? 'Sending…' : 'Submit Feedback'}
+                      </button>
+                    </>
+                  )}
+                </div>
 
                 {/* Recommended next course */}
                 <div className="mt-6 p-4 rounded-xl bg-primary/5 border border-primary/20 flex items-center gap-4">
