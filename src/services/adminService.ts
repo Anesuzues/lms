@@ -377,12 +377,34 @@ export interface FeedbackItem {
 }
 
 export async function fetchAllFeedback(): Promise<FeedbackItem[]> {
-  const { data, error } = await supabase
+  // Fetch feedback without FK join (FK may have been dropped)
+  const { data: feedbackData, error } = await supabase
     .from('feedback')
-    .select('*, profiles(full_name, email)')
+    .select('id, user_id, category, message, created_at')
     .order('created_at', { ascending: false });
   if (error) { console.error('fetchAllFeedback error:', error); return []; }
-  return (data ?? []) as FeedbackItem[];
+  const rows = feedbackData ?? [];
+
+  // Look up profiles separately for any rows with a user_id
+  const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
+  const profileMap = new Map<string, { full_name: string | null; email: string | null }>();
+  if (userIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, full_name, email')
+      .in('id', userIds);
+    for (const p of profiles ?? []) profileMap.set(p.id, { full_name: p.full_name, email: p.email });
+  }
+
+  return rows.map(r => ({
+    id: r.id,
+    user_id: r.user_id,
+    category: r.category,
+    message: r.message,
+    status: 'open' as const,
+    created_at: r.created_at,
+    profiles: r.user_id ? profileMap.get(r.user_id) ?? null : null,
+  }));
 }
 
 export async function updateFeedbackStatus(id: string, status: 'open' | 'resolved'): Promise<{ error?: string }> {
