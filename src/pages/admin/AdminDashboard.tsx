@@ -324,7 +324,7 @@ const AdminDashboard = () => {
       <div className={`fixed left-0 top-0 bottom-0 w-64 bg-gray-900 text-white flex flex-col z-30 transition-transform duration-300 ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="p-5 border-b border-gray-800 flex items-center justify-between">
           <div>
-            <img src="/nobzlearn-logo.png" alt="NobzTech" className="h-7 w-auto mb-1 brightness-0 invert" />
+            <img src="/nobzlearnlogonoew.jpeg" alt="NobzTech" className="h-7 w-auto mb-1 brightness-0 invert" />
             <p className="text-xs text-gray-400">Admin Panel</p>
           </div>
           <button type="button" aria-label="Close sidebar" className="md:hidden p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10" onClick={() => setMobileSidebarOpen(false)}>

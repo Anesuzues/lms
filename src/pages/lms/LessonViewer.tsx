@@ -358,7 +358,7 @@ const LessonViewer = () => {
                   <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-950 to-gray-900" />
                   <div className="absolute inset-0 rounded-2xl ring-1 ring-cyan-500/40" />
                   <div className="relative p-6 sm:p-8 text-center">
-                    <img src="/nobztech  logo.jpeg" alt="NobzTech" className="w-16 h-16 rounded-full mx-auto mb-4 object-cover ring-2 ring-cyan-500/40" />
+                    <img src="/nobzlearnlogonoew.jpeg" alt="NobzTech" className="w-16 h-16 rounded-full mx-auto mb-4 object-cover ring-2 ring-cyan-500/40" />
                     <p className="text-cyan-400 text-xs font-bold uppercase tracking-widest mb-1">Certificate of Completion</p>
                     <div className="w-24 h-px bg-cyan-500/40 mx-auto mb-4" />
                     <p className="text-gray-400 text-xs mb-2">This certifies that</p>

@@ -41,7 +41,7 @@ export async function generateStudentReport(
   doc.setFillColor(15, 23, 42);
   doc.rect(0, 0, W, 38, 'F');
 
-  const logo = await loadImageAsBase64('/nobztech  logo.jpeg');
+  const logo = await loadImageAsBase64('/nobzlearnlogonoew.jpeg');
   if (logo) doc.addImage(logo, 'JPEG', 10, 5, 28, 28);
 
   doc.setFont('helvetica', 'bold');
