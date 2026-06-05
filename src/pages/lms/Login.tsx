@@ -116,7 +116,7 @@ const Login = () => {
         {/* Logo */}
         <div className="text-center mb-8">
           <a href="/">
-            <img src="/nobzlearnlogonoew.jpeg" alt="NobzLearn" className="h-12 w-auto mx-auto mb-4" />
+            <img src="/nobzlearn-new-logo.jpeg" alt="NobzLearn" className="h-12 w-auto mx-auto mb-4" />
           </a>
           <h1 className="text-2xl font-bold text-foreground">
             {mode === 'forgot' ? 'Reset your password' : mode === 'signup' ? 'Create your account' : 'Welcome back'}

@@ -14,7 +14,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-10 mb-8 sm:mb-10">
           {/* Brand */}
           <div>
-            <img src="/nobzlearnlogonoew.jpeg" alt="NobzLearn" className="h-8 w-auto mb-3" />
+            <img src="/nobzlearn-new-logo.jpeg" alt="NobzLearn" className="h-8 w-auto mb-3" />
             <p className="text-muted-foreground text-sm leading-relaxed max-w-xs">
               Empowering the next generation of AI developers — one certificate at a time.
             </p>

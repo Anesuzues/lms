@@ -80,7 +80,7 @@ export async function generateCertificate({
   });
 
   // ── Logo ──────────────────────────────────────────────────────────────────
-  const logoBase64 = await loadImageAsBase64('/nobzlearnlogonoew.jpeg');
+  const logoBase64 = await loadImageAsBase64('/nobzlearn-new-logo.jpeg');
   if (logoBase64) {
     doc.addImage(logoBase64, 'JPEG', W / 2 - 19, 15, 38, 38);
   }
