@@ -117,6 +117,7 @@ const Dashboard = () => {
     </div>
   );
   if (!isAuthenticated || !user) return <Navigate to="/login" />;
+  if (user.role === 'admin') return <Navigate to="/admin" replace />;
 
   const completedCount = enrolledCourses.filter(e => e.enrollment.progress >= 100).length;
 
