@@ -60,10 +60,10 @@ const RevealOnScroll = ({
 };
 
 const FALLBACK_MODULE_NAMES = [
-  'Workplace Foundations',
-  'CV Writing & AI Tools',
-  'Interview Readiness',
-  'Professional Conduct',
+  'Module 1',
+  'Module 2',
+  'Module 3',
+  'Module 4',
 ];
 
 const getModuleName = (lesson: DBLesson) =>
