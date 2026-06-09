@@ -7,6 +7,7 @@ import Quiz from '@/components/lms/Quiz';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import confetti from 'canvas-confetti';
+import { BlockquoteRenderer, ListRenderer } from '@/components/lms/LessonContent';
 import {
   fetchCourseById, fetchLessonsByCourse, fetchLessonProgress,
   markLessonComplete, updateEnrollmentProgress, fetchUserEnrollments,
@@ -104,6 +105,7 @@ const LessonViewer = () => {
   const scrollBarRef = useRef<HTMLDivElement>(null);
   const navProgressRef = useRef<HTMLDivElement>(null);
   const sidebarProgressRef = useRef<HTMLDivElement>(null);
+  const lessonStartRef = useRef<number>(Date.now());
 
   const handleReadingScroll = useCallback(() => {
     const el = readingPaneRef.current;
@@ -149,6 +151,7 @@ const LessonViewer = () => {
   useEffect(() => {
     if (readingPaneRef.current) readingPaneRef.current.scrollTop = 0;
     if (scrollBarRef.current) scrollBarRef.current.style.width = '0%';
+    lessonStartRef.current = Date.now();
   }, [activeLessonId]);
 
   useEffect(() => {
@@ -181,7 +184,8 @@ const LessonViewer = () => {
   const handleMarkRead = async () => {
     if (!user || !id || !activeLessonId || !activeLesson || marking) return;
     setMarking(true);
-    await markLessonComplete(user.id, id, activeLessonId, 0);
+    const timeSpentSeconds = Math.round((Date.now() - lessonStartRef.current) / 1000);
+    await markLessonComplete(user.id, id, activeLessonId, timeSpentSeconds);
     const prevCompleted = progress.filter(p => p.completed).length;
     const updated = [
       ...progress.filter(p => p.lesson_id !== activeLessonId),
@@ -565,9 +569,11 @@ const LessonViewer = () => {
                             h3: ({ children, ...props }) => (
                               <RevealOnScroll tag="h3" {...props}>{children}</RevealOnScroll>
                             ),
-                            blockquote: ({ children, ...props }) => (
-                              <RevealOnScroll tag="blockquote" {...props}>{children}</RevealOnScroll>
+                            blockquote: ({ children }) => (
+                              <BlockquoteRenderer>{children}</BlockquoteRenderer>
                             ),
+                            ul: ({ children }) => <ListRenderer>{children}</ListRenderer>,
+                            ol: ({ children }) => <ListRenderer ordered>{children}</ListRenderer>,
                             table: ({ children }) => (
                               <div className="overflow-x-auto my-6 rounded-xl border border-border">
                                 <table className="w-full min-w-[480px] border-collapse text-sm">{children}</table>
@@ -794,10 +800,10 @@ const LessonViewer = () => {
                               if (window.innerWidth < 768) setSidebarOpen(false);
                             }}
                             disabled={lessonLocked}
-                            className={`w-full text-left p-3 rounded-lg transition-all flex items-start gap-3 ${
-                              lessonLocked ? 'opacity-40 cursor-not-allowed' :
-                              active ? 'bg-primary/10 border border-primary/30' :
-                              'hover:bg-secondary border border-transparent'
+                            className={`w-full text-left p-3 rounded-lg transition-all flex items-start gap-3 border-l-[3px] ${
+                              lessonLocked ? 'opacity-40 cursor-not-allowed border-l-transparent border border-transparent' :
+                              active ? 'bg-primary/5 border border-transparent border-l-primary shadow-sm' :
+                              'hover:bg-secondary/60 border border-transparent border-l-transparent hover:border-border/40'
                             }`}
                           >
                             <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${

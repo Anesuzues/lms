@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Clock, ArrowRight, User, BookMarked, Lock } from 'lucide-react';
+import { BookOpen, Clock, ArrowRight, User, BookMarked, Lock, CheckCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -48,7 +48,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
   };
 
   return (
-    <div className={`group bg-card rounded-2xl border overflow-hidden hover:shadow-card transition-all duration-300 flex flex-col h-full ${locked ? 'border-border opacity-75' : 'border-border hover:-translate-y-1'}`}>
+    <div className={`group bg-card rounded-2xl border overflow-hidden shadow-soft hover:shadow-card transition-all duration-300 flex flex-col h-full ${locked ? 'border-border opacity-75' : 'border-border hover:-translate-y-1'}`}>
       {/* Thumbnail */}
       <div className="relative h-48 overflow-hidden bg-secondary">
         <img
@@ -127,12 +127,21 @@ const CourseCard: React.FC<CourseCardProps> = ({
             <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
               <div className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-700" style={{ width: `${progress}%` }} />
             </div>
-            <Link
-              to={`/learn/${course.id}`}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 font-semibold text-sm transition-colors"
-            >
-              <BookOpen size={15} /> Continue Learning
-            </Link>
+            {progress >= 100 ? (
+              <Link
+                to={`/learn/${course.id}`}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 font-semibold text-sm transition-colors border border-emerald-500/20"
+              >
+                <CheckCircle size={15} /> Completed
+              </Link>
+            ) : (
+              <Link
+                to={`/learn/${course.id}`}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 font-semibold text-sm transition-colors"
+              >
+                <BookOpen size={15} /> Continue Learning
+              </Link>
+            )}
           </div>
         ) : (
           <div className="mt-auto space-y-3">
