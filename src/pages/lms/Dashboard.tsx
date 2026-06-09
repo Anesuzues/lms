@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
-import { BookOpen, Trophy, Clock, ArrowRight, PlayCircle, Compass, Loader2, Download, CheckCircle2, XCircle, BarChart2, Flame, Star, Zap } from 'lucide-react';
+import { BookOpen, Trophy, ArrowRight, PlayCircle, Compass, Loader2, Download, CheckCircle2, XCircle, BarChart2, Flame, Star, Zap } from 'lucide-react';
 import Header from '@/components/Header';
 import OnboardingModal from '@/components/lms/OnboardingModal';
 import Footer from '@/components/Footer';
 import CourseCard, { CourseCardCourse } from '@/components/lms/CourseCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
-import { fetchCoursesByIds, fetchUserEnrollments, fetchTotalTimeSpent, fetchCoursesWithPassedQuiz, DBCourse, DBEnrollment } from '@/services/courseService';
+import { fetchCoursesByIds, fetchUserEnrollments, fetchCoursesWithPassedQuiz, DBCourse, DBEnrollment } from '@/services/courseService';
 import { fetchAllQuizAttempts, QuizAttempt } from '@/services/quizService';
 import { generateCertificate } from '@/lib/generateCertificate';
 import { CERTIFICATES, getCertForCourse } from '@/lib/programmeConfig';
@@ -29,7 +29,6 @@ interface EnrolledCourse {
 const Dashboard = () => {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourse[]>([]);
-  const [totalSeconds, setTotalSeconds] = useState(0);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState<string | null>(null);
   const [quizPassedCourses, setQuizPassedCourses] = useState<string[]>([]);
@@ -47,14 +46,12 @@ const Dashboard = () => {
     const load = async () => {
       setLoading(true);
       try {
-        const [enrollments, seconds, stats] = await Promise.all([
+        const [enrollments, stats] = await Promise.all([
           fetchUserEnrollments(user.id),
-          fetchTotalTimeSpent(user.id),
           fetchUserStats(user.id),
         ]);
         setUserStats(stats);
         if (!stats.onboarded) setShowOnboarding(true);
-        setTotalSeconds(seconds);
         if (enrollments.length === 0) { setEnrolledCourses([]); setLoading(false); return; }
         const courseIds = enrollments.map(e => e.course_id);
         const courses = await fetchCoursesByIds(courseIds);
@@ -149,12 +146,6 @@ const Dashboard = () => {
       setDownloading(null);
     }
   };
-
-  // Real time spent from actual watch data
-  const totalMinutes = Math.round(totalSeconds / 60);
-  const timeDisplay = totalSeconds < 60 ? `${totalSeconds}s`
-    : totalMinutes < 60 ? `${totalMinutes}m`
-    : `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m`;
 
   // Show the course the user is actively working on:
   // 1st preference: highest-progress course that isn't yet done
@@ -273,9 +264,8 @@ const Dashboard = () => {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-5">
           {[
-            { icon: BookOpen, label: 'Enrolled',   value: enrolledCourses.length, color: 'text-primary',      bg: 'bg-primary/10'     },
-            { icon: Trophy,   label: 'Completed',  value: completedCount,          color: 'text-amber-500',    bg: 'bg-amber-500/10'   },
-            { icon: Clock,    label: 'Time Spent', value: timeDisplay,             color: 'text-emerald-500',  bg: 'bg-emerald-500/10' },
+            { icon: BookOpen, label: 'Enrolled',   value: enrolledCourses.length, color: 'text-primary',    bg: 'bg-primary/10'   },
+            { icon: Trophy,   label: 'Completed',  value: completedCount,          color: 'text-amber-500',  bg: 'bg-amber-500/10' },
           ].map(({ icon: Icon, label, value, color, bg }) => (
             <div key={label} className="bg-card rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-border shadow-soft flex items-center gap-3 sm:gap-4">
               <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl ${bg} flex items-center justify-center shrink-0`}>
