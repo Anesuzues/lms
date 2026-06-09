@@ -413,6 +413,36 @@ export async function updateFeedbackStatus(id: string, status: 'open' | 'resolve
   return {};
 }
 
+// ─── Content Editor ───────────────────────────────────────────────────────────
+
+export interface AdminLesson {
+  id: string;
+  title: string;
+  order_index: number;
+  content: string | null;
+  module_id: string;
+  duration_minutes: number;
+}
+
+export async function adminFetchLessons(courseId: string): Promise<AdminLesson[]> {
+  const { data, error } = await supabase
+    .from('lessons')
+    .select('id, title, order_index, content, module_id, duration_minutes')
+    .eq('course_id', courseId)
+    .order('order_index', { ascending: true });
+  if (error) { console.error('adminFetchLessons error:', error); return []; }
+  return data ?? [];
+}
+
+export async function adminUpdateLessonContent(lessonId: string, content: string): Promise<{ error?: string }> {
+  const { error } = await supabase
+    .from('lessons')
+    .update({ content })
+    .eq('id', lessonId);
+  if (error) return { error: error.message };
+  return {};
+}
+
 // ─── Stats ────────────────────────────────────────────────────────────────────
 
 export async function fetchAdminStats(): Promise<AdminStats> {

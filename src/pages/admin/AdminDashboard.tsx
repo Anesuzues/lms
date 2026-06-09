@@ -4,7 +4,7 @@ import {
   Users, Trophy, BookOpen, Search, Loader2, LogOut, TrendingUp,
   ChevronLeft, ChevronRight, Plus, Pencil, Trash2, X, Menu,
   BarChart2, Download, Eye, ShieldCheck, ShieldOff, UserCog,
-  MessageSquare, CheckCircle2, Circle, Bug, Lightbulb,
+  MessageSquare, CheckCircle2, Circle, Bug, Lightbulb, FileText, Save, ChevronDown,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
@@ -13,8 +13,9 @@ import {
   adminCreateCourse, adminUpdateCourse, adminDeleteCourse,
   fetchCourseAnalytics, fetchAllProfiles, updateUserRole,
   fetchAllFeedback, updateFeedbackStatus,
+  adminFetchLessons, adminUpdateLessonContent,
   StudentOverview, AdminStats, CourseFormData, CourseAnalytics, UserProfile, FeedbackItem,
-  PlacementStatus,
+  PlacementStatus, AdminLesson,
 } from '@/services/adminService';
 import { DBCourse } from '@/services/courseService';
 import { exportStudentsCSV } from '@/lib/generateReport';
@@ -119,7 +120,7 @@ const CourseModal: React.FC<CourseModalProps> = ({ initial, onSave, onClose, sav
 };
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
-type Tab = 'students' | 'courses' | 'analytics' | 'users' | 'feedback';
+type Tab = 'students' | 'courses' | 'analytics' | 'users' | 'feedback' | 'content';
 
 const AdminDashboard = () => {
   const { user, isAuthenticated, signOut, loading: authLoading } = useAuth();
@@ -159,6 +160,14 @@ const AdminDashboard = () => {
   const [feedbackFilter, setFeedbackFilter] = useState<'all' | 'open' | 'resolved'>('all');
   const [updatingFeedback, setUpdatingFeedback] = useState<string | null>(null);
 
+  // Content editor
+  const [contentLessons, setContentLessons] = useState<Record<string, AdminLesson[]>>({});
+  const [loadingLessonId, setLoadingLessonId] = useState<string | null>(null);
+  const [selectedLesson, setSelectedLesson] = useState<AdminLesson | null>(null);
+  const [editorValue, setEditorValue] = useState('');
+  const [savingContent, setSavingContent] = useState(false);
+  const [expandedCourses, setExpandedCourses] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     if (!user || user.role !== 'admin') return;
     const load = async () => {
@@ -182,7 +191,7 @@ const AdminDashboard = () => {
   }, [user]);
 
   useEffect(() => {
-    if (tab !== 'courses' || !user || user.role !== 'admin') return;
+    if ((tab !== 'courses' && tab !== 'content') || !user || user.role !== 'admin') return;
     if (courses.length > 0) return;
     const load = async () => {
       setLoadingCourses(true);
@@ -306,11 +315,48 @@ const AdminDashboard = () => {
     { key: 'analytics',label: 'Analytics',        icon: BarChart2     },
     { key: 'users',    label: 'User Management',  icon: UserCog       },
     { key: 'feedback', label: 'Feedback',          icon: MessageSquare },
+    { key: 'content',  label: 'Content Editor',   icon: FileText      },
   ];
 
   const tabLabel: Record<Tab, string> = {
     students: 'Student Overview', courses: 'Course Management',
     analytics: 'Analytics', users: 'User Management', feedback: 'Feedback',
+    content: 'Content Editor',
+  };
+
+  const handleSelectCourse = async (courseId: string) => {
+    const alreadyExpanded = expandedCourses.has(courseId);
+    setExpandedCourses(prev => {
+      const next = new Set(prev);
+      if (next.has(courseId)) { next.delete(courseId); return next; }
+      next.add(courseId);
+      return next;
+    });
+    if (!alreadyExpanded && !contentLessons[courseId]) {
+      setLoadingLessonId(courseId);
+      const lessons = await adminFetchLessons(courseId);
+      setContentLessons(prev => ({ ...prev, [courseId]: lessons }));
+      setLoadingLessonId(null);
+    }
+  };
+
+  const handleSelectLesson = (lesson: AdminLesson) => {
+    setSelectedLesson(lesson);
+    setEditorValue(lesson.content ?? '');
+  };
+
+  const handleSaveContent = async () => {
+    if (!selectedLesson) return;
+    setSavingContent(true);
+    const res = await adminUpdateLessonContent(selectedLesson.id, editorValue);
+    if (res.error) {
+      toast({ title: 'Save failed', description: res.error, variant: 'destructive' });
+    } else {
+      setContentLessons(prev => prev.map(l => l.id === selectedLesson.id ? { ...l, content: editorValue } : l));
+      setSelectedLesson(prev => prev ? { ...prev, content: editorValue } : prev);
+      toast({ title: 'Lesson saved' });
+    }
+    setSavingContent(false);
   };
 
   return (
@@ -832,6 +878,129 @@ const AdminDashboard = () => {
                   })}
                 </div>
               )}
+            </>
+          )}
+
+          {/* ── Content Editor Tab ── */}
+          {tab === 'content' && (
+            <>
+              <div className="mb-6 md:mb-8">
+                <h1 className="text-xl md:text-2xl font-bold text-gray-900">Content Editor</h1>
+                <p className="text-gray-500 text-sm mt-1">Edit lesson markdown content for any course</p>
+              </div>
+
+              <div className="flex gap-5 h-[calc(100vh-220px)] min-h-[500px]">
+
+                {/* Course / lesson tree */}
+                <div className="w-72 shrink-0 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-y-auto">
+                  {loadingCourses ? (
+                    <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+                  ) : courses.length === 0 ? (
+                    <p className="text-center text-sm text-gray-400 py-12">No courses found</p>
+                  ) : (
+                    <div className="p-2 space-y-1">
+                      {courses.map(course => {
+                        const expanded = expandedCourses.has(course.id);
+                        const courseLessons = contentLessons[course.id] ?? [];
+                        return (
+                          <div key={course.id}>
+                            <button
+                              type="button"
+                              onClick={() => handleSelectCourse(course.id)}
+                              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-left hover:bg-gray-50 transition-colors"
+                            >
+                              <ChevronDown size={14} className={`text-gray-400 shrink-0 transition-transform ${expanded ? '' : '-rotate-90'}`} />
+                              <BookOpen size={14} className="text-primary shrink-0" />
+                              <span className="text-sm font-semibold text-gray-800 truncate flex-1">{course.title}</span>
+                            </button>
+
+                            {expanded && (
+                              <div className="ml-5 border-l border-gray-100 pl-2 mt-1 mb-2 space-y-0.5">
+                                {loadingLessonId === course.id ? (
+                                  <div className="py-3 flex justify-center"><Loader2 size={14} className="animate-spin text-primary" /></div>
+                                ) : courseLessons.length === 0 ? (
+                                  <p className="text-xs text-gray-400 px-2 py-2">No lessons found</p>
+                                ) : (
+                                  courseLessons.map(lesson => (
+                                    <button
+                                      key={lesson.id}
+                                      type="button"
+                                      onClick={() => handleSelectLesson(lesson)}
+                                      className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-colors ${
+                                        selectedLesson?.id === lesson.id
+                                          ? 'bg-primary/10 text-primary font-semibold'
+                                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                      }`}
+                                    >
+                                      <span className="flex items-center gap-2">
+                                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${lesson.content ? 'bg-emerald-500' : 'bg-gray-300'}`} />
+                                        <span className="truncate">{lesson.order_index}. {lesson.title}</span>
+                                      </span>
+                                    </button>
+                                  ))
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Editor panel */}
+                <div className="flex-1 flex flex-col bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  {!selectedLesson ? (
+                    <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+                      <FileText size={40} className="text-gray-200 mb-3" />
+                      <p className="font-semibold text-gray-500 mb-1">Select a lesson to edit</p>
+                      <p className="text-xs text-gray-400">Expand a course on the left and click a lesson</p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Editor header */}
+                      <div className="flex items-center justify-between gap-4 px-5 py-3.5 border-b border-gray-100">
+                        <div className="min-w-0">
+                          <p className="text-xs text-gray-400 mb-0.5">Editing lesson</p>
+                          <p className="font-bold text-gray-900 text-sm truncate">{selectedLesson.title}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleSaveContent}
+                          disabled={savingContent}
+                          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 transition-colors disabled:opacity-60 shrink-0"
+                        >
+                          {savingContent ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                          {savingContent ? 'Saving...' : 'Save'}
+                        </button>
+                      </div>
+
+                      {/* Cheatsheet */}
+                      <div className="px-5 py-2.5 border-b border-gray-100 bg-gray-50 flex flex-wrap gap-x-5 gap-y-1">
+                        {[
+                          ['Callout',    '> Key Point: text'],
+                          ['Cards',      '> [cards]\\n> - item'],
+                          ['Compare',    '> [compare]\\n> ## Col1\\n> ## Col2'],
+                          ['Tabs',       '> [tabs]\\n> ## Tab1\\n> ## Tab2'],
+                        ].map(([label, syntax]) => (
+                          <span key={label} className="text-xs text-gray-500">
+                            <span className="font-semibold text-gray-700">{label}:</span> <code className="bg-white border border-gray-200 px-1 rounded text-gray-600">{syntax}</code>
+                          </span>
+                        ))}
+                      </div>
+
+                      {/* Textarea */}
+                      <textarea
+                        value={editorValue}
+                        onChange={e => setEditorValue(e.target.value)}
+                        spellCheck={false}
+                        className="flex-1 w-full p-5 font-mono text-sm text-gray-800 resize-none focus:outline-none leading-relaxed"
+                        placeholder="Write lesson content in markdown..."
+                      />
+                    </>
+                  )}
+                </div>
+              </div>
             </>
           )}
 

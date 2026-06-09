@@ -59,6 +59,7 @@ export const BlockquoteRenderer: React.FC<{ children: React.ReactNode }> = ({ ch
 
   if (lower.startsWith('[tabs]'))    return <TabsBlock>{children}</TabsBlock>;
   if (lower.startsWith('[compare]')) return <CompareBlock>{children}</CompareBlock>;
+  if (lower.startsWith('[cards]'))   return <CardsBlock>{children}</CardsBlock>;
 
   const cfg = CALLOUTS.find(([k]) => lower.startsWith(k))?.[1] ?? CALLOUTS[5][1]; // default: Note
 
@@ -110,7 +111,51 @@ export const ListRenderer: React.FC<{ children: React.ReactNode; ordered?: boole
   );
 };
 
-// ── 3. Compare Block ───────────────────────────────────────────────────────
+// ── 3. Cards Block (no-emoji card grid) ───────────────────────────────────
+
+const CardsBlock: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const arr = React.Children.toArray(children).filter(child => {
+    const t = getTextContent(child).trim().toLowerCase();
+    return !t.startsWith('[cards]');
+  });
+
+  // Collect li items from any ul/ol inside the blockquote
+  const items: React.ReactNode[] = [];
+  arr.forEach(child => {
+    if (React.isValidElement(child)) {
+      const type = (child as React.ReactElement).type;
+      if (type === 'ul' || type === 'ol') {
+        React.Children.forEach((child.props as { children?: React.ReactNode }).children, li => {
+          items.push(li);
+        });
+      } else {
+        items.push(child);
+      }
+    } else {
+      items.push(child);
+    }
+  });
+
+  if (!items.length) return null;
+
+  return (
+    <div className="my-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {items.map((item, i) => (
+        <div
+          key={i}
+          className="flex items-start gap-3 p-4 rounded-xl bg-card border border-border shadow-soft hover:shadow-card transition-shadow"
+        >
+          <span className="mt-1 w-2 h-2 rounded-full bg-primary shrink-0" />
+          <div className="text-sm text-foreground/80 leading-relaxed [&>p]:m-0 [&>strong]:text-foreground [&>strong]:font-semibold">
+            {item}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ── 4. Compare Block ───────────────────────────────────────────────────────
 
 const CompareBlock: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const arr = React.Children.toArray(children).filter(child => {
