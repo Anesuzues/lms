@@ -117,7 +117,9 @@ const CertSection: React.FC<CertSectionProps> = ({
                 {cert.level}
               </span>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/15 border border-white/20 text-white">
-                {nonExam.length} modules + exam
+                {nonExam.length > 0
+                  ? `${nonExam.length} modules + exam`
+                  : `${sorted.length} course${sorted.length !== 1 ? 's' : ''}`}
               </span>
               {pathwayStarted && (
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/20 border border-white/30 text-white">

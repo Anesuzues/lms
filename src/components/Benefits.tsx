@@ -14,7 +14,7 @@ const benefits = [
   {
     icon: Clock,
     title: "Self-Paced",
-    description: "Complete each certificate on your schedule — no deadlines, no pressure.",
+    description: "Complete each certificate on your schedule: no deadlines, no pressure.",
   },
   {
     icon: Lock,
@@ -29,7 +29,7 @@ const benefits = [
   {
     icon: CheckCircle2,
     title: "Verified Certificates",
-    description: "Each certificate is verifiable and shareable — prove your skills to future employers.",
+    description: "Each certificate is verifiable and shareable: prove your skills to future employers.",
   },
 ];
 
@@ -46,7 +46,7 @@ const Benefits = () => {
             Everything You Need to <span className="text-gradient">Succeed</span>
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground">
-            One complete programme — from AI fundamentals to building production applications — designed to make you job-ready.
+            One complete programme, from AI fundamentals to building production applications, designed to make you job-ready.
           </p>
         </div>
 

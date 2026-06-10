@@ -17,7 +17,7 @@ async function loadImageAsBase64(url: string): Promise<string | null> {
 }
 
 function fmtDate(iso: string | null): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   return new Date(iso).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
@@ -128,7 +128,7 @@ export async function generateStudentReport(
     );
     if (certEnrollments.length === 0) return;
 
-    const total = cert.courseTitles.length;
+    const total = certEnrollments.length;
     const done = certEnrollments.filter(e => e.completed_at).length;
     const pct = Math.round((done / total) * 100);
 
@@ -218,7 +218,7 @@ export async function generateStudentReport(
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(100, 140, 180);
-  doc.text('NobzTech Learning Platform — Confidential Admin Report', W / 2, 293, { align: 'center' });
+  doc.text('NobzTech Learning Platform: Confidential Admin Report', W / 2, 293, { align: 'center' });
 
   const safe = (s: string) => s.replace(/[^a-zA-Z0-9]/g, '_');
   doc.save(`${safe(student.name)}_Progress_Report.pdf`);

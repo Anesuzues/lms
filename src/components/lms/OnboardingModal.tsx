@@ -15,7 +15,7 @@ const STEPS = [
     iconBg: 'bg-primary/10',
     iconColor: 'text-primary',
     title: (name: string) => `Welcome, ${name.split(' ')[0]}! 👋`,
-    body: 'NobzLearn gives you everything you need to walk into your WIL placement with confidence — CV skills, interview techniques, workplace conduct, and AI tools.',
+    body: 'NobzLearn gives you everything you need to walk into your WIL placement with confidence: CV skills, interview techniques, workplace conduct, and AI tools.',
     cta: 'Show me how it works',
   },
   {
@@ -25,19 +25,19 @@ const STEPS = [
     title: () => 'Here\'s how it works',
     body: null,
     bullets: [
-      { label: 'Read each lesson', sub: 'Lessons are 10–15 minutes. Read at your own pace.' },
+      { label: 'Read each lesson', sub: 'Lessons are 10-15 minutes. Read at your own pace.' },
       { label: 'Mark as Read', sub: 'Tap the button when you\'re done to unlock the next lesson.' },
       { label: 'Pass the quiz', sub: 'A short quiz at the end of each module checks what you\'ve learned.' },
       { label: 'Earn your certificate', sub: 'Complete all modules and pass the final exam to get certified.' },
     ],
-    cta: 'Got it — what\'s first?',
+    cta: 'Got it, what\'s first?',
   },
   {
     icon: Trophy,
     iconBg: 'bg-amber-500/10',
     iconColor: 'text-amber-500',
     title: () => 'Your learning path is ready',
-    body: 'You\'re enrolled in the NobzTech programme. Start with Module 1 today — it takes less than 20 minutes and sets the foundation for everything that follows.',
+    body: 'You\'re enrolled in the NobzTech programme. Start with Module 1 today: it takes less than 20 minutes and sets the foundation for everything that follows.',
     cta: 'Start learning now',
   },
 ];

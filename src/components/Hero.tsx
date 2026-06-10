@@ -32,7 +32,7 @@ const Hero = () => {
             </h1>
 
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-xl opacity-0 animate-fade-in anim-delay-200">
-              A structured 4-certificate programme that takes you from AI fundamentals to building production-ready applications — step by step.
+              A structured 4-certificate programme that takes you from AI fundamentals to building production-ready applications, step by step.
             </p>
 
             <div className="flex opacity-0 animate-fade-in anim-delay-300">

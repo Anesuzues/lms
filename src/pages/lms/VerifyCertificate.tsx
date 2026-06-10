@@ -75,7 +75,7 @@ const ValidCard = ({ cert }: { cert: CertificateRecord }) => (
     <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/5 border border-primary/20">
       <ShieldCheck size={14} className="text-primary shrink-0" />
       <p className="text-xs text-muted-foreground">
-        Issued by <span className="font-semibold text-foreground">NobzTech Learning Platform</span> — nobztech.co.za
+        Issued by <span className="font-semibold text-foreground">NobzTech Learning Platform</span> · nobztech.co.za
       </p>
     </div>
   </div>

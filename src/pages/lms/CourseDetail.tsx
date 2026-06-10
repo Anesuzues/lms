@@ -189,7 +189,7 @@ const CourseDetail = () => {
                     <p className="text-amber-700 text-xs mt-0.5">
                       {courseIsFinalExam
                         ? 'You must complete all prerequisite courses at 100% before taking the final exam.'
-                        : 'Courses unlock sequentially — finish the course below before continuing.'}
+                        : 'Courses unlock sequentially: finish the course below before continuing.'}
                     </p>
                   </div>
                 </div>

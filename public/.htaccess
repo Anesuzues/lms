@@ -1,9 +1,9 @@
 Options -MultiViews
 RewriteEngine On
 
-# ── HTTPS redirect (uncomment once SSL is active on cPanel) ────────────────
-# RewriteCond %{HTTPS} off
-# RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# ── HTTPS redirect ──────────────────────────────────────────────────────────
+RewriteCond %{HTTPS} off
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
 # ── React Router SPA — send all requests to index.html ────────────────────
 RewriteCond %{REQUEST_FILENAME} !-f

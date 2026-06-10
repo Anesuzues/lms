@@ -77,7 +77,7 @@ const LiveStats = () => {
           className="bg-card/30 backdrop-blur-sm border border-primary/20 rounded-xl p-5"
         >
           <div className="font-orbitron font-black text-3xl text-primary mb-1 tabular-nums">
-            {s.value > 0 ? s.value.toLocaleString() : '—'}
+            {s.value > 0 ? s.value.toLocaleString() : '-'}
           </div>
           <div className="font-exo text-xs text-muted-foreground uppercase tracking-wide">
             {s.label}

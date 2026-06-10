@@ -167,7 +167,7 @@ const Quiz: React.FC<QuizProps> = ({ questions, courseId, moduleId, moduleName, 
                   <p className="text-foreground font-medium mb-1">{i + 1}. {q.question}</p>
                   <p className={`text-xs flex items-center gap-1 ${correct ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'}`}>
                     {correct ? <CheckCircle2 size={11} /> : <XCircle size={11} />}
-                    {correct ? 'Correct' : 'Incorrect'} — {q.options[userAnswer] ?? 'No answer'}
+                    {correct ? 'Correct' : 'Incorrect'}: {q.options[userAnswer] ?? 'No answer'}
                   </p>
                 </div>
               );
@@ -189,7 +189,7 @@ const Quiz: React.FC<QuizProps> = ({ questions, courseId, moduleId, moduleName, 
         <div className="flex items-center justify-between mb-6">
           <div>
             <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wide mb-1">
-              {moduleName} — Quiz
+              {moduleName}: Quiz
             </p>
             <p className="text-sm text-muted-foreground">Question {current + 1} of {questions.length}</p>
           </div>
@@ -264,7 +264,7 @@ const Quiz: React.FC<QuizProps> = ({ questions, courseId, moduleId, moduleName, 
             <div className="flex-1 flex flex-col gap-1.5">
               {!allAnswered && (
                 <p className="text-xs text-amber-500 text-center">
-                  {answeredCount}/{questions.length} answered — go back and complete all questions
+                  {answeredCount}/{questions.length} answered: go back and complete all questions
                 </p>
               )}
               <button

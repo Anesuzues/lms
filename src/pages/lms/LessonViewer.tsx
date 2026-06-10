@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { ChevronLeft, Menu, CheckCircle, Loader2, ChevronRight, Lock, ClipboardList, BookOpen, Download, Trophy, ArrowRight, Flame } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -72,6 +72,75 @@ const getModuleName = (lesson: DBLesson) =>
   FALLBACK_MODULE_NAMES[(lesson.position ?? lesson.order_index) - 1] ??
   `Module ${lesson.position ?? lesson.order_index}`;
 
+interface LessonSection {
+  title: string;
+  body: string;
+}
+
+type HeadingMatch = { title: string; line: string } | null;
+
+function sectionsFrom(
+  lines: string[],
+  match: (line: string, prev?: string) => HeadingMatch
+): LessonSection[] {
+  const sections: LessonSection[] = [];
+  let buffer: string[] = [];
+  let title = '';
+  let inFence = false;
+
+  const flush = () => {
+    const body = buffer.join('\n');
+    if (body.trim()) sections.push({ title, body });
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^(```|~~~)/.test(line.trim())) inFence = !inFence;
+    const m = !inFence ? match(line, lines[i - 1]) : null;
+    if (m) {
+      flush();
+      title = m.title;
+      buffer = [m.line];
+    } else {
+      buffer.push(line);
+    }
+  }
+  flush();
+  return sections;
+}
+
+// Split markdown into sections so each renders as its own card.
+// Tries ## headings first, then # and ###. For content written without
+// markdown headings, falls back to detecting short standalone title lines
+// (e.g. "Manual Testing") and promotes them to ## so they render styled.
+function splitIntoSections(md: string): LessonSection[] {
+  const lines = md.split('\n');
+
+  for (const re of [/^##\s+/, /^#\s+/, /^###\s+/]) {
+    const found = sectionsFrom(lines, line =>
+      re.test(line) ? { title: line.replace(/^#{1,3}\s+/, '').trim(), line } : null
+    );
+    if (found.length > 1) return found;
+  }
+
+  // Plain or bold title lines: short, no ending punctuation, not a list item,
+  // and preceded by a blank line (or at the very start of the content).
+  const found = sectionsFrom(lines, (line, prev) => {
+    const t = line.trim();
+    if (!t || t.length > 60) return null;
+    if (prev !== undefined && prev.trim() !== '') return null;
+    if (/^([-+*]\s|\d+\.\s|>|\||#|!\[|\[|`)/.test(t)) return null;
+    const bold = t.match(/^\*\*(.+)\*\*$/);
+    const inner = (bold ? bold[1] : t).trim();
+    if (/[.,;:!?]$/.test(inner)) return null;
+    if (inner.split(/\s+/).length > 8) return null;
+    return { title: inner, line: `## ${inner}` };
+  });
+  if (found.length > 1) return found;
+
+  return [{ title: '', body: md }];
+}
+
 type ViewMode = 'reading' | 'quiz' | 'certificate';
 
 const LessonViewer = () => {
@@ -101,6 +170,7 @@ const LessonViewer = () => {
   const [certComment, setCertComment] = useState('');
   const [certFeedbackSent, setCertFeedbackSent] = useState(false);
   const [certFeedbackSending, setCertFeedbackSending] = useState(false);
+  const [sectionIndex, setSectionIndex] = useState(0);
   const readingPaneRef = useRef<HTMLDivElement>(null);
   const scrollBarRef = useRef<HTMLDivElement>(null);
   const navProgressRef = useRef<HTMLDivElement>(null);
@@ -138,7 +208,11 @@ const LessonViewer = () => {
         setLessons(l);
         setProgress(p);
         setPassedModules(passed);
-        if (l.length > 0) setActiveLessonId(l[0].id);
+        if (l.length > 0) {
+          // Resume at the first lesson not yet completed
+          const firstIncomplete = l.find(les => !p.some(pp => pp.lesson_id === les.id && pp.completed));
+          setActiveLessonId((firstIncomplete ?? l[0]).id);
+        }
       } catch {
         toast({ title: 'Failed to load course', description: 'Please refresh the page.', variant: 'destructive' });
       } finally {
@@ -152,7 +226,13 @@ const LessonViewer = () => {
     if (readingPaneRef.current) readingPaneRef.current.scrollTop = 0;
     if (scrollBarRef.current) scrollBarRef.current.style.width = '0%';
     lessonStartRef.current = Date.now();
-  }, [activeLessonId]);
+    setSectionIndex(0);
+  }, [activeLessonId, viewMode]);
+
+  // Scroll back to top when stepping between sections
+  useEffect(() => {
+    if (readingPaneRef.current) readingPaneRef.current.scrollTop = 0;
+  }, [sectionIndex]);
 
   useEffect(() => {
     const completedCount = progress.filter(p => p.completed).length;
@@ -166,6 +246,14 @@ const LessonViewer = () => {
   const isCompleted = (lessonId: string) => progress.some(p => p.lesson_id === lessonId && p.completed);
   const isModulePassed = (moduleId: string) => passedModules.includes(moduleId);
 
+  const lessonSections = useMemo(
+    () => splitIntoSections(((activeLesson as any)?.content as string) ?? ''),
+    [activeLesson]
+  );
+  const totalSections = lessonSections.length;
+  const safeSectionIndex = Math.min(sectionIndex, totalSections - 1);
+  const isLastSection = safeSectionIndex >= totalSections - 1;
+
   const isLessonLocked = (lesson: DBLesson) => {
     const pos = lesson.position ?? lesson.order_index;
     if (pos <= 1) return false;
@@ -175,9 +263,9 @@ const LessonViewer = () => {
   };
 
   const MILESTONE_MESSAGES: Record<number, { title: string; description: string }> = {
-    25: { title: '25% complete!', description: "You're a quarter of the way through — keep it up!" },
+    25: { title: '25% complete!', description: "You're a quarter of the way through. Keep it up!" },
     50: { title: 'Halfway there!', description: "You're halfway through the course. Great work!" },
-    75: { title: '75% complete!', description: "Almost done — the finish line is in sight!" },
+    75: { title: '75% complete!', description: "Almost done: the finish line is in sight!" },
     100: { title: 'Course complete!', description: "You've finished every lesson. Time for the quiz!" },
   };
 
@@ -222,7 +310,11 @@ const LessonViewer = () => {
     }
 
     const currentIdx = lessons.findIndex(l => l.id === activeLessonId);
-    if (currentIdx < lessons.length - 1) setActiveLessonId(lessons[currentIdx + 1].id);
+    if (currentIdx < lessons.length - 1) {
+      const next = lessons[currentIdx + 1];
+      setActiveLessonId(next.id);
+      if (!milestone) toast({ title: 'Up next', description: next.title });
+    }
   };
 
   const handleQuizPass = () => {
@@ -238,7 +330,7 @@ const LessonViewer = () => {
   const handleCertFeedback = async () => {
     if (!certRating || !course) return;
     setCertFeedbackSending(true);
-    const message = `[${course.title}] ${certRating}★${certComment.trim() ? ' — ' + certComment.trim() : ''}`;
+    const message = `[${course.title}] ${certRating}★${certComment.trim() ? ': ' + certComment.trim() : ''}`;
     await supabase.from('feedback').insert({ category: 'Course Feedback', message, user_id: user?.id ?? null });
     setCertFeedbackSending(false);
     setCertFeedbackSent(true);
@@ -300,6 +392,9 @@ const LessonViewer = () => {
 
   const completedCount = progress.filter(p => p.completed).length;
   const overallProgress = lessons.length > 0 ? Math.round((completedCount / lessons.length) * 100) : 0;
+  const minutesLeft = lessons
+    .filter(l => !isCompleted(l.id))
+    .reduce((s, l) => s + (l.duration_minutes ?? 0), 0);
 
   return (
     <div className="h-dvh flex flex-col bg-background overflow-hidden">
@@ -546,9 +641,34 @@ const LessonViewer = () => {
                       <div className="mt-6 h-px bg-gradient-to-r from-primary/40 via-primary/10 to-transparent animate-in fade-in duration-700 [animation-fill-mode:both] anim-delay-220" />
                     </div>
 
-                    {/* Lesson content */}
+                    {/* Lesson content — one section per card, quiz-style */}
                     {(activeLesson as any).content ? (
-                      <div className="bg-card rounded-2xl border border-border shadow-card p-6 sm:p-8 mb-2">
+                      <div
+                        key={`${activeLessonId}-${safeSectionIndex}`}
+                        className="bg-card rounded-2xl border border-border shadow-card p-5 sm:p-8 mb-2 animate-in fade-in slide-in-from-bottom-2 duration-300"
+                      >
+
+                      {/* Section header with progress dots */}
+                      {totalSections > 1 && (
+                        <div className="flex items-center justify-between gap-3 mb-6">
+                          <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">
+                            Section {safeSectionIndex + 1} of {totalSections}
+                          </p>
+                          {totalSections <= 12 && (
+                            <div className="flex gap-1">
+                              {lessonSections.map((s, i) => (
+                                <div
+                                  key={`${i}-${s.title}`}
+                                  className={`w-2 h-2 rounded-full transition-colors ${
+                                    i === safeSectionIndex ? 'bg-primary' : i < safeSectionIndex ? 'bg-primary/40' : 'bg-secondary'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none
                         prose-headings:text-foreground prose-headings:font-bold
                         prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:border-b prose-h2:border-border prose-h2:pb-2
@@ -593,8 +713,55 @@ const LessonViewer = () => {
                               <tr className="even:bg-secondary/30 hover:bg-secondary/50 transition-colors">{children}</tr>
                             ),
                           }}
-                        >{(activeLesson as any).content}</ReactMarkdown>
+                        >{lessonSections[safeSectionIndex].body}</ReactMarkdown>
                       </div>
+
+                      {/* Section navigation — Back / Next, like the quiz */}
+                      {totalSections > 1 && (
+                        <div className="flex items-center justify-between gap-3 mt-8 pt-6 border-t border-border">
+                          <button
+                            type="button"
+                            onClick={() => setSectionIndex(i => Math.max(0, i - 1))}
+                            disabled={safeSectionIndex === 0}
+                            className="px-5 py-2.5 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground text-sm font-semibold transition-colors border border-border disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            Back
+                          </button>
+                          {!isLastSection ? (
+                            <button
+                              type="button"
+                              onClick={() => setSectionIndex(i => Math.min(totalSections - 1, i + 1))}
+                              className="flex items-center gap-1.5 px-6 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold transition-colors"
+                            >
+                              Next <ChevronRight size={15} />
+                            </button>
+                          ) : !isCompleted(activeLesson.id) ? (
+                            <button
+                              type="button"
+                              onClick={handleMarkRead}
+                              disabled={marking}
+                              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold transition-colors disabled:opacity-60 shadow-glow"
+                            >
+                              {marking
+                                ? <><Loader2 size={14} className="animate-spin" /> Saving…</>
+                                : <><CheckCircle size={14} /> Mark as Read</>}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={handleNextLesson}
+                              disabled={(() => {
+                                const idx = lessons.findIndex(l => l.id === activeLessonId);
+                                if (idx >= lessons.length - 1) return true;
+                                return isLessonLocked(lessons[idx + 1]);
+                              })()}
+                              className="flex items-center gap-1.5 px-6 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              Next Lesson <ChevronRight size={15} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -603,7 +770,8 @@ const LessonViewer = () => {
                       </div>
                     )}
 
-                    {/* End of lesson action */}
+                    {/* End of lesson action — shown once the learner reaches the last section */}
+                    {isLastSection && (
                     <RevealOnScroll delay={100}>
                     {(() => {
                       const allDone = lessons.length > 0 && lessons.every(l => isCompleted(l.id));
@@ -613,7 +781,7 @@ const LessonViewer = () => {
                         return (
                           <div className="mt-12 pt-8 border-t border-border text-center">
                             <p className="text-muted-foreground text-sm">
-                              Done reading? Tap <span className="font-semibold text-primary">Mark as Read</span> in the bar below to continue.
+                              Done reading? Tap <span className="font-semibold text-primary">Mark as Read</span> to continue.
                             </p>
                           </div>
                         );
@@ -640,7 +808,7 @@ const LessonViewer = () => {
                                 } else {
                                   // No quiz questions in DB — auto-pass so user can progress
                                   handleQuizPass();
-                                  toast({ title: 'Course complete!', description: 'All lessons done — moving to next step.' });
+                                  toast({ title: 'Course complete!', description: 'All lessons done: moving to next step.' });
                                 }
                               }}
                               disabled={loadingQuiz}
@@ -669,12 +837,13 @@ const LessonViewer = () => {
                       return (
                         <div className="mt-12 pt-8 border-t border-border text-center">
                           <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-sm font-semibold border border-emerald-500/20">
-                            <CheckCircle size={14} /> Lesson complete — continue to the next one
+                            <CheckCircle size={14} /> Lesson complete: continue to the next one
                           </span>
                         </div>
                       );
                     })()}
                     </RevealOnScroll>
+                    )}
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full text-center p-8">
@@ -747,7 +916,9 @@ const LessonViewer = () => {
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground">{lessons.length} lessons • {overallProgress}% complete</p>
+                <p className="text-xs text-muted-foreground">
+                  {lessons.length} lessons • {overallProgress}% complete{minutesLeft > 0 && <> • ~{minutesLeft} min left</>}
+                </p>
                 <div className="mt-2 h-1 bg-secondary rounded-full overflow-hidden">
                   <div ref={sidebarProgressRef} className="h-full bg-primary rounded-full transition-[width] duration-300" />
                 </div>

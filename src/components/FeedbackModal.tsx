@@ -36,7 +36,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ onClose }) => {
       toast({ title: 'Could not send feedback', description: 'Please try again or email us at learning@nobztech.co.za', variant: 'destructive' });
       return;
     }
-    toast({ title: 'Feedback received!', description: "Thank you — we'll review your message shortly." });
+    toast({ title: 'Feedback received!', description: "Thank you, we'll review your message shortly." });
     onClose();
   };
 

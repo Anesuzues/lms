@@ -23,7 +23,7 @@ const CTA = () => {
           </h2>
 
           <p className="text-base sm:text-lg md:text-xl opacity-90 mb-8 sm:mb-10 max-w-xl mx-auto">
-            Start Certificate 1 today and follow the sequential pathway all the way to Certified AI Application Developer.
+            Start Certificate 1 today and follow the sequential pathway all the way to AI Application Developer.
           </p>
 
           <div className="flex justify-center">

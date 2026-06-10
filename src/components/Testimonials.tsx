@@ -3,16 +3,16 @@ const testimonials = [
     initials: 'TM',
     name: 'Tebogo Mokoena',
     institution: 'Software Developer',
-    cert: 'Certified AI Digital Professional',
+    cert: 'AI Digital Professional',
     quote:
-      'Certificate 1 gave me the AI fundamentals I was missing. I went from knowing nothing about AI tools to using them confidently at work — all before my first job.',
+      'Certificate 1 gave me the AI fundamentals I was missing. I went from knowing nothing about AI tools to using them confidently at work, all before my first job.',
     color: 'from-blue-600 to-cyan-500',
   },
   {
     initials: 'NZ',
     name: 'Nomsa Zulu',
     institution: 'Junior Developer',
-    cert: 'Certified Junior Software Developer',
+    cert: 'Junior Software Developer',
     quote:
       'The sequential structure is what made the difference. Each course built on the last and by the time I finished Certificate 2 I had built real applications I could show in interviews.',
     color: 'from-violet-600 to-purple-500',
@@ -21,9 +21,9 @@ const testimonials = [
     initials: 'KP',
     name: 'Katlego Phiri',
     institution: 'AI Application Developer',
-    cert: 'Certified AI Application Developer',
+    cert: 'AI Application Developer',
     quote:
-      'I completed all 4 certificates and landed a role building AI applications. The final exam for each certificate really tests you — passing them felt like a genuine achievement.',
+      'I completed all 4 certificates and landed a role building AI applications. The final exam for each certificate really tests you, passing them felt like a genuine achievement.',
     color: 'from-emerald-600 to-teal-500',
   },
 ];

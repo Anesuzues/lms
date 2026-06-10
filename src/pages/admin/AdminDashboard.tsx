@@ -173,13 +173,15 @@ const AdminDashboard = () => {
     const load = async () => {
       setLoadingStudents(true);
       try {
-        const s = await fetchCombinedStudents();
-        setStudents(s);
+        const combined = await fetchCombinedStudents();
+        // Admin table: only real Supabase accounts (exclude sheet-only rows)
+        setStudents(combined.filter(x => x.source !== 'sheet'));
+        // Stats: count everyone, including sheet-only entries
         setStats({
-          totalStudents: s.length,
-          enrolled:      s.filter(x => x.source === 'db' || x.source === 'both').length,
-          completed:     s.filter(x => x.completed_at !== null).length,
-          inProgress:    s.filter(x => x.progress > 0 && !x.completed_at).length,
+          totalStudents: combined.length,
+          enrolled:      combined.filter(x => x.hasEnrollment).length,
+          completed:     combined.filter(x => x.completed_at !== null).length,
+          inProgress:    combined.filter(x => x.progress > 0 && !x.completed_at).length,
         });
       } catch {
         toast({ title: 'Failed to load data', description: 'Please refresh.', variant: 'destructive' });
@@ -547,7 +549,7 @@ const AdminDashboard = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-4">
-                <p className="text-xs text-gray-400">{filtered.length} student{filtered.length !== 1 ? 's' : ''} — page {safePage} of {totalPages}</p>
+                <p className="text-xs text-gray-400">{filtered.length} student{filtered.length !== 1 ? 's' : ''} · page {safePage} of {totalPages}</p>
                 {totalPages > 1 && (
                   <div className="flex items-center gap-2">
                     <button type="button" aria-label="Previous page" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1}
@@ -738,7 +740,7 @@ const AdminDashboard = () => {
                                   {(profile.full_name || profile.email || '?')[0].toUpperCase()}
                                 </div>
                                 <div>
-                                  <p className="font-semibold text-sm text-gray-900">{profile.full_name || '—'}</p>
+                                  <p className="font-semibold text-sm text-gray-900">{profile.full_name || '-'}</p>
                                   <p className="text-xs text-gray-400">{profile.email}</p>
                                 </div>
                               </div>

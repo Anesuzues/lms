@@ -96,11 +96,11 @@ const StudentDetailModal: React.FC<Props> = ({ student, onClose }) => {
                   const certEnrollments = detail.enrollments.filter(
                     e => getCertForCourse(e.course_title)?.number === cert.number
                   );
-                  const total = cert.courseTitles.length;
-                  const done = certEnrollments.filter(e => e.completed_at).length;
                   const enrolled = certEnrollments.length;
-                  const pct = Math.round((done / total) * 100);
-                  const eligible = done === total && enrolled === total;
+                  if (enrolled === 0) return null;
+                  const done = certEnrollments.filter(e => e.completed_at).length;
+                  const pct = Math.round((done / enrolled) * 100);
+                  const eligible = done === enrolled;
 
                   return (
                     <div key={cert.number} className="bg-white rounded-xl border border-gray-100 p-3 shadow-sm">
@@ -111,7 +111,7 @@ const StudentDetailModal: React.FC<Props> = ({ student, onClose }) => {
                           </div>
                           <div>
                             <p className="font-semibold text-gray-900 text-xs">{cert.shortName}</p>
-                            <p className="text-xs text-gray-400">{enrolled} enrolled · {done}/{total} complete</p>
+                            <p className="text-xs text-gray-400">{enrolled} enrolled · {done}/{enrolled} complete</p>
                           </div>
                         </div>
                         {eligible ? (

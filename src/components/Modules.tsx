@@ -4,7 +4,7 @@ import { Cpu, Code2, Wand2, Rocket, ChevronRight } from "lucide-react";
 const certificates = [
   {
     number: 1,
-    title: "Certified AI Digital Professional",
+    title: "AI Digital Professional",
     subtitle: "Workplace Readiness & AI Productivity",
     description: "Master workplace foundations, AI tools, and digital productivity to launch your professional career.",
     icon: Cpu,
@@ -14,9 +14,9 @@ const certificates = [
   },
   {
     number: 2,
-    title: "Certified Junior Software Developer",
+    title: "Junior Software Developer",
     subtitle: "Programming, Web Dev & Real Applications",
-    description: "Go from zero to job-ready — learn programming, web development, and how to build real applications.",
+    description: "Go from zero to job-ready: learn programming, web development, and how to build real applications.",
     icon: Code2,
     color: "from-violet-600 to-purple-500",
     level: "Intermediate",
@@ -24,7 +24,7 @@ const certificates = [
   },
   {
     number: 3,
-    title: "Certified AI-Enhanced Developer",
+    title: "AI-Enhanced Developer",
     subtitle: "Prompt Engineering, Testing & Docs",
     description: "Level up with prompt engineering, professional testing, and technical documentation skills.",
     icon: Wand2,
@@ -34,7 +34,7 @@ const certificates = [
   },
   {
     number: 4,
-    title: "Certified AI Application Developer",
+    title: "AI Application Developer",
     subtitle: "Agents, RAG Systems & Production Apps",
     description: "Build production-ready AI applications, autonomous agents, and RAG systems.",
     icon: Rocket,
@@ -63,7 +63,7 @@ const Modules = () => {
             4 Certificates to <span className="text-gradient">Mastery</span>
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground">
-            Each certificate builds on the last — from AI fundamentals all the way to shipping production AI applications.
+            Each certificate builds on the last: from AI fundamentals all the way to shipping production AI applications.
           </p>
         </div>
 

@@ -229,7 +229,7 @@ const Dashboard = () => {
               </div>
               <div className="flex-1 text-center sm:text-left">
                 <p className="font-bold text-foreground text-base mb-0.5">Your next step: start Certificate 1</p>
-                <p className="text-muted-foreground text-sm">Enroll in your first pathway and begin your journey to becoming a Certified AI Developer.</p>
+                <p className="text-muted-foreground text-sm">Enroll in your first pathway and begin your journey to becoming an AI Developer.</p>
               </div>
               <Link
                 to="/courses"
@@ -445,7 +445,7 @@ const Dashboard = () => {
                               <span className="text-xs font-bold text-muted-foreground shrink-0">{completedCount}/{totalEnrolled} modules</span>
                             </div>
                             {eligible
-                              ? <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 font-semibold">✓ Final exam passed — certificate earned!</p>
+                              ? <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 font-semibold">✓ Final exam passed: certificate earned!</p>
                               : <p className="text-xs text-muted-foreground mt-1">Complete all modules and pass the final exam to earn this certificate</p>
                             }
                           </div>

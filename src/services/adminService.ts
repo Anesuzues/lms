@@ -99,6 +99,7 @@ export interface StudentOverview {
   completed_at: string | null;
   status: 'completed' | 'in_progress' | 'not_started';
   source: 'db' | 'sheet' | 'both';
+  hasEnrollment: boolean;
 }
 
 export interface AdminStats {
@@ -149,6 +150,7 @@ export async function fetchAllStudents(): Promise<StudentOverview[]> {
       completed_at: anyCompleted?.completed_at ?? null,
       status: anyCompleted ? 'completed' : avgProgress > 0 ? 'in_progress' : 'not_started',
       source: 'db' as const,
+      hasEnrollment: rows.length > 0,
       placementStatus: null,
     } as StudentOverview;
   });
@@ -252,6 +254,7 @@ export async function fetchCombinedStudents(): Promise<StudentOverview[]> {
         completed_at:    null,
         status:          'not_started',
         source:          'sheet',
+        hasEnrollment:   false,
       });
     }
   }

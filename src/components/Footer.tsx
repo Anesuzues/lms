@@ -16,7 +16,7 @@ const Footer = () => {
           <div>
             <img src="/nobzlearn-new-logo.jpeg" alt="NobzLearn" className="h-8 w-auto mb-3" />
             <p className="text-muted-foreground text-sm leading-relaxed max-w-xs">
-              Empowering the next generation of AI developers — one certificate at a time.
+              Empowering the next generation of AI developers: one certificate at a time.
             </p>
           </div>
 
