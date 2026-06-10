@@ -548,6 +548,7 @@ const LessonViewer = () => {
 
                     {/* Lesson content */}
                     {(activeLesson as any).content ? (
+                      <div className="bg-card rounded-2xl border border-border shadow-card p-6 sm:p-8 mb-2">
                       <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none
                         prose-headings:text-foreground prose-headings:font-bold
                         prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:border-b prose-h2:border-border prose-h2:pb-2
@@ -593,6 +594,7 @@ const LessonViewer = () => {
                             ),
                           }}
                         >{(activeLesson as any).content}</ReactMarkdown>
+                      </div>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-20 text-center">

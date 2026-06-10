@@ -109,67 +109,49 @@ export interface AdminStats {
 }
 
 export async function fetchAllStudents(): Promise<StudentOverview[]> {
-  const { data, error } = await supabase
-    .from('enrollments')
-    .select(`
-      user_id,
-      enrolled_at,
-      progress,
-      completed_at,
-      profiles (
-        id,
-        full_name,
-        email,
-        avatar_url
-      )
-    `)
-    .order('enrolled_at', { ascending: false });
+  const [profilesRes, enrollmentsRes] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('id, full_name, email, avatar_url, created_at')
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('enrollments')
+      .select('user_id, enrolled_at, progress, completed_at'),
+  ]);
 
-  if (error) { console.error('fetchAllStudents error:', error); return []; }
+  if (profilesRes.error) { console.error('fetchAllStudents profiles error:', profilesRes.error); return []; }
 
-  type EnrollmentRow = {
-    user_id: string;
-    enrolled_at: string;
-    progress: number | null;
-    completed_at: string | null;
-    profiles: {
-      id: string;
-      full_name: string | null;
-      email: string | null;
-      avatar_url: string | null;
-    } | null;
-  };
-
-  // Deduplicate by user_id — one row per student showing overall progress
-  const byUser = new Map<string, EnrollmentRow[]>();
-  for (const row of (data ?? []) as EnrollmentRow[]) {
-    const uid = row.user_id;
-    if (!byUser.has(uid)) byUser.set(uid, []);
-    byUser.get(uid)!.push(row);
+  type EnrollmentRow = { user_id: string; enrolled_at: string; progress: number | null; completed_at: string | null };
+  const enrollmentsByUser = new Map<string, EnrollmentRow[]>();
+  for (const row of (enrollmentsRes.data ?? []) as EnrollmentRow[]) {
+    if (!enrollmentsByUser.has(row.user_id)) enrollmentsByUser.set(row.user_id, []);
+    enrollmentsByUser.get(row.user_id)!.push(row);
   }
 
-  return Array.from(byUser.values()).map(rows => {
-    const profile = rows[0].profiles;
-    const name = profile?.full_name || profile?.email?.split('@')[0] || 'Unknown';
+  return (profilesRes.data ?? []).map((profile: any) => {
+    const name = profile.full_name || profile.email?.split('@')[0] || 'Unknown';
+    const rows = enrollmentsByUser.get(profile.id) ?? [];
     const allProgress = rows.map(r => r.progress ?? 0);
-    const avgProgress = Math.round(allProgress.reduce((s, p) => s + p, 0) / allProgress.length);
+    const avgProgress = rows.length > 0
+      ? Math.round(allProgress.reduce((s, p) => s + p, 0) / allProgress.length)
+      : 0;
     const anyCompleted = rows.find(r => r.completed_at) ?? null;
-    const earliestEnroll = rows.reduce((earliest, r) =>
-      r.enrolled_at < earliest.enrolled_at ? r : earliest
-    );
+    const earliestEnroll = rows.length > 0
+      ? rows.reduce((e, r) => r.enrolled_at < e.enrolled_at ? r : e)
+      : null;
     return {
-      id: profile?.id ?? rows[0].user_id,
+      id: profile.id,
       name,
-      email: profile?.email ?? '',
-      avatar: profile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3B82F6&color=fff&bold=true`,
-      enrolled_at: earliestEnroll.enrolled_at,
+      email: profile.email ?? '',
+      avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3B82F6&color=fff&bold=true`,
+      enrolled_at: earliestEnroll?.enrolled_at ?? profile.created_at,
       progress: avgProgress,
       completed_at: anyCompleted?.completed_at ?? null,
       status: anyCompleted ? 'completed' : avgProgress > 0 ? 'in_progress' : 'not_started',
       source: 'db' as const,
       placementStatus: null,
     } as StudentOverview;
-  }).sort((a, b) => b.enrolled_at.localeCompare(a.enrolled_at));
+  });
 }
 
 // ─── Google Sheet helpers ─────────────────────────────────────────────────────

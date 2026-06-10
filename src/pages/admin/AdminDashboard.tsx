@@ -233,10 +233,8 @@ const AdminDashboard = () => {
     load();
   }, [tab]);
 
-  // Student filtering — only show students who enrolled directly through the LMS
   const placementFilters = ['placed', 'to_be_placed', 'exited', 'candidate_response'] as const;
   const filtered = students.filter(s => {
-    if (s.source !== 'db') return false;
     const matchSearch = s.name.toLowerCase().includes(search.toLowerCase())
       || s.email.toLowerCase().includes(search.toLowerCase())
       || (s.company ?? '').toLowerCase().includes(search.toLowerCase());
