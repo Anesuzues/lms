@@ -40,3 +40,6 @@ public/certificate-preview.html
 *.njsproj
 *.sln
 *.sw?
+
+# cPanel deployment package
+nobzlearn-cpanel-upload.zip
