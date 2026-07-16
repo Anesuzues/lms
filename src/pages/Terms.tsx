@@ -9,7 +9,7 @@ const Terms = () => (
       <h1 className="text-3xl font-bold text-foreground mb-2">Terms of Service</h1>
       <p className="text-sm text-muted-foreground mb-8">Last updated: June 2026</p>
 
-      <div className="prose prose-sm max-w-none text-foreground space-y-6">
+      <div className="prose prose-sm dark:prose-invert max-w-none text-foreground space-y-6">
         <section>
           <h2 className="text-lg font-bold mb-2">1. Acceptance of Terms</h2>
           <p className="text-muted-foreground leading-relaxed">By accessing or using the NobzTech Learning Platform, you agree to be bound by these Terms of Service. If you do not agree, please do not use the platform.</p>

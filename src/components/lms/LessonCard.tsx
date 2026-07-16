@@ -45,7 +45,7 @@ const LessonCard: React.FC<LessonCardProps> = ({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h3 className={`font-semibold text-sm ${
+            <h3 className={`font-bold text-sm ${
               canAccess ? 'text-foreground' : 'text-muted-foreground'
             }`}>
               {lesson.order_index}. {lesson.title}

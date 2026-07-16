@@ -10,6 +10,7 @@ const Hero = () => {
     <section className="relative min-h-screen flex items-center overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-background" />
+      <div className="absolute inset-0 bg-grid [mask-image:radial-gradient(ellipse_at_center,black_10%,transparent_70%)]" />
       <div className="absolute top-0 right-0 w-3/4 h-full bg-hero-gradient opacity-10 blur-3xl rounded-full translate-x-1/3 -translate-y-1/4" />
       <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-primary/10 opacity-20 blur-3xl rounded-full -translate-x-1/4 translate-y-1/4" />
 
@@ -22,28 +23,31 @@ const Hero = () => {
 
           {/* Content */}
           <div className="space-y-6 sm:space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 glass-panel rounded-full text-foreground text-xs sm:text-sm font-medium opacity-0 animate-fade-in border border-primary/20">
-              <span className="w-2 h-2 bg-primary rounded-full animate-pulse-soft shadow-glow shrink-0" />
-              4 Certificates · Free to Start
-            </div>
-
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.1] tracking-tight opacity-0 animate-fade-in anim-delay-100">
-              Go From Beginner to <span className="text-gradient drop-shadow-sm">AI Developer</span>
+            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold leading-[0.95] tracking-tighter opacity-0 animate-fade-in">
+              Go From Beginner to{" "}
+              <span className="text-gradient-animated">AI Developer</span>
             </h1>
 
-            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-xl opacity-0 animate-fade-in anim-delay-200">
+            <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-xl leading-relaxed opacity-0 animate-fade-in anim-delay-200">
               A structured 4-certificate programme that takes you from AI fundamentals to building production-ready applications, step by step.
             </p>
 
-            <div className="flex opacity-0 animate-fade-in anim-delay-300">
+            <div className="flex flex-wrap items-center gap-4 opacity-0 animate-fade-in anim-delay-300">
               <Button
                 size="lg"
-                className="group bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow rounded-full px-6 sm:px-8 py-5 sm:py-6 text-base sm:text-lg transition-all hover:scale-105"
+                className="group bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow rounded-full px-7 sm:px-9 py-6 sm:py-7 text-base sm:text-lg font-bold transition-all hover:scale-105"
                 onClick={() => navigate("/login")}
               >
                 Start Your Journey
                 <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2 transition-transform group-hover:translate-x-1" />
               </Button>
+              <a
+                href="#modules"
+                className="group inline-flex items-center gap-1.5 px-5 py-3 rounded-full text-sm sm:text-base font-semibold text-foreground border border-border hover:border-primary/50 hover:text-primary transition-colors"
+              >
+                See the pathway
+                <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+              </a>
             </div>
 
             {/* Live stats */}

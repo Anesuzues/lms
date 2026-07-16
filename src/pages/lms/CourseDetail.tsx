@@ -168,7 +168,7 @@ const CourseDetail = () => {
                   {course.level}
                 </span>
                 {courseIsFinalExam && (
-                  <span className="inline-block px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-bold">
+                  <span className="inline-block px-3 py-1 bg-amber-500/15 text-amber-700 dark:text-amber-400 rounded-full text-xs font-bold">
                     Final Examination
                   </span>
                 )}
@@ -179,7 +179,7 @@ const CourseDetail = () => {
 
             {/* Prerequisite warning — shown for any locked course, including the final exam */}
             {!isEnrolled && !prerequisitesMet && (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+              <div className="rounded-2xl border border-amber-500/25 bg-amber-500/10 p-5">
                 <div className="flex items-start gap-3 mb-3">
                   <Lock size={18} className="text-amber-600 shrink-0 mt-0.5" />
                   <div>
@@ -278,7 +278,7 @@ const CourseDetail = () => {
 
                 <div className="p-6">
                   {isEnrolled ? (
-                    <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 mb-4 justify-center">
+                    <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 mb-4 justify-center">
                       <CheckCircle size={18} />
                       <span className="font-bold text-sm">You're enrolled</span>
                     </div>
@@ -298,7 +298,7 @@ const CourseDetail = () => {
                     <button
                       type="button"
                       disabled
-                      className="w-full py-3.5 rounded-xl bg-amber-100 text-amber-600 font-bold flex items-center justify-center gap-2 cursor-not-allowed border border-amber-200"
+                      className="w-full py-3.5 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold flex items-center justify-center gap-2 cursor-not-allowed border border-amber-500/25"
                     >
                       <Lock size={16} /> {courseIsFinalExam ? 'Complete Modules First' : 'Complete Previous Course First'}
                     </button>
@@ -315,8 +315,8 @@ const CourseDetail = () => {
 
                   <ul className="mt-5 space-y-2 text-sm text-muted-foreground">
                     {['Full lifetime access', 'Access on mobile and web', 'Certificate of completion'].map(item => (
-                      <li key={item} className="flex items-center gap-2">
-                        <CheckCircle size={14} className="text-emerald-500 shrink-0" /> {item}
+                      <li key={item} className="flex items-center gap-2.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" /> {item}
                       </li>
                     ))}
                   </ul>

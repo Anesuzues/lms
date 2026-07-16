@@ -152,6 +152,50 @@
     background-image: var(--gradient-hero);
   }
 
+  /* Animated gradient text — the hero headline accent.
+     Cyan -> teal -> emerald. First and last stops match so the 200% background-size
+     loop wraps seamlessly. Light mode runs darker to stay legible on the near-white bg. */
+  .text-gradient-animated {
+    @apply bg-clip-text text-transparent animate-gradient-shift;
+    background-image: linear-gradient(
+      100deg,
+      hsl(199 89% 45%) 0%,
+      hsl(178 78% 38%) 40%,
+      hsl(160 72% 38%) 70%,
+      hsl(199 89% 45%) 100%
+    );
+    background-size: 200% 200%;
+  }
+
+  .dark .text-gradient-animated {
+    background-image: linear-gradient(
+      100deg,
+      hsl(199 89% 60%) 0%,
+      hsl(178 78% 52%) 40%,
+      hsl(160 72% 52%) 70%,
+      hsl(199 89% 60%) 100%
+    );
+  }
+
+  /* Faint grid backdrop for the hero */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, hsl(var(--foreground) / 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--foreground) / 0.05) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+
+  /* Vertical gradient rail connecting the certificate steps */
+  .pathway-rail {
+    background: linear-gradient(
+      to bottom,
+      hsl(var(--primary)) 0%,
+      hsl(var(--accent)) 50%,
+      hsl(var(--primary) / 0.2) 100%
+    );
+    transform-origin: top;
+  }
+
   .bg-hero-gradient {
     background: var(--gradient-hero);
   }

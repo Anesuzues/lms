@@ -35,7 +35,7 @@ const StudentDetailModal: React.FC<Props> = ({ student, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="h-full w-full max-w-xl bg-white shadow-2xl flex flex-col overflow-hidden"
+        className="h-full w-full max-w-xl bg-card shadow-2xl flex flex-col overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -68,29 +68,29 @@ const StudentDetailModal: React.FC<Props> = ({ student, onClose }) => {
             <Loader2 className="w-7 h-7 animate-spin text-primary" />
           </div>
         ) : detail ? (
-          <div className="flex-1 overflow-y-auto p-5 space-y-6 bg-gray-50">
+          <div className="flex-1 overflow-y-auto p-5 space-y-6 bg-secondary">
 
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
                 { icon: BookOpen,    label: 'Enrolled',  value: detail.enrollments.length,                                                  color: 'text-primary',     bg: 'bg-primary/10' },
-                { icon: Trophy,     label: 'Completed', value: detail.enrollments.filter(e => e.completed_at).length,                       color: 'text-emerald-500', bg: 'bg-emerald-50' },
-                { icon: BarChart2,  label: 'Progress',  value: `${student.progress}%`,                                                     color: 'text-amber-500',   bg: 'bg-amber-50'   },
-                { icon: Clock,      label: 'Time Spent',value: fmtTime(detail.totalTimeSeconds),                                            color: 'text-violet-500',  bg: 'bg-violet-50'  },
+                { icon: Trophy,     label: 'Completed', value: detail.enrollments.filter(e => e.completed_at).length,                       color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+                { icon: BarChart2,  label: 'Progress',  value: `${student.progress}%`,                                                     color: 'text-amber-500',   bg: 'bg-amber-500/10'   },
+                { icon: Clock,      label: 'Time Spent',value: fmtTime(detail.totalTimeSeconds),                                            color: 'text-violet-500',  bg: 'bg-violet-500/10'  },
               ].map(({ icon: Icon, label, value, color, bg }) => (
-                <div key={label} className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm text-center">
+                <div key={label} className="bg-card rounded-xl p-3 border border-border shadow-sm text-center">
                   <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center mx-auto mb-1.5`}>
                     <Icon size={15} className={color} />
                   </div>
-                  <p className="font-bold text-gray-900 text-sm">{value}</p>
-                  <p className="text-xs text-gray-400">{label}</p>
+                  <p className="font-bold text-foreground text-sm">{value}</p>
+                  <p className="text-xs text-muted-foreground">{label}</p>
                 </div>
               ))}
             </div>
 
             {/* Certificate Progress */}
             <div>
-              <h3 className="font-bold text-gray-900 text-sm mb-3">Certificate Progress</h3>
+              <h3 className="font-bold text-foreground text-sm mb-3">Certificate Progress</h3>
               <div className="space-y-2">
                 {CERTIFICATES.map(cert => {
                   const certEnrollments = detail.enrollments.filter(
@@ -103,24 +103,24 @@ const StudentDetailModal: React.FC<Props> = ({ student, onClose }) => {
                   const eligible = done === enrolled;
 
                   return (
-                    <div key={cert.number} className="bg-white rounded-xl border border-gray-100 p-3 shadow-sm">
+                    <div key={cert.number} className="bg-card rounded-xl border border-border p-3 shadow-sm">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${cert.gradient} flex items-center justify-center`}>
                             <Trophy size={12} className="text-white" />
                           </div>
                           <div>
-                            <p className="font-semibold text-gray-900 text-xs">{cert.shortName}</p>
-                            <p className="text-xs text-gray-400">{enrolled} enrolled · {done}/{enrolled} complete</p>
+                            <p className="font-semibold text-foreground text-xs">{cert.shortName}</p>
+                            <p className="text-xs text-muted-foreground">{enrolled} enrolled · {done}/{enrolled} complete</p>
                           </div>
                         </div>
                         {eligible ? (
-                          <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold">Earned</span>
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 text-xs font-bold">Earned</span>
                         ) : (
-                          <span className="text-xs font-bold text-gray-500">{pct}%</span>
+                          <span className="text-xs font-bold text-muted-foreground">{pct}%</span>
                         )}
                       </div>
-                      <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
                         <div
                           className={`h-full bg-gradient-to-r ${cert.gradient} rounded-full transition-all`}
                           style={{ width: `${pct}%` }}
@@ -134,20 +134,20 @@ const StudentDetailModal: React.FC<Props> = ({ student, onClose }) => {
 
             {/* Course Enrollments */}
             <div>
-              <h3 className="font-bold text-gray-900 text-sm mb-3">Course Enrollments ({detail.enrollments.length})</h3>
-              <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+              <h3 className="font-bold text-foreground text-sm mb-3">Course Enrollments ({detail.enrollments.length})</h3>
+              <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
                 {detail.enrollments.length === 0 ? (
-                  <p className="text-center text-gray-400 text-sm py-8">No enrollments yet</p>
+                  <p className="text-center text-muted-foreground text-sm py-8">No enrollments yet</p>
                 ) : (
-                  <div className="divide-y divide-gray-50">
+                  <div className="divide-y divide-border">
                     {detail.enrollments.map(e => (
                       <div key={e.course_id} className="px-4 py-3 flex items-center gap-3">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{e.course_title}</p>
-                          <p className="text-xs text-gray-400">Enrolled {new Date(e.enrolled_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                          <p className="text-sm font-medium text-foreground truncate">{e.course_title}</p>
+                          <p className="text-xs text-muted-foreground">Enrolled {new Date(e.enrolled_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="w-16 h-1.5 bg-secondary rounded-full overflow-hidden">
                             <div className="h-full bg-primary rounded-full" style={{ width: `${e.progress}%` }} />
                           </div>
                           <span className="text-xs font-bold text-primary w-8 text-right">{e.progress}%</span>
@@ -162,14 +162,14 @@ const StudentDetailModal: React.FC<Props> = ({ student, onClose }) => {
             {/* Quiz History */}
             {detail.quizAttempts.length > 0 && (
               <div>
-                <h3 className="font-bold text-gray-900 text-sm mb-3">Quiz History</h3>
-                <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
-                  <div className="divide-y divide-gray-50">
+                <h3 className="font-bold text-foreground text-sm mb-3">Quiz History</h3>
+                <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+                  <div className="divide-y divide-border">
                     {detail.quizAttempts.map((qa, i) => (
                       <div key={i} className="px-4 py-3 flex items-center gap-3">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{qa.course_title}</p>
-                          <p className="text-xs text-gray-400">{new Date(qa.attempted_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                          <p className="text-sm font-medium text-foreground truncate">{qa.course_title}</p>
+                          <p className="text-xs text-muted-foreground">{new Date(qa.attempted_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <span className={`font-bold text-sm ${qa.passed ? 'text-emerald-600' : 'text-red-500'}`}>{qa.score}%</span>
@@ -186,7 +186,7 @@ const StudentDetailModal: React.FC<Props> = ({ student, onClose }) => {
 
           </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
+          <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
             Could not load student data.
           </div>
         )}

@@ -16,15 +16,40 @@ function startsWithEmoji(text: string): boolean {
   return cp > 255;
 }
 
+/**
+ * The markdown tag a node came from ('h2', 'ul', 'li'…), or null if it isn't an element.
+ *
+ * A plain element's type is the tag string, but any tag remapped through ReactMarkdown's
+ * `components` (LessonViewer remaps h2/h3 and ul/ol) has a function as its type instead.
+ * ReactMarkdown passes the original hast node alongside, so read the tag from there.
+ */
+function nodeTagName(child: React.ReactNode): string | null {
+  if (!React.isValidElement(child)) return null;
+  if (typeof child.type === 'string') return child.type;
+  const node = (child.props as { node?: { tagName?: unknown } }).node;
+  return typeof node?.tagName === 'string' ? node.tagName : null;
+}
+
+function isHeadingNode(child: React.ReactNode): boolean {
+  return /^h[1-6]$/.test(nodeTagName(child) ?? '');
+}
+
+/** The <li> children of a list node, or null if this isn't a list. */
+function getListItems(node: React.ReactNode): React.ReactNode[] | null {
+  const tag = nodeTagName(node);
+  if (tag !== 'ul' && tag !== 'ol') return null;
+  if (!React.isValidElement(node)) return null;
+  const kids = React.Children.toArray((node.props as { children?: React.ReactNode }).children)
+    .filter(k => getTextContent(k).trim() !== '');
+  if (!kids.length) return null;
+  return kids.every(k => nodeTagName(k) === 'li') ? kids : null;
+}
+
 function splitByHeadings(arr: React.ReactNode[]): { heading: React.ReactNode; content: React.ReactNode[] }[] {
   const sections: { heading: React.ReactNode; content: React.ReactNode[] }[] = [];
   let current: { heading: React.ReactNode; content: React.ReactNode[] } | null = null;
   for (const child of arr) {
-    const isHeading =
-      React.isValidElement(child) &&
-      typeof child.type === 'string' &&
-      /^h[1-6]$/.test(child.type);
-    if (isHeading) {
+    if (isHeadingNode(child)) {
       current = { heading: child, content: [] };
       sections.push(current);
     } else if (current) {
@@ -69,7 +94,7 @@ export const BlockquoteRenderer: React.FC<{ children: React.ReactNode }> = ({ ch
         <span>{cfg.icon}</span>
         <span>{cfg.label}</span>
       </p>
-      <div className="[&>p:last-child]:mb-0 [&>p]:text-sm">
+      <div className="min-w-0 break-words [&>p:last-child]:mb-0 [&>p]:text-sm [&_pre]:overflow-x-auto [&_code]:break-all">
         {children}
       </div>
     </div>
@@ -79,13 +104,15 @@ export const BlockquoteRenderer: React.FC<{ children: React.ReactNode }> = ({ ch
 // ── 2. Feature Card Grid ───────────────────────────────────────────────────
 
 export const ListRenderer: React.FC<{ children: React.ReactNode; ordered?: boolean }> = ({ children, ordered }) => {
-  const items = React.Children.toArray(children);
+  // Markdown puts whitespace text nodes between <li>s; they carry no text and would
+  // otherwise be rendered as empty cards below.
+  const items = React.Children.toArray(children).filter(item => getTextContent(item).trim() !== '');
   const hasEmoji = items.some(item => startsWithEmoji(getTextContent(item).trim()));
 
   if (!hasEmoji) {
     const Tag = ordered ? 'ol' : 'ul';
     return (
-      <Tag className={`${ordered ? 'list-decimal' : 'list-disc'} pl-6 space-y-1.5 my-3 text-foreground/80 text-sm`}>
+      <Tag className={`${ordered ? 'list-decimal' : 'list-disc'} pl-6 space-y-1.5 my-3 text-foreground/80 text-sm break-words`}>
         {children}
       </Tag>
     );
@@ -100,10 +127,10 @@ export const ListRenderer: React.FC<{ children: React.ReactNode; ordered?: boole
         return (
           <div
             key={i}
-            className="flex items-start gap-3 p-4 rounded-xl bg-card border border-border shadow-soft hover:shadow-card transition-shadow"
+            className="flex min-w-0 items-start gap-3 p-4 rounded-xl bg-card border border-border shadow-soft hover:shadow-card transition-shadow"
           >
             <span className="text-2xl shrink-0">{emoji}</span>
-            <p className="text-sm text-foreground/80 leading-relaxed m-0">{rest}</p>
+            <p className="min-w-0 flex-1 text-sm text-foreground/80 leading-relaxed break-words m-0">{rest}</p>
           </div>
         );
       })}
@@ -116,24 +143,16 @@ export const ListRenderer: React.FC<{ children: React.ReactNode; ordered?: boole
 const CardsBlock: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const arr = React.Children.toArray(children).filter(child => {
     const t = getTextContent(child).trim().toLowerCase();
-    return !t.startsWith('[cards]');
+    // Empty nodes are the whitespace between block elements; they would render as blank cards.
+    return t !== '' && !t.startsWith('[cards]');
   });
 
-  // Collect li items from any ul/ol inside the blockquote
+  // Collect li items from any list inside the blockquote — one card per item.
   const items: React.ReactNode[] = [];
   arr.forEach(child => {
-    if (React.isValidElement(child)) {
-      const type = (child as React.ReactElement).type;
-      if (type === 'ul' || type === 'ol') {
-        React.Children.forEach((child.props as { children?: React.ReactNode }).children, li => {
-          items.push(li);
-        });
-      } else {
-        items.push(child);
-      }
-    } else {
-      items.push(child);
-    }
+    const listItems = getListItems(child);
+    if (listItems) items.push(...listItems);
+    else items.push(child);
   });
 
   if (!items.length) return null;
@@ -143,10 +162,10 @@ const CardsBlock: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       {items.map((item, i) => (
         <div
           key={i}
-          className="flex items-start gap-3 p-4 rounded-xl bg-card border border-border shadow-soft hover:shadow-card transition-shadow"
+          className="flex min-w-0 items-start gap-3 p-4 rounded-xl bg-card border border-border shadow-soft hover:shadow-card transition-shadow"
         >
           <span className="mt-1 w-2 h-2 rounded-full bg-primary shrink-0" />
-          <div className="text-sm text-foreground/80 leading-relaxed [&>p]:m-0 [&>strong]:text-foreground [&>strong]:font-semibold">
+          <div className="min-w-0 flex-1 text-sm text-foreground/80 leading-relaxed break-words [&>p]:m-0 [&>strong]:text-foreground [&>strong]:font-semibold">
             {item}
           </div>
         </div>
@@ -177,11 +196,11 @@ const CompareBlock: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   return (
     <div className="my-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
       {sections.map((section, i) => (
-        <div key={i} className={`rounded-xl border overflow-hidden shadow-soft ${styles[i].card}`}>
-          <div className={`px-4 py-3 font-bold text-sm border-b border-border ${styles[i].head}`}>
+        <div key={i} className={`min-w-0 rounded-xl border overflow-hidden shadow-soft ${styles[i].card}`}>
+          <div className={`px-4 py-3 font-bold text-sm border-b border-border break-words ${styles[i].head}`}>
             {getTextContent(section.heading)}
           </div>
-          <div className="p-4 bg-card text-sm text-foreground/80 leading-relaxed space-y-2 [&>ul]:list-disc [&>ul]:pl-4 [&>ul]:space-y-1 [&>p]:mb-0">
+          <div className="min-w-0 p-4 bg-card text-sm text-foreground/80 leading-relaxed break-words space-y-2 [&>ul]:list-disc [&>ul]:pl-4 [&>ul]:space-y-1 [&>p]:mb-0 [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto">
             {section.content}
           </div>
         </div>
@@ -224,7 +243,7 @@ const TabsBlock: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         ))}
       </div>
       {/* Active panel */}
-      <div className="p-5 bg-card text-sm text-foreground/80 leading-relaxed space-y-3 [&>ul]:list-disc [&>ul]:pl-4 [&>ul]:space-y-1 [&>p]:mb-0">
+      <div className="min-w-0 p-5 bg-card text-sm text-foreground/80 leading-relaxed break-words space-y-3 [&>ul]:list-disc [&>ul]:pl-4 [&>ul]:space-y-1 [&>p]:mb-0 [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto">
         {sections[active].content}
       </div>
     </div>

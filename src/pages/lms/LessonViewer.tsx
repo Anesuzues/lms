@@ -6,6 +6,9 @@ import { useToast } from '@/components/ui/use-toast';
 import Quiz from '@/components/lms/Quiz';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+// Lesson content is authored with one line per point (e.g. the ✅ takeaway lists), so a
+// single newline is meant as a line break rather than a paragraph continuation.
+import remarkBreaks from 'remark-breaks';
 import confetti from 'canvas-confetti';
 import { BlockquoteRenderer, ListRenderer } from '@/components/lms/LessonContent';
 import {
@@ -411,7 +414,7 @@ const LessonViewer = () => {
             <ChevronLeft size={22} />
           </button>
           <div className="h-5 w-px bg-border shrink-0" />
-          <span className="font-semibold text-foreground text-sm truncate max-w-[140px] md:max-w-xs">{course.title}</span>
+          <span className="font-bold text-foreground text-sm truncate max-w-[140px] md:max-w-xs">{course.title}</span>
         </div>
         <div className="hidden md:flex items-center gap-3">
           <div className="w-32 h-1.5 bg-secondary rounded-full overflow-hidden">
@@ -669,8 +672,9 @@ const LessonViewer = () => {
                         </div>
                       )}
 
-                      <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none
-                        prose-headings:text-foreground prose-headings:font-bold
+                      <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none min-w-0 break-words
+                        prose-pre:overflow-x-auto prose-code:break-words
+                        prose-headings:text-foreground prose-headings:font-bold prose-headings:break-words
                         prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:border-b prose-h2:border-border prose-h2:pb-2
                         prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-3
                         prose-p:text-foreground/80 prose-p:leading-relaxed prose-p:mb-4
@@ -680,9 +684,11 @@ const LessonViewer = () => {
                         prose-strong:text-foreground prose-strong:font-semibold
                         prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground
                         prose-code:text-primary prose-code:bg-secondary prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+                        prose-pre:bg-secondary prose-pre:border prose-pre:border-border prose-pre:rounded-xl
+                        [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:text-foreground/90 [&_pre_code]:text-[13px]
                       ">
                         <ReactMarkdown
-                          remarkPlugins={[remarkGfm]}
+                          remarkPlugins={[remarkGfm, remarkBreaks]}
                           components={{
                             h2: ({ children, ...props }) => (
                               <RevealOnScroll tag="h2" {...props}>{children}</RevealOnScroll>
@@ -695,6 +701,19 @@ const LessonViewer = () => {
                             ),
                             ul: ({ children }) => <ListRenderer>{children}</ListRenderer>,
                             ol: ({ children }) => <ListRenderer ordered>{children}</ListRenderer>,
+                            // A <pre> never wraps by default, so a long line grows the block
+                            // and pushes it out of the card. whitespace-pre-wrap keeps the
+                            // authored line breaks but lets long lines wrap, so the whole
+                            // line stays readable at any width — these blocks are mostly
+                            // email/CV templates rather than alignment-sensitive code.
+                            // break-words handles unbreakable tokens (long URLs); overflow-x
+                            // is a last-resort guard. All core utilities, so containment does
+                            // not depend on the typography plugin (prose-pre:* needs it).
+                            pre: ({ children }) => (
+                              <pre className="my-6 max-w-full overflow-x-auto whitespace-pre-wrap break-words rounded-xl border border-border bg-secondary p-4 text-[13px] leading-relaxed text-foreground/90">
+                                {children}
+                              </pre>
+                            ),
                             table: ({ children }) => (
                               <div className="overflow-x-auto my-6 rounded-xl border border-border">
                                 <table className="w-full min-w-[480px] border-collapse text-sm">{children}</table>

@@ -9,7 +9,7 @@ const Privacy = () => (
       <h1 className="text-3xl font-bold text-foreground mb-2">Privacy Policy</h1>
       <p className="text-sm text-muted-foreground mb-8">Last updated: June 2026</p>
 
-      <div className="prose prose-sm max-w-none text-foreground space-y-6">
+      <div className="prose prose-sm dark:prose-invert max-w-none text-foreground space-y-6">
         <section>
           <h2 className="text-lg font-bold mb-2">1. Information We Collect</h2>
           <p className="text-muted-foreground leading-relaxed">We collect your name, email address, and learning progress data when you register and use the platform. We also collect usage data to improve the learning experience.</p>

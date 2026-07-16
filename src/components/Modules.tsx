@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Cpu, Code2, Wand2, Rocket, ChevronRight } from "lucide-react";
+import { Cpu, Code2, Wand2, Rocket, ChevronRight, Trophy } from "lucide-react";
 
 const certificates = [
   {
@@ -45,9 +45,9 @@ const certificates = [
 ];
 
 const LEVEL_COLORS: Record<string, string> = {
-  Beginner:     "bg-emerald-500/15 text-emerald-400",
-  Intermediate: "bg-amber-500/15 text-amber-400",
-  Advanced:     "bg-red-500/15 text-red-400",
+  Beginner:     "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+  Intermediate: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+  Advanced:     "bg-red-500/15 text-red-600 dark:text-red-400",
 };
 
 const Modules = () => {
@@ -67,54 +67,86 @@ const Modules = () => {
           </p>
         </div>
 
-        {/* Certificate Cards */}
-        <div className="grid sm:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
-          {certificates.map((cert, index) => {
-            const delayClass = ['anim-delay-0','anim-delay-100','anim-delay-200','anim-delay-300'][index] ?? '';
-            return (
-              <Card
-                key={cert.number}
-                className={`group relative overflow-hidden glass-panel hover-glow hover:-translate-y-1 transition-all duration-500 opacity-0 animate-fade-in-up ${delayClass}`}
-              >
-                <CardContent className="p-5 sm:p-6 lg:p-8">
-                  <div className="flex items-start gap-4 sm:gap-5">
-                    {/* Icon */}
-                    <div className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br ${cert.color} flex items-center justify-center shrink-0 shadow-glow transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3`}>
-                      <cert.icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
-                      <span className="absolute -top-2 -right-2 w-5 h-5 sm:w-6 sm:h-6 bg-card rounded-full flex items-center justify-center text-xs font-bold shadow-sm border border-border">
-                        {cert.number}
-                      </span>
-                    </div>
+        {/* Certificate Pathway — a step-by-step journey down a connecting rail */}
+        <div className="relative max-w-4xl mx-auto">
+          {/* The rail: runs behind the step markers, drawing itself downward */}
+          <div
+            className="absolute left-6 sm:left-8 top-8 bottom-8 w-0.5 pathway-rail animate-draw-down hidden sm:block"
+            aria-hidden="true"
+          />
 
-                    {/* Content */}
-                    <div className="space-y-1.5 sm:space-y-2 flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <h3 className="text-lg sm:text-xl font-bold leading-snug">{cert.title}</h3>
-                        <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0" />
+          <div className="space-y-4 sm:space-y-6">
+            {certificates.map((cert, index) => {
+              const delayClass = ['anim-delay-0','anim-delay-100','anim-delay-200','anim-delay-300'][index] ?? '';
+              return (
+                <div
+                  key={cert.number}
+                  className={`relative flex items-stretch gap-4 sm:gap-6 opacity-0 animate-fade-in-up ${delayClass}`}
+                >
+                  {/* Step marker on the rail */}
+                  <div className="hidden sm:flex shrink-0 w-16 justify-center pt-6">
+                    <div className={`relative z-10 w-12 h-12 rounded-2xl bg-gradient-to-br ${cert.color} flex items-center justify-center shadow-glow ring-4 ring-background`}>
+                      <span className="text-base font-extrabold text-white">{cert.number}</span>
+                    </div>
+                  </div>
+
+                  {/* Step card */}
+                  <Card className="group flex-1 min-w-0 relative overflow-hidden glass-panel hover-glow hover:-translate-y-1 transition-all duration-500">
+                    <CardContent className="p-5 sm:p-6">
+                      <div className="flex items-start gap-4">
+                        {/* Icon — also the step number on mobile, where the rail is hidden */}
+                        <div className={`relative w-12 h-12 rounded-xl bg-gradient-to-br ${cert.color} flex items-center justify-center shrink-0 shadow-glow transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3`}>
+                          <cert.icon className="w-6 h-6 text-white" />
+                          <span className="sm:hidden absolute -top-2 -right-2 w-5 h-5 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold shadow-sm ring-2 ring-card">
+                            {cert.number}
+                          </span>
+                        </div>
+
+                        <div className="space-y-1.5 flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <h3 className="text-lg sm:text-xl font-bold leading-snug break-words">{cert.title}</h3>
+                            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0" />
+                          </div>
+                          <p className="text-xs sm:text-sm font-bold text-primary break-words">{cert.subtitle}</p>
+                          <p className="text-sm text-muted-foreground leading-relaxed break-words">{cert.description}</p>
+                        </div>
                       </div>
-                      <p className="text-xs sm:text-sm font-medium text-primary">{cert.subtitle}</p>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{cert.description}</p>
-                    </div>
-                  </div>
 
-                  {/* Footer */}
-                  <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-border flex flex-wrap items-center gap-3 sm:gap-4">
-                    <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
-                      <span className="w-2 h-2 bg-primary rounded-full shrink-0" />
-                      {cert.modules} Modules
-                    </div>
-                    <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
-                      <span className="w-2 h-2 bg-accent rounded-full shrink-0" />
-                      Final Exam
-                    </div>
-                    <span className={`ml-auto px-2.5 py-0.5 rounded-full text-xs font-semibold ${LEVEL_COLORS[cert.level]}`}>
-                      {cert.level}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                      {/* Footer */}
+                      <div className="mt-4 pt-3 border-t border-border flex flex-wrap items-center gap-3 sm:gap-4">
+                        <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                          <span className="w-2 h-2 bg-primary rounded-full shrink-0" />
+                          {cert.modules} Modules
+                        </div>
+                        <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                          <span className="w-2 h-2 bg-accent rounded-full shrink-0" />
+                          Final Exam
+                        </div>
+                        <span className={`ml-auto px-2.5 py-0.5 rounded-full text-xs font-semibold ${LEVEL_COLORS[cert.level]}`}>
+                          {cert.level}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              );
+            })}
+
+            {/* Rail endpoint — the payoff at the bottom of the journey */}
+            <div className="relative flex items-center gap-4 sm:gap-6 opacity-0 animate-fade-in-up anim-delay-400">
+              <div className="hidden sm:flex shrink-0 w-16 justify-center">
+                <div className="relative z-10 w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-yellow-400 flex items-center justify-center shadow-glow ring-4 ring-background">
+                  <Trophy className="w-6 h-6 text-white" />
+                </div>
+              </div>
+              <div className="flex-1 min-w-0 flex items-center gap-3 py-3">
+                <Trophy className="w-5 h-5 text-amber-500 shrink-0 sm:hidden" />
+                <p className="font-bold text-base sm:text-lg break-words">
+                  Certified AI Application Developer
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Flow indicator */}

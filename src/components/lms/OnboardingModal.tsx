@@ -112,9 +112,9 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ userId, userName, onC
             <ul className="space-y-3 mb-8 text-left">
               {current.bullets.map(b => (
                 <li key={b.label} className="flex items-start gap-3">
-                  <CheckCircle size={16} className="text-emerald-500 shrink-0 mt-0.5" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0 mt-[7px]" />
                   <div>
-                    <p className="text-sm font-semibold text-foreground">{b.label}</p>
+                    <p className="text-sm font-bold text-foreground">{b.label}</p>
                     <p className="text-xs text-muted-foreground">{b.sub}</p>
                   </div>
                 </li>
